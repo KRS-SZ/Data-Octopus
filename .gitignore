@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test data and output
+*.stdf
+*.csv
+*.xlsx
+*.xls
+*.pptx
+*.7z
+*.zip
+*.log
+*.txt
+
+# Directories with test data
+AM Data/
+PPT/
+Tooltest/
+
+# Google API credentials (NEVER commit these!)
+credentials.json
+google_token.pickle
+*.pickle
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backup copies (old versioning method)
+*Kopie*.py
+*backup*.py
+main\ -\ *.py
+main\ *.py
+!main.py
+
+# Temporary files
+*.tmp
+*.temp

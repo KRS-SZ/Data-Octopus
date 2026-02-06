@@ -1,0 +1,87 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stdf-wafermap-analyzer"
+version = "1.0.0"
+description = "A tool for analyzing semiconductor test data from STDF files, creating wafermaps, and generating reports"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Proprietary"}
+authors = [
+    {name = "Krzysztof Szenklarz", email = "szenklarz@meta.com"}
+]
+keywords = ["stdf", "semiconductor", "wafermap", "test", "analysis"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+]
+
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "pillow>=9.0.0",
+    "Semi-ATE-STDF>=1.0.0",
+]
+
+[project.optional-dependencies]
+web = [
+    "streamlit>=1.30.0",
+    "plotly>=5.18.0",
+]
+desktop = [
+    "python-pptx>=0.6.21",
+]
+google = [
+    "google-api-python-client>=2.0.0",
+    "google-auth-httplib2>=0.1.0",
+    "google-auth-oauthlib>=1.0.0",
+    "google-generativeai>=0.3.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+all = [
+    "stdf-wafermap-analyzer[web,desktop,google,dev]",
+]
+
+[project.scripts]
+stdf-analyzer = "stdf_analyzer.gui.main_window:main"
+stdf-web = "stdf_analyzer.web.app:main"
+
+[project.urls]
+Repository = "https://github.com/your-org/stdf-wafermap-analyzer"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W", "I", "N", "D", "UP"]
+ignore = ["D100", "D104"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
