@@ -33,16 +33,16 @@ env/
 *.swo
 *~
 
-# Test data and output
-*.stdf
-*.csv
-*.xlsx
-*.xls
-*.pptx
+# Test data and output (uncomment to ignore)
+# *.stdf
+# *.csv
+# *.xlsx
+# *.xls
+# *.pptx
 *.7z
 *.zip
 *.log
-*.txt
+# *.txt
 
 # Directories with test data
 AM Data/

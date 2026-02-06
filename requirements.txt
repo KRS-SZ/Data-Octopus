@@ -1,0 +1,22 @@
+# Requirements for STDF Wafermap Analyzer
+
+# Core dependencies
+streamlit>=1.30.0
+plotly>=5.18.0
+pandas>=2.0.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+pillow>=9.0.0
+scipy>=1.11.0
+
+# STDF parsing
+Semi-ATE-STDF>=1.0.0
+
+# PowerPoint export
+python-pptx>=0.6.21
+
+# Optional: Google integration (uncomment if needed)
+# google-api-python-client>=2.0.0
+# google-auth-httplib2>=0.1.0
+# google-auth-oauthlib>=1.0.0
+# google-generativeai>=0.3.0
