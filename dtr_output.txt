@@ -1,0 +1,118 @@
+Using Semi_ATE.STDF
+Analyzing: C:/Users/szenklarz/Downloads/TESTDATA/STDDatalog\Tuskar_P03004_CP2_P03004-CP2-X1-V100-PROD-RT-20251002_PROD_UNAC19012_19_Slot19_red_X_0_20251015-145221.std
+
+============================================================
+DETECTED GROUP PATTERNS
+============================================================
+
+ARROW patterns (6 found):
+  >>>>>> Analog Tests <<<<<<
+  >>>>>> Comm. Tests <<<<<<
+  >>>>>> DC Tests <<<<<<
+  >>>>>> Definitions <<<<<<
+  >>>>>> Initialization <<<<<<
+  >>>>>> Optical Tests <<<<<<
+
+============================================================
+FIRST 100 DTR RECORDS
+============================================================
+  1: >>>>>> Definitions <<<<<<
+  2: >>>>>> Initialization <<<<<<
+  3: Wafer Color based on job selection: RED
+  4: Fitted ND for the current Photometer: ND3.0
+  5: >>>>>> DC Tests <<<<<<
+  6: >>>>>> Comm. Tests <<<<<<
+  7: >>>>>> Analog Tests <<<<<<
+  8: >>>>>> Optical Tests <<<<<<
+  9: >>>>>> Comm. Tests <<<<<<
+ 10: Device#1(34,20) Bin=1 Sort=1 Pass
+ 11: LotID:   UNAC19012
+ 12: WaferID: 19
+ 13: Die_X:   35     Die_Y: 20
+ 14: >>>>>> Definitions <<<<<<
+ 15: >>>>>> Initialization <<<<<<
+ 16: Wafer Color based on job selection: RED
+ 17: Fitted ND for the current Photometer: ND3.0
+ 18: >>>>>> DC Tests <<<<<<
+ 19: >>>>>> Comm. Tests <<<<<<
+ 20: >>>>>> Analog Tests <<<<<<
+ 21: >>>>>> Optical Tests <<<<<<
+ 22: >>>>>> Comm. Tests <<<<<<
+ 23: Device#2(35,20) Bin=1 Sort=1 Pass
+ 24: LotID:   UNAC19012
+ 25: WaferID: 19
+ 26: Die_X:   36     Die_Y: 20
+ 27: >>>>>> Definitions <<<<<<
+ 28: >>>>>> Initialization <<<<<<
+ 29: Wafer Color based on job selection: RED
+ 30: Fitted ND for the current Photometer: ND3.0
+ 31: >>>>>> DC Tests <<<<<<
+ 32: >>>>>> Comm. Tests <<<<<<
+ 33: >>>>>> Analog Tests <<<<<<
+ 34: >>>>>> Optical Tests <<<<<<
+ 35: >>>>>> Comm. Tests <<<<<<
+ 36: Device#3(36,20) Bin=1 Sort=1 Pass
+ 37: LotID:   UNAC19012
+ 38: WaferID: 19
+ 39: Die_X:   37     Die_Y: 20
+ 40: >>>>>> Definitions <<<<<<
+ 41: >>>>>> Initialization <<<<<<
+ 42: Wafer Color based on job selection: RED
+ 43: Fitted ND for the current Photometer: ND3.0
+ 44: >>>>>> DC Tests <<<<<<
+ 45: >>>>>> Comm. Tests <<<<<<
+ 46: >>>>>> Analog Tests <<<<<<
+ 47: >>>>>> Optical Tests <<<<<<
+ 48: >>>>>> Comm. Tests <<<<<<
+ 49: Device#4(37,20) Bin=1 Sort=1 Pass
+ 50: LotID:   UNAC19012
+ 51: WaferID: 19
+ 52: Die_X:   38     Die_Y: 20
+ 53: >>>>>> Definitions <<<<<<
+ 54: >>>>>> Initialization <<<<<<
+ 55: Wafer Color based on job selection: RED
+ 56: Fitted ND for the current Photometer: ND3.0
+ 57: >>>>>> DC Tests <<<<<<
+ 58: >>>>>> Comm. Tests <<<<<<
+ 59: >>>>>> Analog Tests <<<<<<
+ 60: >>>>>> Optical Tests <<<<<<
+ 61: >>>>>> Comm. Tests <<<<<<
+ 62: Device#5(38,20) Bin=1 Sort=1 Pass
+ 63: LotID:   UNAC19012
+ 64: WaferID: 19
+ 65: Die_X:   39     Die_Y: 20
+ 66: >>>>>> Definitions <<<<<<
+ 67: >>>>>> Initialization <<<<<<
+ 68: Wafer Color based on job selection: RED
+ 69: Fitted ND for the current Photometer: ND3.0
+ 70: >>>>>> DC Tests <<<<<<
+ 71: >>>>>> Comm. Tests <<<<<<
+ 72: >>>>>> Analog Tests <<<<<<
+ 73: >>>>>> Optical Tests <<<<<<
+ 74: >>>>>> Comm. Tests <<<<<<
+ 75: Device#6(39,20) Bin=1 Sort=1 Pass
+ 76: LotID:   UNAC19012
+ 77: WaferID: 19
+ 78: Die_X:   40     Die_Y: 20
+ 79: >>>>>> Definitions <<<<<<
+ 80: >>>>>> Initialization <<<<<<
+ 81: Wafer Color based on job selection: RED
+ 82: Fitted ND for the current Photometer: ND3.0
+ 83: >>>>>> DC Tests <<<<<<
+ 84: >>>>>> Comm. Tests <<<<<<
+ 85: >>>>>> Analog Tests <<<<<<
+ 86: >>>>>> Optical Tests <<<<<<
+ 87: >>>>>> Comm. Tests <<<<<<
+ 88: Device#7(40,20) Bin=1 Sort=1 Pass
+ 89: LotID:   UNAC19012
+ 90: WaferID: 19
+ 91: Die_X:   41     Die_Y: 20
+ 92: >>>>>> Definitions <<<<<<
+ 93: >>>>>> Initialization <<<<<<
+ 94: Wafer Color based on job selection: RED
+ 95: Fitted ND for the current Photometer: ND3.0
+ 96: >>>>>> DC Tests <<<<<<
+ 97: >>>>>> Comm. Tests <<<<<<
+ 98: >>>>>> Analog Tests <<<<<<
+ 99: >>>>>> Optical Tests <<<<<<
+100: >>>>>> Comm. Tests <<<<<<

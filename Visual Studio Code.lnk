@@ -1,0 +1,1338 @@
+# Python
+# from Semi_ATE.STDF.STDFFile import STDFFile
+​​​
+import sys
+​​​
+print(sys.executable)
+​​​
+import os
+​​​
+# Try to set MATPLOTLIBDATA for Meta environments
+try:
+    from libfb import parutil
+​​​
+    os.environ["MATPLOTLIBDATA"] = parutil.get_dir_path("matplotlib/mpl-data")
+except ImportError:
+    pass
+​​​
+import tkinter as tk
+from tkinter import filedialog, ttk
+​​​
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from PIL import Image, ImageTk
+​​​
+# Robust STDF import - try to import the module
+STDF_MODULE = None
+STDF_TYPE = None
+​​​
+try:
+    import Semi_ATE.STDF
+​​​
+    STDF_MODULE = Semi_ATE.STDF
+    STDF_TYPE = "Semi_ATE"
+    print(f"Successfully imported Semi_ATE.STDF module")
+    print(
+        f"Available functions: {[x for x in dir(STDF_MODULE) if not x.startswith('_')][:15]}"
+    )
+except ImportError as e:
+    print(f"Failed to import Semi_ATE.STDF: {e}")
+    try:
+        import pystdf
+​​​
+        STDF_MODULE = pystdf
+        STDF_TYPE = "pystdf"
+        print("Successfully imported pystdf")
+    except ImportError:
+        print("Warning: No STDF library found. STDF file features will not work.")
+        STDF_MODULE = None
+        STDF_TYPE = None
+​​​
+import pandas as pd
+​​​
+# Initialize empty data storage
+data_arrays = []
+file_names = []
+​​​
+# Create main Tkinter window with tabs and large tab font
+main_win = tk.Tk()
+main_win.title("Measurement Data Visualization")
+main_win.geometry("1200x800")
+​​​
+style = ttk.Style(main_win)
+style.configure("TNotebook.Tab", font=("Helvetica", 20, "bold"))
+​​​
+notebook = ttk.Notebook(main_win)
+notebook.pack(fill="both", expand=True)
+​​​
+# Tab 1: Heatmaps and Histogram
+tab1 = ttk.Frame(notebook)
+notebook.add(tab1, text="Plot")
+​​​
+# Global variables for plot canvases
+canvas1 = None
+canvas1_hist = None
+fig1 = None
+fig1_hist = None
+axes1 = None
+​​​
+​​​
+def load_measurement_files():
+    """Load measurement data files and update all visualizations"""
+    global data_arrays, file_names, canvas1, canvas1_hist, fig1, fig1_hist, axes1
+​​​
+    file_paths = filedialog.askopenfilenames(
+        title="Select one or more measurement data files",
+        filetypes=(("Text files", "*.txt"), ("All files", "*.*")),
+    )
+​​​
+    if not file_paths:
+        print("No files selected.")
+        return
+​​​
+    # Clear existing data
+    data_arrays = []
+    file_names = []
+​​​
+    # Load files
+    for file_path in file_paths:
+        try:
+            with open(file_path, "r") as f:
+                lines = f.readlines()
+​​​
+            data_start = 0
+            for i, line in enumerate(lines):
+                if line.strip() and line[0].isdigit():
+                    data_start = i
+                    break
+​​​
+            raw_data = lines[data_start:]
+            matrix = [
+                list(map(float, row.strip().split(",")))
+                for row in raw_data
+                if row.strip()
+            ]
+​​​
+            arr = np.array(matrix)
+            data_arrays.append(arr)
+            file_names.append(file_path.split("/")[-1])
+            print(f"Loaded: {file_path.split('/')[-1]} - Shape: {arr.shape}")
+​​​
+        except Exception as e:
+            print(f"Error loading {file_path}: {e}")
+​​​
+    if not data_arrays:
+        print("No valid data files loaded.")
+        return
+​​​
+    # Clear existing canvases
+    if canvas1:
+        canvas1.get_tk_widget().destroy()
+    if canvas1_hist:
+        canvas1_hist.get_tk_widget().destroy()
+    if fig1:
+        plt.close(fig1)
+    if fig1_hist:
+        plt.close(fig1_hist)
+​​​
+    # Create heatmap plots
+    fig1, axes1 = plt.subplots(
+        1, len(data_arrays), figsize=(8 * len(data_arrays), 8), constrained_layout=True
+    )
+    if len(data_arrays) == 1:
+        axes1 = [axes1]
+​​​
+    for idx, arr in enumerate(data_arrays):
+        ax = axes1[idx]
+        im = ax.imshow(arr, cmap="viridis", aspect="equal")
+        ax.set_title(f"Heatmap: {file_names[idx]}")
+        ax.set_xlabel("Column Index")
+        ax.set_ylabel("Row Index")
+        fig1.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+​​​
+    # Create histogram
+    fig1_hist, ax_hist = plt.subplots(figsize=(8, 4))
+    for idx, arr in enumerate(data_arrays):
+        ax_hist.hist(arr.flatten(), bins=100, alpha=0.5, label=file_names[idx])
+    ax_hist.set_title("Combined Histogram of Measurement Values")
+    ax_hist.set_xlabel("Luminance Value")
+    ax_hist.set_ylabel("Frequency")
+    ax_hist.legend(loc="upper right")
+    fig1_hist.tight_layout()
+​​​
+    # Create canvases
+    canvas1 = FigureCanvasTkAgg(fig1, master=plot_frame)
+    canvas1.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+​​​
+    canvas1_hist = FigureCanvasTkAgg(fig1_hist, master=plot_frame)
+    canvas1_hist.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+​​​
+    # Connect double-click event
+    canvas1.mpl_connect("button_press_event", on_subplot_doubleclick)
+​​​
+    # Update other tabs
+    update_boxplot_tab()
+    update_probability_tab()
+​​​
+    print(f"Successfully loaded {len(data_arrays)} file(s)")
+​​​
+​​​
+def on_subplot_doubleclick(event):
+    """Handle double-click on subplot to show zoomed view"""
+    if event.dblclick and axes1 is not None:
+        for idx, ax in enumerate(axes1):
+            if event.inaxes == ax:
+                arr = data_arrays[idx]
+                title = file_names[idx]
+​​​
+                zoom_win = tk.Toplevel(main_win)
+                zoom_win.title(f"Zoomed: {title}")
+​​​
+                fig_zoom, ax_zoom = plt.subplots(figsize=(16, 12))
+                im_zoom = ax_zoom.imshow(arr, cmap="viridis", aspect="equal")
+                ax_zoom.set_title(f"Zoomed: {title}")
+                ax_zoom.set_xlabel("Column Index")
+                ax_zoom.set_ylabel("Row Index")
+                fig_zoom.colorbar(im_zoom, ax=ax_zoom, fraction=0.046, pad=0.04)
+​​​
+                canvas_zoom = FigureCanvasTkAgg(fig_zoom, master=zoom_win)
+                canvas_zoom.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+​​​
+                def on_close():
+                    plt.close(fig_zoom)
+                    zoom_win.destroy()
+​​​
+                zoom_win.protocol("WM_DELETE_WINDOW", on_close)
+                break
+​​​
+​​​
+# Control frame for file selection
+control_frame_plot = tk.Frame(tab1)
+control_frame_plot.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
+​​​
+select_files_button = tk.Button(
+    control_frame_plot,
+    text="Select Measurement Files",
+    command=load_measurement_files,
+    font=("Helvetica", 12),
+    bg="#4CAF50",
+    fg="white",
+    padx=20,
+    pady=10,
+)
+select_files_button.pack(side=tk.LEFT, padx=5)
+​​​
+info_label = tk.Label(
+    control_frame_plot,
+    text="No data loaded. Click 'Select Measurement Files' to begin.",
+    font=("Helvetica", 10),
+)
+info_label.pack(side=tk.LEFT, padx=20)
+​​​
+# Frame for plots
+plot_frame = tk.Frame(tab1)
+plot_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+​​​
+# Tab 2: Boxplots
+tab2 = ttk.Frame(notebook)
+notebook.add(tab2, text="Boxplot")
+​​​
+canvas2 = None
+fig2 = None
+​​​
+​​​
+def update_boxplot_tab():
+    """Update boxplot visualization with mean and median values"""
+    global canvas2, fig2
+​​​
+    if canvas2:
+        canvas2.get_tk_widget().destroy()
+    if fig2:
+        plt.close(fig2)
+​​​
+    if not data_arrays:
+        return
+​​​
+    fig2, ax2 = plt.subplots(figsize=(16, 10))
+​​​
+    bp = ax2.boxplot(
+        [arr.flatten() for arr in data_arrays],
+        tick_labels=file_names,
+        vert=True,
+        patch_artist=True,
+        showmeans=True,
+        meanprops=dict(
+            marker="D", markerfacecolor="red", markeredgecolor="red", markersize=8
+        ),
+        medianprops=dict(color="blue", linewidth=2),
+    )
+​​​
+    for patch in bp["boxes"]:
+        patch.set_facecolor("lightblue")
+        patch.set_alpha(0.6)
+​​​
+    for idx, arr in enumerate(data_arrays):
+        data = arr.flatten()
+        mean_val = np.mean(data)
+        median_val = np.median(data)
+        x_pos = idx + 1
+​​​
+        ax2.text(
+            x_pos + 0.15,
+            mean_val,
+            f"μ={mean_val:.2f}",
+            fontsize=9,
+            color="red",
+            fontweight="bold",
+            verticalalignment="center",
+        )
+        ax2.text(
+            x_pos + 0.15,
+            median_val,
+            f"M={median_val:.2f}",
+            fontsize=9,
+            color="blue",
+            fontweight="bold",
+            verticalalignment="center",
+        )
+​​​
+    ax2.set_title(
+        "Boxplot of Each Dataset (with Mean and Median)", fontsize=14, fontweight="bold"
+    )
+    ax2.set_xlabel("Dataset", fontsize=12)
+    ax2.set_ylabel("Luminance Value", fontsize=12)
+    ax2.grid(True, alpha=0.3, linestyle="--")
+​​​
+    from matplotlib.lines import Line2D
+​​​
+    legend_elements = [
+        Line2D(
+            [0],
+            [0],
+            marker="D",
+            color="w",
+            markerfacecolor="red",
+            markersize=8,
+            label="Mean (μ)",
+        ),
+        Line2D([0], [0], color="blue", linewidth=2, label="Median (M)"),
+    ]
+    ax2.legend(handles=legend_elements, loc="upper right", fontsize=10)
+​​​
+    fig2.tight_layout()
+​​​
+    canvas2 = FigureCanvasTkAgg(fig2, master=tab2)
+    canvas2.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+​​​
+​​​
+# Tab 3: Probability Plot
+tab3 = ttk.Frame(notebook)
+notebook.add(tab3, text="Probability")
+​​​
+canvas3 = None
+fig3 = None
+​​​
+​​​
+def update_probability_tab():
+    """Update probability plot visualization"""
+    global canvas3, fig3
+​​​
+    if canvas3:
+        canvas3.get_tk_widget().destroy()
+    if fig3:
+        plt.close(fig3)
+​​​
+    if not data_arrays:
+        return
+​​​
+    fig3, ax3 = plt.subplots(figsize=(16, 10))
+​​​
+    for idx, arr in enumerate(data_arrays):
+        sorted_data = np.sort(arr.flatten())
+        prob = np.linspace(0, 1, len(sorted_data), endpoint=False)
+        ax3.plot(sorted_data, prob, label=file_names[idx])
+​​​
+    ax3.set_title("Probability Plot of Measurement Values")
+    ax3.set_xlabel("Value")
+    ax3.set_ylabel("Probability")
+    ax3.legend(loc="upper right")
+    fig3.tight_layout()
+​​​
+    canvas3 = FigureCanvasTkAgg(fig3, master=tab3)
+    canvas3.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+​​​
+​​​
+# Tab 4: Multi-Image Display (scrollable, with zoom)
+tab4 = ttk.Frame(notebook)
+notebook.add(tab4, text="Images")
+​​​
+canvas_img = tk.Canvas(tab4)
+scrollbar_img = tk.Scrollbar(tab4, orient="vertical", command=canvas_img.yview)
+scrollable_frame_img = tk.Frame(canvas_img)
+​​​
+scrollable_frame_img.bind(
+    "<Configure>", lambda e: canvas_img.configure(scrollregion=canvas_img.bbox("all"))
+)
+​​​
+canvas_img.create_window((0, 0), window=scrollable_frame_img, anchor="nw")
+canvas_img.configure(yscrollcommand=scrollbar_img.set)
+​​​
+canvas_img.pack(side="left", fill="both", expand=True)
+scrollbar_img.pack(side="right", fill="y")
+​​​
+image_refs = []
+​​​
+​​​
+def show_zoomed_image(image_path):
+    zoom_win = tk.Toplevel(main_win)
+    zoom_win.title(f"Zoomed: {image_path.split('/')[-1]}")
+​​​
+    zoom_size = [800, 600]
+    img = Image.open(image_path)
+    img_zoom = img.resize(zoom_size)
+    tk_img_zoom = ImageTk.PhotoImage(img_zoom, master=zoom_win)
+​​​
+    img_label = tk.Label(zoom_win, image=tk_img_zoom)
+    img_label.pack()
+    img_label.image = tk_img_zoom
+​​​
+    def zoom_in():
+        zoom_size[0] = int(zoom_size[0] * 1.2)
+        zoom_size[1] = int(zoom_size[1] * 1.2)
+        img_zoom = img.resize(zoom_size)
+        tk_img_zoom = ImageTk.PhotoImage(img_zoom, master=zoom_win)
+        img_label.config(image=tk_img_zoom)
+        img_label.image = tk_img_zoom
+​​​
+    def zoom_out():
+        zoom_size[0] = int(zoom_size[0] / 1.2)
+        zoom_size[1] = int(zoom_size[1] / 1.2)
+        img_zoom = img.resize(zoom_size)
+        tk_img_zoom = ImageTk.PhotoImage(img_zoom, master=zoom_win)
+        img_label.config(image=tk_img_zoom)
+        img_label.image = tk_img_zoom
+​​​
+    btn_frame = tk.Frame(zoom_win)
+    btn_frame.pack()
+    tk.Button(btn_frame, text="Zoom In", command=zoom_in).pack(side=tk.LEFT)
+    tk.Button(btn_frame, text="Zoom Out", command=zoom_out).pack(side=tk.LEFT)
+​​​
+​​​
+def select_images():
+    image_paths = filedialog.askopenfilenames(
+        title="Select one or more image files",
+        filetypes=[("Image files", "*.jpg *.jpeg *.png *.gif *.bmp")],
+    )
+​​​
+    if image_paths:
+        for widget in scrollable_frame_img.winfo_children():
+            widget.destroy()
+        image_refs.clear()
+​​​
+        for image_path in image_paths:
+            img = Image.open(image_path)
+            img.thumbnail((300, 200))
+            tk_img = ImageTk.PhotoImage(img, master=main_win)
+​​​
+            lbl = tk.Label(scrollable_frame_img, image=tk_img)
+            lbl.pack(padx=10, pady=10)
+            lbl.bind("<Button-1>", lambda e, path=image_path: show_zoomed_image(path))
+​​​
+            image_refs.append(tk_img)
+​​​
+​​​
+select_button = tk.Button(tab4, text="Select Image(s)", command=select_images)
+select_button.pack(pady=10)
+​​​
+# Tab 5: Wafermap Display
+tab5 = ttk.Frame(notebook)
+notebook.add(tab5, text="Wafermap")
+​​​
+wafermap_canvas = None
+current_stdf_data = None
+current_wafer_id = None
+test_parameters = {}
+​​​
+# Control frame for file selection and parameter selection
+control_frame = tk.Frame(tab5)
+control_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
+​​​
+select_stdf_button = tk.Button(
+    control_frame,
+    text="Select STDF File",
+    command=lambda: select_stdf_file(),
+    font=("Helvetica", 12),
+)
+select_stdf_button.pack(side=tk.LEFT, padx=5)
+​​​
+stdf_path_label = tk.Label(control_frame, text="File:", font=("Helvetica", 10))
+stdf_path_label.pack(side=tk.LEFT, padx=5)
+​​​
+stdf_path_text = tk.Text(control_frame, height=1, width=40, wrap="none")
+stdf_path_text.pack(side=tk.LEFT, padx=5)
+​​​
+param_label = tk.Label(control_frame, text="Parameter:", font=("Helvetica", 10))
+param_label.pack(side=tk.LEFT, padx=5)
+​​​
+param_combobox = ttk.Combobox(
+    control_frame, state="readonly", width=30, font=("Helvetica", 10)
+)
+param_combobox.pack(side=tk.LEFT, padx=5)
+param_combobox.bind("<<ComboboxSelected>>", lambda e: update_wafermap_with_parameter())
+​​​
+refresh_button = tk.Button(
+    control_frame,
+    text="Refresh",
+    command=lambda: update_wafermap_with_parameter(),
+    font=("Helvetica", 12),
+)
+refresh_button.pack(side=tk.LEFT, padx=5)
+​​​
+# Frame for wafermap display
+wafermap_frame = tk.Frame(tab5)
+wafermap_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+​​​
+​​​
+def select_stdf_file():
+    stdf_path = filedialog.askopenfilename(
+        title="Select an STDF file",
+        filetypes=[("STDF files", "*.stdf"), ("All files", "*.*")],
+    )
+​​​
+    if stdf_path:
+        stdf_path_text.delete(1.0, "end")
+        stdf_path_text.insert("end", stdf_path)
+        load_stdf_data(stdf_path)
+def read_wafermap_from_stdf(stdf_path):
+    wafermap = []
+    wafer_id = None
+    test_params = {}
+​​​
+    if STDF_MODULE is None:
+        print("\n" + "=" * 60)
+        print("ERROR: STDF library not installed!")
+        print("=" * 60)
+        print("To use STDF wafermap features, install one of these libraries:")
+        print("\nOption 1 (Recommended):")
+        print("  pip install Semi-ATE-STDF")
+        print("\nOption 2:")
+        print("  pip install pystdf")
+        print("\nAfter installation, restart the application.")
+        print("=" * 60 + "\n")
+        return pd.DataFrame(), None, {}
+​​​
+    try:
+        if STDF_TYPE == "pystdf":
+            wafermap, wafer_id, test_params = read_with_pystdf(stdf_path)
+        else:
+            print(f"Opening STDF file: {stdf_path}")
+            print(f"Using STDF_TYPE: {STDF_TYPE}")
+​​​
+            test_info = {}
+            current_die_tests = {}
+​​​
+            print("Reading STDF file (optimized)...")
+​​​
+            with open(stdf_path, "rb") as f:
+                records_gen = STDF_MODULE.records_from_file(f)
+                record_count = 0
+                prr_count = 0
+                ptr_count = 0
+                record_types = {}
+​​​
+                for record in records_gen:
+                    record_count += 1
+                    if record_count % 100000 == 0:
+                        print(f"Processed {record_count} records, {prr_count} dies...")
+​​​
+                    rec_type = type(record).__name__
+                    record_types[rec_type] = record_types.get(rec_type, 0) + 1
+​​​
+                    if rec_type == "WIR":
+                        try:
+                            if hasattr(record, "WAFER_ID"):
+                                wafer_id = record.WAFER_ID
+                            else:
+                                wafer_id = record.get_value("WAFER_ID")
+                        except Exception as e:
+                            print(f"Warning: Could not read WIR record: {e}")
+​​​
+                    elif rec_type == "PIR":
+                        current_die_tests = {}
+​​​
+                    elif rec_type == "PTR":
+                        ptr_count += 1
+                        try:
+                            if hasattr(record, "TEST_NUM"):
+                                test_num = record.TEST_NUM
+                                test_name = (
+                                    record.TEST_TXT
+                                    if hasattr(record, "TEST_TXT")
+                                    else None
+                                )
+                                result = (
+                                    record.RESULT if hasattr(record, "RESULT") else None
+                                )
+                            else:
+                                test_num = record.get_value("TEST_NUM")
+                                test_name = (
+                                    record.get_value("TEST_TXT")
+                                    if test_num is not None
+                                    else None
+                                )
+                                result = (
+                                    record.get_value("RESULT")
+                                    if test_num is not None
+                                    else None
+                                )
+​​​
+                            if test_num is not None:
+                                if test_num not in test_info and test_name:
+                                    test_info[test_num] = test_name
+                                if result is not None:
+                                    current_die_tests[test_num] = result
+                        except Exception as e:
+                            if ptr_count <= 5:
+                                print(
+                                    f"Warning: Could not read PTR record #{ptr_count}: {e}"
+                                )
+​​​
+                    elif rec_type == "PRR":
+                        prr_count += 1
+                        try:
+                            if hasattr(record, "X_COORD") and hasattr(
+                                record, "Y_COORD"
+                            ):
+                                x_coord = record.X_COORD
+                                y_coord = record.Y_COORD
+                            else:
+                                x_coord = record.get_value("X_COORD")
+                                y_coord = record.get_value("Y_COORD")
+​​​
+                            if x_coord is not None and y_coord is not None:
+                                if hasattr(record, "HARD_BIN"):
+                                    hard_bin = record.HARD_BIN
+                                    soft_bin = (
+                                        record.SOFT_BIN
+                                        if hasattr(record, "SOFT_BIN")
+                                        else None
+                                    )
+                                else:
+                                    hard_bin = record.get_value("HARD_BIN")
+                                    soft_bin = record.get_value("SOFT_BIN")
+​​​
+                                die_data = {
+                                    "x": x_coord,
+                                    "y": y_coord,
+                                    "bin": hard_bin
+                                    if hard_bin is not None
+                                    else soft_bin,
+                                }
+                                die_data.update(current_die_tests)
+                                wafermap.append(die_data)
+                        except Exception as e:
+                            if prr_count <= 5:
+                                print(
+                                    f"Warning: Could not read PRR record #{prr_count}: {e}"
+                                )
+                                print(f"  Record type: {type(record)}")
+                                attrs = [
+                                    attr
+                                    for attr in dir(record)
+                                    if not attr.startswith("_") and attr.isupper()
+                                ]
+                                print(f"  Available attributes: {attrs[:15]}")
+​​​
+                test_params = {f"test_{num}": name for num, name in test_info.items()}
+​​​
+                print(f"\n=== STDF File Summary ===")
+                print(f"Total records processed: {record_count}")
+                print(f"PRR records found: {prr_count}")
+                print(f"PTR records found: {ptr_count}")
+                print(f"Dies collected: {len(wafermap)}")
+                print(f"Test parameters found: {len(test_params)}")
+                print(f"Wafer ID: {wafer_id}")
+​​​
+                if prr_count == 0:
+                    print("\nWARNING: No PRR (Part Result Records) found!")
+                    print("This file may not contain wafer map data.")
+                elif len(wafermap) == 0 and prr_count > 0:
+                    print(
+                        f"\nWARNING: Found {prr_count} PRR records but no valid dies!"
+                    )
+                    print("PRR records may be missing X_COORD or Y_COORD values.")
+​​​
+                print(f"\nRecord types found: {dict(sorted(record_types.items()))}")
+​​​
+        df = pd.DataFrame(wafermap)
+        if len(df) > 0:
+            print(f"Successfully loaded {len(df)} die records from STDF file")
+            print(f"X range: {df['x'].min()} to {df['x'].max()}")
+            print(f"Y range: {df['y'].min()} to {df['y'].max()}")
+            print(f"Unique bins: {df['bin'].unique()}")
+        else:
+            print("WARNING: No die records found in STDF file")
+​​​
+        return df, wafer_id, test_params
+​​​
+    except Exception as e:
+        print(f"Error reading STDF file: {e}")
+        import traceback
+​​​
+        traceback.print_exc()
+        return pd.DataFrame(), None, {}
+​​​
+​​​
+def read_with_pystdf(stdf_path):
+    import pystdf
+​​​
+    wafermap = []
+    wafer_id = None
+    test_params = {}
+    test_info = {}
+    current_die_tests = {}
+​​​
+    with open(stdf_path, "rb") as f:
+        parser = pystdf.Parser(inp=f)
+​​​
+        for record in parser:
+            if record.id == "WIR":
+                wafer_id = record.WAFER_ID
+​​​
+            elif record.id == "PIR":
+                current_die_tests = {}
+​​​
+            elif record.id == "PTR":
+                try:
+                    test_num = record.TEST_NUM
+                    test_name = record.TEST_TXT
+                    result = record.RESULT
+​​​
+                    if test_num is not None and test_name:
+                        test_info[test_num] = test_name
+​​​
+                    if test_num is not None and result is not None:
+                        current_die_tests[test_num] = result
+​​​
+                except (ValueError, KeyError, AttributeError) as e:
+                    print(f"Warning: Could not read PTR record: {e}")
+​​​
+            elif record.id == "PRR":
+                try:
+                    if record.X_COORD is not None and record.Y_COORD is not None:
+                        die_data = {
+                            "x": record.X_COORD,
+                            "y": record.Y_COORD,
+                            "bin": record.HARD_BIN
+                            if record.HARD_BIN is not None
+                            else record.SOFT_BIN,
+                        }
+​​​
+                        for test_num in current_die_tests:
+                            die_data[f"test_{test_num}"] = current_die_tests[test_num]
+​​​
+                        wafermap.append(die_data)
+​​​
+                except (ValueError, KeyError, AttributeError) as e:
+                    print(f"Warning: Could not read PRR record: {e}")
+​​​
+    test_params = {f"test_{num}": name for num, name in test_info.items()}
+​​​
+    return wafermap, wafer_id, test_params
+​​​
+​​​
+def load_stdf_data(stdf_path):
+    """Load STDF file and populate parameter selection"""
+    global current_stdf_data, current_wafer_id, test_parameters
+​​​
+    df, wafer_id, test_params = read_wafermap_from_stdf(stdf_path)
+​​​
+    current_stdf_data = df
+    current_wafer_id = wafer_id
+    test_parameters = test_params
+​​​
+    param_options = ["BIN (Bin Number)"]
+    for test_key, test_name in sorted(test_parameters.items()):
+        param_options.append(f"{test_key}: {test_name}")
+​​​
+    param_combobox["values"] = param_options
+    if param_options:
+        param_combobox.current(0)
+​​​
+    print(f"Available parameters: {len(param_options)}")
+​​​
+    update_wafermap_with_parameter()
+    update_heatmap_parameter_list()
+​​​
+​​​
+def update_wafermap_with_parameter():
+    """Update wafermap display based on selected parameter"""
+    global current_stdf_data, current_wafer_id
+​​​
+    if current_stdf_data is None or current_stdf_data.empty:
+        print("No STDF data loaded")
+        return
+​​​
+    selected = param_combobox.get()
+​​​
+    if selected.startswith("BIN"):
+        param_column = "bin"
+        param_label = "Bin"
+    else:
+        param_column = selected.split(":")[0].strip()
+        param_label = selected
+​​​
+    update_wafermap_display(param_column, param_label)
+​​​
+​​​
+def update_wafermap_display(parameter="bin", param_label="Bin"):
+    """Display wafermap colored by specified parameter"""
+    global wafermap_canvas, current_stdf_data, current_wafer_id
+​​​
+    fig, ax = plt.subplots(figsize=(10, 10))
+​​​
+    if current_stdf_data is not None and not current_stdf_data.empty:
+        if parameter not in current_stdf_data.columns:
+            ax.set_title(f"Parameter '{parameter}' not found in data")
+            print(f"Available columns: {current_stdf_data.columns.tolist()}")
+        else:
+            plot_data = current_stdf_data.dropna(subset=[parameter])
+​​​
+            if len(plot_data) > 0:
+                sc = ax.scatter(
+                    plot_data["x"],
+                    plot_data["y"],
+                    c=plot_data[parameter],
+                    cmap="viridis" if parameter != "bin" else "tab20",
+                    s=80,
+                    edgecolors="black",
+                    linewidth=0.5,
+                )
+​​​
+                ax.set_xlabel("X Coordinate", fontsize=12)
+                ax.set_ylabel("Y Coordinate", fontsize=12)
+                ax.set_title(
+                    f"Wafermap for Wafer {current_wafer_id}\n{param_label}", fontsize=14
+                )
+                ax.grid(True, alpha=0.3)
+                ax.set_aspect("equal")
+​​​
+                cbar = plt.colorbar(sc, ax=ax, label=param_label)
+                cbar.ax.tick_params(labelsize=10)
+​​​
+                print(f"Plotted {len(plot_data)} dies with {parameter}")
+                print(
+                    f"Value range: {plot_data[parameter].min()} to {plot_data[parameter].max()}"
+                )
+​​​
+            else:
+                ax.set_title(f"No valid data for parameter '{param_label}'")
+    else:
+        ax.set_title("No wafermap data available")
+​​​
+    fig.tight_layout()
+​​​
+    if wafermap_canvas:
+        wafermap_canvas.get_tk_widget().destroy()
+​​​
+    wafermap_canvas = FigureCanvasTkAgg(fig, master=wafermap_frame)
+    wafermap_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, pady=10)
+    wafermap_canvas.draw()
+# Tab 6: STDF Heatmap with Parameter Selection
+tab6 = ttk.Frame(notebook)
+notebook.add(tab6, text="STDF Heatmap")
+​​​
+heatmap_canvas = None
+current_heatmap_data = None
+show_grid_var = tk.BooleanVar(value=False)
+selected_die_coords = None
+multiple_stdf_data = []
+multiple_wafer_ids = []
+​​​
+# Control frame for STDF heatmap
+control_frame_heatmap = tk.Frame(tab6)
+control_frame_heatmap.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
+​​​
+select_multiple_stdf_button = tk.Button(
+    control_frame_heatmap,
+    text="Load Multiple STDF Files",
+    command=lambda: load_multiple_stdf_files(),
+    font=("Helvetica", 12),
+    bg="#4CAF50",
+    fg="white",
+)
+select_multiple_stdf_button.pack(side=tk.LEFT, padx=5)
+​​​
+heatmap_info_label = tk.Label(
+    control_frame_heatmap,
+    text="No STDF files loaded",
+    font=("Helvetica", 10),
+)
+heatmap_info_label.pack(side=tk.LEFT, padx=5)
+​​​
+heatmap_param_label = tk.Label(
+    control_frame_heatmap, text="Parameter:", font=("Helvetica", 10)
+)
+heatmap_param_label.pack(side=tk.LEFT, padx=5)
+​​​
+heatmap_param_combobox = ttk.Combobox(
+    control_frame_heatmap, state="readonly", width=40, font=("Helvetica", 10)
+)
+heatmap_param_combobox.pack(side=tk.LEFT, padx=5)
+heatmap_param_combobox.bind("<<ComboboxSelected>>", lambda e: refresh_heatmap_display())
+​​​
+heatmap_refresh_button = tk.Button(
+    control_frame_heatmap,
+    text="Refresh",
+    command=lambda: refresh_heatmap_display(),
+    font=("Helvetica", 12),
+)
+heatmap_refresh_button.pack(side=tk.LEFT, padx=5)
+​​​
+show_grid_checkbox = tk.Checkbutton(
+    control_frame_heatmap,
+    text="Show Grid",
+    variable=show_grid_var,
+    command=lambda: refresh_heatmap_display(),
+    font=("Helvetica", 10),
+)
+show_grid_checkbox.pack(side=tk.LEFT, padx=5)
+​​​
+# Frame for heatmap display
+heatmap_display_frame = tk.Frame(tab6)
+heatmap_display_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+​​​
+​​​
+def load_multiple_stdf_files():
+    """Load multiple STDF files for multi-plot heatmap display"""
+    global multiple_stdf_data, multiple_wafer_ids, test_parameters
+​​​
+    stdf_paths = filedialog.askopenfilenames(
+        title="Select multiple STDF files",
+        filetypes=[("STDF files", "*.stdf"), ("All files", "*.*")],
+    )
+​​​
+    if not stdf_paths:
+        print("No files selected.")
+        return
+​​​
+    multiple_stdf_data = []
+    multiple_wafer_ids = []
+​​​
+    for stdf_path in stdf_paths:
+        print(f"\nLoading: {stdf_path.split('/')[-1]}")
+        df, wafer_id, test_params = read_wafermap_from_stdf(stdf_path)
+​​​
+        if not df.empty:
+            multiple_stdf_data.append(df)
+            multiple_wafer_ids.append(
+                wafer_id if wafer_id else stdf_path.split("/")[-1]
+            )
+​​​
+            if not test_parameters:
+                test_parameters = test_params
+​​​
+    if not multiple_stdf_data:
+        print("No valid STDF files loaded.")
+        heatmap_info_label.config(text="No valid STDF files loaded")
+        return
+​​​
+    param_options = ["BIN (Bin Number)"]
+    for test_key, test_name in sorted(test_parameters.items()):
+        param_options.append(f"{test_key}: {test_name}")
+​​​
+    heatmap_param_combobox["values"] = param_options
+    if param_options:
+        heatmap_param_combobox.current(0)
+​​​
+    heatmap_info_label.config(text=f"Loaded {len(multiple_stdf_data)} STDF files")
+    print(f"\nSuccessfully loaded {len(multiple_stdf_data)} STDF files for multi-plot")
+​​​
+    update_multi_stdf_heatmap()
+​​​
+​​​
+def update_multi_stdf_heatmap():
+    """Update multi-plot STDF heatmap display"""
+    global heatmap_canvas, multiple_stdf_data, multiple_wafer_ids
+​​​
+    if not multiple_stdf_data:
+        print("No STDF data loaded for multi-plot")
+        return
+​​​
+    selected = heatmap_param_combobox.get()
+​​​
+    if not selected:
+        print("No parameter selected")
+        return
+​​​
+    if selected.startswith("BIN"):
+        param_column = "bin"
+        param_label = "Bin"
+    else:
+        param_column = selected.split(":")[0].strip()
+        param_label = selected
+​​​
+    num_files = len(multiple_stdf_data)
+    cols = min(3, num_files)
+    rows = (num_files + cols - 1) // cols
+​​​
+    fig, axes = plt.subplots(
+        rows, cols, figsize=(8 * cols, 8 * rows), constrained_layout=True
+    )
+​​​
+    if num_files == 1:
+        axes = [axes]
+    else:
+        axes = axes.flatten() if num_files > 1 else [axes]
+​​​
+    for idx, (df, wafer_id) in enumerate(zip(multiple_stdf_data, multiple_wafer_ids)):
+        ax = axes[idx]
+​​​
+        if param_column not in df.columns:
+            ax.set_title(f"Parameter '{param_column}' not found")
+            continue
+​​​
+        plot_data = df.dropna(subset=[param_column])
+​​​
+        if len(plot_data) == 0:
+            ax.set_title(f"No data for {wafer_id}")
+            continue
+​​​
+        x_coords = sorted(plot_data["x"].unique())
+        y_coords = sorted(plot_data["y"].unique())
+​​​
+        x_min, x_max = min(x_coords), max(x_coords)
+        y_min, y_max = min(y_coords), max(y_coords)
+​​​
+        grid_width = x_max - x_min + 1
+        grid_height = y_max - y_min + 1
+​​​
+        grid = np.full((grid_height, grid_width), np.nan)
+​​​
+        for _, row in plot_data.iterrows():
+            x_idx = int(row["x"] - x_min)
+            y_idx = int(row["y"] - y_min)
+            grid[y_idx, x_idx] = row[param_column]
+​​​
+        if param_column == "bin":
+            im = ax.imshow(
+                grid,
+                cmap="tab20",
+                aspect="auto",
+                interpolation="nearest",
+                origin="lower",
+            )
+        else:
+            im = ax.imshow(
+                grid,
+                cmap="viridis",
+                aspect="auto",
+                interpolation="nearest",
+                origin="lower",
+            )
+​​​
+        ax.set_title(f"{wafer_id}\n{param_label}", fontsize=12, fontweight="bold")
+        ax.set_xlabel("X", fontsize=10)
+        ax.set_ylabel("Y", fontsize=10)
+​​​
+        if show_grid_var.get():
+            for i in range(grid_height + 1):
+                ax.axhline(i - 0.5, color="black", linewidth=0.3)
+            for j in range(grid_width + 1):
+                ax.axvline(j - 0.5, color="black", linewidth=0.3)
+​​​
+        fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+​​​
+    for idx in range(num_files, len(axes)):
+        fig.delaxes(axes[idx])
+​​​
+    if heatmap_canvas:
+        heatmap_canvas.get_tk_widget().destroy()
+​​​
+    heatmap_canvas = FigureCanvasTkAgg(fig, master=heatmap_display_frame)
+    heatmap_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, pady=10)
+    heatmap_canvas.draw()
+​​​
+    print(f"Multi-plot heatmap updated with {num_files} wafers")
+​​​
+​​​
+def update_heatmap_parameter_list():
+    """Update the heatmap parameter combobox when STDF data is loaded"""
+    global current_stdf_data, test_parameters
+​​​
+    if current_stdf_data is None or current_stdf_data.empty:
+        heatmap_param_combobox["values"] = []
+        heatmap_info_label.config(
+            text="No STDF data loaded. Load file in Wafermap tab first."
+        )
+        return
+​​​
+    param_options = ["BIN (Bin Number)"]
+    for test_key, test_name in sorted(test_parameters.items()):
+        param_options.append(f"{test_key}: {test_name}")
+​​​
+    heatmap_param_combobox["values"] = param_options
+    if param_options:
+        heatmap_param_combobox.current(0)
+​​​
+    heatmap_info_label.config(text=f"Loaded: {len(param_options)} parameters available")
+​​​
+    update_stdf_heatmap()
+​​​
+​​​
+def update_stdf_heatmap():
+    """Update STDF heatmap display based on selected parameter"""
+    global heatmap_canvas, current_stdf_data, current_wafer_id
+​​​
+    if current_stdf_data is None or current_stdf_data.empty:
+        print("No STDF data loaded for heatmap")
+        return
+​​​
+    selected = heatmap_param_combobox.get()
+​​​
+    if not selected:
+        print("No parameter selected")
+        return
+​​​
+    if selected.startswith("BIN"):
+        param_column = "bin"
+        param_label = "Bin"
+    else:
+        param_column = selected.split(":")[0].strip()
+        param_label = selected
+​​​
+    if param_column not in current_stdf_data.columns:
+        print(f"Parameter '{param_column}' not found in data")
+        return
+​​​
+    fig, ax = plt.subplots(figsize=(12, 10))
+​​​
+    plot_data = current_stdf_data.dropna(subset=[param_column])
+​​​
+    if len(plot_data) == 0:
+        ax.set_title(f"No valid data for parameter '{param_label}'")
+    else:
+        x_coords = sorted(plot_data["x"].unique())
+        y_coords = sorted(plot_data["y"].unique())
+​​​
+        x_min, x_max = min(x_coords), max(x_coords)
+        y_min, y_max = min(y_coords), max(y_coords)
+​​​
+        grid_width = x_max - x_min + 1
+        grid_height = y_max - y_min + 1
+​​​
+        grid = np.full((grid_height, grid_width), np.nan)
+​​​
+        for _, row in plot_data.iterrows():
+            x_idx = int(row["x"] - x_min)
+            y_idx = int(row["y"] - y_min)
+            grid[y_idx, x_idx] = row[param_column]
+​​​
+        if param_column == "bin":
+            im = ax.imshow(
+                grid,
+                cmap="tab20",
+                aspect="auto",
+                interpolation="nearest",
+                origin="lower",
+            )
+        else:
+            im = ax.imshow(
+                grid,
+                cmap="viridis",
+                aspect="auto",
+                interpolation="nearest",
+                origin="lower",
+            )
+​​​
+        cbar = plt.colorbar(im, ax=ax, label=param_label)
+        cbar.ax.tick_params(labelsize=10)
+​​​
+        ax.set_xlabel("X Coordinate", fontsize=12)
+        ax.set_ylabel("Y Coordinate", fontsize=12)
+        ax.set_title(
+            f"Heatmap: {param_label}\nWafer {current_wafer_id}",
+            fontsize=14,
+            fontweight="bold",
+        )
+​​​
+        x_tick_positions = np.linspace(0, grid_width - 1, min(10, grid_width))
+        y_tick_positions = np.linspace(0, grid_height - 1, min(10, grid_height))
+​​​
+        ax.set_xticks(x_tick_positions)
+        ax.set_yticks(y_tick_positions)
+​​​
+        x_tick_labels = [f"{int(x_min + pos)}" for pos in x_tick_positions]
+        y_tick_labels = [f"{int(y_min + pos)}" for pos in y_tick_positions]
+​​​
+        ax.set_xticklabels(x_tick_labels)
+        ax.set_yticklabels(y_tick_labels)
+​​​
+        if show_grid_var.get():
+            for i in range(grid_height + 1):
+                ax.axhline(i - 0.5, color="black", linewidth=0.5)
+            for j in range(grid_width + 1):
+                ax.axvline(j - 0.5, color="black", linewidth=0.5)
+        else:
+            ax.grid(True, alpha=0.3, linestyle="--", linewidth=0.5)
+​​​
+        if selected_die_coords is not None:
+            sel_x, sel_y = selected_die_coords
+            x_idx = sel_x - x_min
+            y_idx = sel_y - y_min
+​​​
+            from matplotlib.patches import Rectangle
+​​​
+            rect = Rectangle(
+                (x_idx - 0.5, y_idx - 0.5),
+                1,
+                1,
+                linewidth=3,
+                edgecolor="black",
+                facecolor="none",
+            )
+            ax.add_patch(rect)
+​​​
+        stats_text = f"Min: {plot_data[param_column].min():.2f}\n"
+        stats_text += f"Max: {plot_data[param_column].max():.2f}\n"
+        stats_text += f"Mean: {plot_data[param_column].mean():.2f}\n"
+        stats_text += f"Median: {plot_data[param_column].median():.2f}\n"
+        stats_text += f"Dies: {len(plot_data)}"
+​​​
+        ax.text(
+            0.02,
+            0.98,
+            stats_text,
+            transform=ax.transAxes,
+            fontsize=10,
+            verticalalignment="top",
+            bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
+        )
+​​​
+        print(
+            f"Heatmap: {param_label} - Range: {plot_data[param_column].min():.2f} to {plot_data[param_column].max():.2f}"
+        )
+​​​
+    fig.tight_layout()
+​​​
+    if heatmap_canvas:
+        heatmap_canvas.get_tk_widget().destroy()
+​​​
+    heatmap_canvas = FigureCanvasTkAgg(fig, master=heatmap_display_frame)
+    heatmap_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, pady=10)
+    heatmap_canvas.mpl_connect("button_press_event", on_heatmap_click)
+    heatmap_canvas.draw()
+​​​
+​​​
+def refresh_heatmap_display():
+    """Refresh heatmap display - calls appropriate function based on loaded data"""
+    if multiple_stdf_data:
+        update_multi_stdf_heatmap()
+    elif current_stdf_data is not None and not current_stdf_data.empty:
+        update_stdf_heatmap()
+    else:
+        print("No STDF data loaded")
+​​​
+​​​
+def on_heatmap_click(event):
+    """Handle left-click on heatmap to display die value"""
+    global current_stdf_data, selected_die_coords
+​​​
+    if event.button != 1:
+        return
+​​​
+    if event.inaxes is None:
+        return
+​​​
+    if current_stdf_data is None or current_stdf_data.empty:
+        return
+​​​
+    selected = heatmap_param_combobox.get()
+​​​
+    if not selected:
+        return
+​​​
+    if selected.startswith("BIN"):
+        param_column = "bin"
+        param_label = "Bin"
+    else:
+        param_column = selected.split(":")[0].strip()
+        param_label = selected
+​​​
+    x_click = event.xdata
+    y_click = event.ydata
+​​​
+    if x_click is None or y_click is None:
+        return
+​​​
+    plot_data = current_stdf_data.dropna(subset=[param_column])
+​​​
+    if len(plot_data) == 0:
+        return
+​​​
+    x_min = plot_data["x"].min()
+    y_min = plot_data["y"].min()
+​​​
+    actual_x = int(round(x_click + x_min))
+    actual_y = int(round(y_click + y_min))
+​​​
+    die_data = plot_data[(plot_data["x"] == actual_x) & (plot_data["y"] == actual_y)]
+​​​
+    if len(die_data) > 0:
+        die_row = die_data.iloc[0]
+        value = die_row[param_column]
+​​​
+        selected_die_coords = (actual_x, actual_y)
+        update_stdf_heatmap()
+​​​
+        info_win = tk.Toplevel(main_win)
+        info_win.title(f"Die Information - ({actual_x}, {actual_y})")
+        info_win.geometry("400x300")
+​​​
+        text_frame = tk.Frame(info_win)
+        text_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+​​​
+        scrollbar = tk.Scrollbar(text_frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+​​​
+        text_widget = tk.Text(
+            text_frame, wrap=tk.WORD, yscrollcommand=scrollbar.set, font=("Courier", 10)
+        )
+        text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+​​​
+        scrollbar.config(command=text_widget.yview)
+​​​
+        info_text = f"Die Coordinates: ({actual_x}, {actual_y})\n"
+        info_text += f"{'='*40}\n\n"
+​​​
+        text_widget.insert("end", info_text)
+        text_widget.insert("end", f"{param_label}: {value:.4f}\n\n", "selected")
+        text_widget.insert("end", f"Additional Information:\n")
+        text_widget.insert("end", f"{'-'*40}\n")
+​​​
+        if "bin" in die_row:
+            if param_column == "bin":
+                text_widget.insert("end", f"Bin: {die_row['bin']}\n", "selected")
+            else:
+                text_widget.insert("end", f"Bin: {die_row['bin']}\n")
+​​​
+        for col in die_row.index:
+            if col.startswith("test_") and col != param_column:
+                test_name = test_parameters.get(col, col)
+                text_widget.insert("end", f"{test_name}: {die_row[col]:.4f}\n")
+​​​
+        text_widget.tag_config(
+            "selected", foreground="red", font=("Courier", 10, "bold")
+        )
+​​​
+        text_widget.config(state=tk.DISABLED)
+​​​
+        print(f"Clicked die at ({actual_x}, {actual_y}): {param_label} = {value:.4f}")
+​​​
+    else:
+        print(f"No die found at position ({actual_x}, {actual_y})")
+​​​
+​​​
+main_win.mainloop()

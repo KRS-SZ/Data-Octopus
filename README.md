@@ -189,7 +189,7 @@ ruff check src/ --fix
 
 ## Autor
 
-**Krzysztof Szenklarz**  
+**Krzysztof Szenklarz**
 Hardware Engineer - D&O Test, Metrology, Characterization and Data Team
 
 ## Lizenz
