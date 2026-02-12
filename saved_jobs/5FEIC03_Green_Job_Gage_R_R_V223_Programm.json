@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "saved_at": "2026-02-12 11:04:28",
+    "app": "Wafer Analysis Tool",
+    "version": "2.0",
+    "jobs_included": [
+      "gage_rr",
+      "report",
+      "general",
+      "statistics"
+    ],
+    "job_name": "5FEIC03 Green Job Gage R&R V223 Programm"
+  },
+  "general": {
+    "language": "English",
+    "show_grid": false
+  },
+  "grr_analysis": {
+    "file_type": "CSV",
+    "num_files": "3",
+    "num_dies": "10",
+    "limit_mode": "auto_3sigma",
+    "sigma_factor": "3",
+    "manual_lsl": "-10",
+    "manual_usl": "+10",
+    "calc_mode": "tolerance",
+    "ndc_use_total_variation": false,
+    "loaded_files": [
+      "C:/Users/szenklarz/Desktop/VS_Folder/AM Data/Correlation Measurement/V223/Green/Gage/Wafer 2.csv",
+      "C:/Users/szenklarz/Desktop/VS_Folder/AM Data/Correlation Measurement/V223/Green/Gage/Wafer 4.csv",
+      "C:/Users/szenklarz/Desktop/VS_Folder/AM Data/Correlation Measurement/V223/Green/Gage/Wafer 6.csv"
+    ],
+    "selected_dies": [
+      [
+        

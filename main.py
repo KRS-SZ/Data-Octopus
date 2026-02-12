@@ -761,6 +761,73 @@ TRANSLATIONS = {
         "pptx_created": "PowerPoint created successfully!",
         "pptx_error": "Error creating PowerPoint",
         "no_data_for_pptx": "No data available for presentation",
+        "settings_header": "Job Manager — Save & load settings",
+        "settings_save_job": "Save Job",
+        "settings_job_name": "Job Name:",
+        "settings_which_tabs": "Which tabs should be saved?",
+        "settings_save": "Save Job",
+        "settings_save_as": "Save as...",
+        "settings_saved_jobs": "Saved Jobs",
+        "settings_load_apply": "Load & apply Job",
+        "settings_load_file": "Load file...",
+        "settings_delete": "Delete",
+        "settings_preview": "Settings Preview",
+        "settings_info": "Save your analysis settings as a job. Choose which tabs (Gage R&R, Report, etc.) "
+                         "should be included. Load a job later to apply the same settings to new wafers.",
+        "settings_no_tab_selected": "Please select at least one tab!",
+        "settings_no_name": "Please enter a job name!",
+        "settings_job_saved": "Job '{name}' saved ({tabs})",
+        "settings_job_file_saved": "Job saved: {file}",
+        "settings_select_job_first": "Please select a job first!",
+        "settings_job_loaded": "Job '{name}' loaded and applied!",
+        "settings_job_loaded_file": "Job loaded: {file}",
+        "settings_delete_title": "Delete Job",
+        "settings_delete_confirm": "Really delete job '{name}'?",
+        "settings_job_deleted": "Job '{name}' deleted",
+        "settings_save_dialog_title": "Save Job as...",
+        "settings_load_dialog_title": "Load Job file",
+        "settings_error_save": "Error saving: {err}",
+        "settings_error_load": "Error loading: {err}",
+        "settings_error": "Error: {err}",
+        "settings_none": "(none)",
+        "settings_items": "{count} items: ",
+        "settings_yes": "Yes",
+        "settings_no": "No",
+        "settings_job_gage_rr": "Gage R&R",
+        "settings_job_gage_rr_desc": "Limit mode, sigma factor, LSL/USL, ndc, calculation method, parameters, dies",
+        "settings_job_report": "Report",
+        "settings_job_report_desc": "Wafermap, Multi-Wafer, Diffmap, GRR report options, slide layouts, template",
+        "settings_job_general": "General",
+        "settings_job_general_desc": "Language, grid display",
+        "settings_job_statistics": "Statistics",
+        "settings_job_statistics_desc": "Statistical measures (Mean, Median, Sigma, Cp, Cpk, ...)",
+        "settings_sec_meta": "File Info",
+        "settings_sec_general": "General",
+        "settings_sec_grr_analysis": "Gage R&R Analysis",
+        "settings_sec_grr_groups": "GRR Report Groups",
+        "settings_sec_report_includes": "Report Sections",
+        "settings_sec_report_wafermap": "Wafermap Report",
+        "settings_sec_report_multi": "Multi-Wafer Report",
+        "settings_sec_report_diffmap": "Diffmap Report",
+        "settings_sec_report_grr": "GRR Report Slides",
+        "settings_sec_template": "Template",
+        "settings_sec_statistics": "Statistics Measures",
+        "settings_sec_layouts": "Slide Layouts",
+        "settings_sec_grr_layouts": "GRR Slide Layouts",
+        "plm_type_selection_title": "PLM Type Selection",
+        "plm_type_selection_header": "Select PLM Types for GRR Analysis",
+        "plm_type_selection_info": "Choose which PLM measurement types to include.\nEach type generates parameters: mean, median, std, min, max, pixel_count.",
+        "plm_custom_type": "Custom type (regex pattern):",
+        "plm_all_types": "All Types",
+        "plm_loading_folder": "Loading PLM folder: {name}...",
+        "plm_select_folders": "Select PLM folders (each folder = one measurement run)...",
+        "plm_folder_dialog": "Select PLM folder {current}/{total} (Run/Wafer {run})",
+        "plm_loading_cancelled": "PLM loading cancelled.",
+        "plm_no_data": "No PLM data loaded. Check folders contain valid PLM files.",
+        "plm_loaded": "Loaded {count} PLM folder(s) - total {total} wafers",
+        "plm_raw_pixel_mode": "Pixel-Level Comparison (Individual Values)",
+        "plm_raw_pixel_info": "Each pixel position in the PLM matrix becomes a separate measurement point.\nCompares pixel reproducibility across measurement runs.",
+        "plm_stats_mode": "Statistics Mode (Mean, Std, Min, Max, ...)",
     },
     "de": {
         "window_title": "Messdaten-Visualisierung",
@@ -822,6 +889,73 @@ TRANSLATIONS = {
         "pptx_created": "PowerPoint erfolgreich erstellt!",
         "pptx_error": "Fehler beim Erstellen der PowerPoint",
         "no_data_for_pptx": "Keine Daten für Präsentation verfügbar",
+        "settings_header": "Job Manager — Einstellungen speichern & laden",
+        "settings_save_job": "Job speichern",
+        "settings_job_name": "Job-Name:",
+        "settings_which_tabs": "Welche Tabs sollen gespeichert werden?",
+        "settings_save": "Job speichern",
+        "settings_save_as": "Speichern unter...",
+        "settings_saved_jobs": "Gespeicherte Jobs",
+        "settings_load_apply": "Job laden & anwenden",
+        "settings_load_file": "Datei laden...",
+        "settings_delete": "Löschen",
+        "settings_preview": "Einstellungsvorschau",
+        "settings_info": "Speichere deine Analyse-Einstellungen als Job. Wähle welche Tabs (Gage R&R, Report, etc.) "
+                         "im Job enthalten sein sollen. Lade einen Job später, um dieselben Einstellungen auf neue Wafer anzuwenden.",
+        "settings_no_tab_selected": "Bitte mindestens einen Tab auswählen!",
+        "settings_no_name": "Bitte einen Job-Namen eingeben!",
+        "settings_job_saved": "Job '{name}' gespeichert ({tabs})",
+        "settings_job_file_saved": "Job gespeichert: {file}",
+        "settings_select_job_first": "Bitte zuerst einen Job auswählen!",
+        "settings_job_loaded": "Job '{name}' geladen und angewendet!",
+        "settings_job_loaded_file": "Job geladen: {file}",
+        "settings_delete_title": "Job löschen",
+        "settings_delete_confirm": "Job '{name}' wirklich löschen?",
+        "settings_job_deleted": "Job '{name}' gelöscht",
+        "settings_save_dialog_title": "Job speichern unter...",
+        "settings_load_dialog_title": "Job-Datei laden",
+        "settings_error_save": "Fehler beim Speichern: {err}",
+        "settings_error_load": "Fehler beim Laden: {err}",
+        "settings_error": "Fehler: {err}",
+        "settings_none": "(keine)",
+        "settings_items": "{count} Einträge: ",
+        "settings_yes": "Ja",
+        "settings_no": "Nein",
+        "settings_job_gage_rr": "Gage R&R",
+        "settings_job_gage_rr_desc": "Limit-Modus, Sigma-Faktor, LSL/USL, ndc, Berechnungsmethode, Parameter, Dies",
+        "settings_job_report": "Report",
+        "settings_job_report_desc": "Wafermap, Multi-Wafer, Diffmap, GRR Report-Optionen, Slide-Layouts, Template",
+        "settings_job_general": "Allgemein",
+        "settings_job_general_desc": "Sprache, Grid-Anzeige",
+        "settings_job_statistics": "Statistik",
+        "settings_job_statistics_desc": "Statistische Kenngrößen (Mean, Median, Sigma, Cp, Cpk, ...)",
+        "settings_sec_meta": "Datei-Info",
+        "settings_sec_general": "Allgemein",
+        "settings_sec_grr_analysis": "Gage R&R Analyse",
+        "settings_sec_grr_groups": "GRR Report-Gruppen",
+        "settings_sec_report_includes": "Report-Abschnitte",
+        "settings_sec_report_wafermap": "Wafermap Report",
+        "settings_sec_report_multi": "Multi-Wafer Report",
+        "settings_sec_report_diffmap": "Diffmap Report",
+        "settings_sec_report_grr": "GRR Report Folien",
+        "settings_sec_template": "Template",
+        "settings_sec_statistics": "Statistische Kenngrößen",
+        "settings_sec_layouts": "Folien-Layouts",
+        "settings_sec_grr_layouts": "GRR Folien-Layouts",
+        "plm_type_selection_title": "PLM-Typ Auswahl",
+        "plm_type_selection_header": "PLM-Typen für GRR-Analyse auswählen",
+        "plm_type_selection_info": "Wähle welche PLM-Messtypen einbezogen werden sollen.\nJeder Typ erzeugt Parameter: Mittelwert, Median, Std, Min, Max, Pixelanzahl.",
+        "plm_custom_type": "Benutzerdefinierter Typ (Regex-Muster):",
+        "plm_all_types": "Alle Typen",
+        "plm_loading_folder": "Lade PLM-Ordner: {name}...",
+        "plm_select_folders": "PLM-Ordner auswählen (jeder Ordner = eine Messrunde)...",
+        "plm_folder_dialog": "PLM-Ordner {current}/{total} auswählen (Run/Wafer {run})",
+        "plm_loading_cancelled": "PLM-Laden abgebrochen.",
+        "plm_no_data": "Keine PLM-Daten geladen. Prüfe ob die Ordner gültige PLM-Dateien enthalten.",
+        "plm_loaded": "{count} PLM-Ordner geladen - insgesamt {total} Wafer",
+        "plm_raw_pixel_mode": "Pixel-Einzelwerte (Vergleich auf Pixel-Ebene)",
+        "plm_raw_pixel_info": "Jede Pixelposition in der PLM-Matrix wird ein eigener Messpunkt.\nVergleicht Pixel-Reproduzierbarkeit über Messdurchläufe.",
+        "plm_stats_mode": "Statistik-Modus (Mittelwert, Std, Min, Max, ...)",
     },
 }
 
@@ -869,20 +1003,38 @@ def change_language(event=None):
     selected_lang = language_var.get()
     current_language = "de" if selected_lang == "Deutsch" else "en"
 
-    # Update window title
-    main_win.title(get_text("window_title"))
+    try:
+        main_win.title(get_text("window_title"))
+    except Exception:
+        pass
 
-    # Update tab names
-    notebook.tab(tab7, text="Configuration")
-    notebook.tab(tab6, text="Wafermap")
-    notebook.tab(tab_multi_wafer, text="Multiple Wafermaps")
+    try:
+        notebook.tab(tab7, text="Configuration")
+        notebook.tab(tab6, text="Wafermap")
+        notebook.tab(tab_multi_wafer, text="Multiple Wafermaps")
+    except Exception:
+        pass
 
-    # Update buttons and labels
-    select_multiple_stdf_button.config(text=get_text("load_multiple_stdf"))
-    heatmap_param_label.config(text=get_text("parameter"))
-    heatmap_refresh_button.config(text=get_text("refresh"))
-    show_grid_checkbox.config(text=get_text("show_grid"))
-    language_label.config(text=get_text("language"))
+    try:
+        select_multiple_stdf_button.config(text=get_text("load_multiple_stdf"))
+    except Exception:
+        pass
+    try:
+        heatmap_refresh_button.config(text=get_text("refresh"))
+    except Exception:
+        pass
+    try:
+        show_grid_checkbox.config(text=get_text("show_grid"))
+    except Exception:
+        pass
+    try:
+        language_label.config(text=get_text("language"))
+    except Exception:
+        pass
+    try:
+        update_settings_tab_language()
+    except Exception:
+        pass
 
     print(f"Language changed to: {selected_lang}")
 
@@ -919,6 +1071,10 @@ notebook.add(tab_stdf_csv, text="🔄 STDF to CSV")
 # Tab 7: Report (at the end)
 tab_presentation = ttk.Frame(notebook)
 notebook.add(tab_presentation, text="📑 Report")
+
+# Tab 8: Settings Save/Load
+tab_settings = ttk.Frame(notebook)
+notebook.add(tab_settings, text="💾 Settings")
 
 # Global variables for plot canvases
 canvas1 = None
@@ -18085,15 +18241,35 @@ grr_grouped_parameters = {}  # Grouped parameters for Gage R&R (similar to main 
 grr_main_frame = tk.Frame(tab_grr, bg='#f5f5f5')
 grr_main_frame.pack(fill=tk.BOTH, expand=True)
 
-# Header
+# Header frame with title (left) and Help button (right)
+grr_header_frame = tk.Frame(grr_main_frame, bg='#f5f5f5')
+grr_header_frame.pack(fill=tk.X, padx=15, pady=10)
+
 grr_header = tk.Label(
-    grr_main_frame,
+    grr_header_frame,
     text="Gage R&R Analysis - Multi-File Comparison",
     font=("Helvetica", 14, "bold"),
     bg='#f5f5f5',
     fg='#2C3E50'
 )
-grr_header.pack(pady=10)
+grr_header.pack(side=tk.LEFT)
+
+grr_header_help_btn = tk.Button(
+    grr_header_frame,
+    text="❓ Hilfe / Help",
+    command=lambda: show_grr_help(),
+    font=("Helvetica", 11, "bold"),
+    bg='#1976D2',
+    fg='white',
+    activebackground='#1565C0',
+    activeforeground='white',
+    padx=18,
+    pady=4,
+    cursor='hand2',
+    relief=tk.RAISED,
+    bd=2
+)
+grr_header_help_btn.pack(side=tk.RIGHT, padx=5)
 
 # Top Control Panel
 grr_control_frame = tk.Frame(grr_main_frame, bg='#f5f5f5')
@@ -18110,16 +18286,200 @@ grr_file_type_combo = ttk.Combobox(grr_left_controls, textvariable=grr_file_type
 grr_file_type_combo.grid(row=0, column=1, padx=5, pady=5)
 
 # Number of files dropdown
-tk.Label(grr_left_controls, text="Number of Files:", font=("Helvetica", 10, "bold"), bg='#f5f5f5').grid(row=0, column=2, padx=15, pady=5, sticky='w')
+tk.Label(grr_left_controls, text="# Files:", font=("Helvetica", 10, "bold"), bg='#f5f5f5').grid(row=0, column=2, padx=10, pady=5, sticky='w')
 grr_num_files_var = tk.StringVar(value="3")
-grr_num_files_combo = ttk.Combobox(grr_left_controls, textvariable=grr_num_files_var, values=["2", "3", "4", "5", "6"], state="readonly", width=5)
+grr_num_files_combo = ttk.Combobox(grr_left_controls, textvariable=grr_num_files_var, values=["2", "3", "4", "5", "6"], state="readonly", width=4)
 grr_num_files_combo.grid(row=0, column=3, padx=5, pady=5)
 
 # Number of dies dropdown
-tk.Label(grr_left_controls, text="Number of Dies:", font=("Helvetica", 10, "bold"), bg='#f5f5f5').grid(row=0, column=4, padx=15, pady=5, sticky='w')
+tk.Label(grr_left_controls, text="# Dies:", font=("Helvetica", 10, "bold"), bg='#f5f5f5').grid(row=0, column=4, padx=10, pady=5, sticky='w')
 grr_num_dies_var = tk.StringVar(value="5")
-grr_num_dies_combo = ttk.Combobox(grr_left_controls, textvariable=grr_num_dies_var, values=["3", "5", "10", "15", "20", "25", "30"], state="readonly", width=5)
+grr_num_dies_combo = ttk.Combobox(grr_left_controls, textvariable=grr_num_dies_var, values=["3", "5", "10", "15", "20", "25", "30"], state="readonly", width=4)
 grr_num_dies_combo.grid(row=0, column=5, padx=5, pady=5)
+
+# Separator
+ttk.Separator(grr_left_controls, orient='vertical').grid(row=0, column=6, rowspan=2, sticky='ns', padx=8, pady=5)
+
+# Visualization Group selection
+tk.Label(grr_left_controls, text="Viz Group:", font=("Helvetica", 10, "bold"), bg='#f5f5f5').grid(row=0, column=7, padx=5, pady=5, sticky='w')
+grr_viz_group_var = tk.StringVar(value="All Groups")
+grr_viz_group_combo = ttk.Combobox(grr_left_controls, textvariable=grr_viz_group_var, values=["All Groups"], state="readonly", width=25)
+grr_viz_group_combo.grid(row=0, column=8, padx=5, pady=5, sticky='w')
+
+# Grid checkbox
+grr_grid_var = tk.BooleanVar(value=False)
+grr_grid_checkbox = tk.Checkbutton(
+    grr_left_controls,
+    text="Grid",
+    variable=grr_grid_var,
+    font=("Helvetica", 10),
+    bg='#f5f5f5',
+    command=lambda: update_grr_file_displays()
+)
+grr_grid_checkbox.grid(row=0, column=9, padx=10, pady=5, sticky='w')
+
+# ============ LSL/USL Configuration Frame ============
+def get_limits_frame_text():
+    """Get translated text for limits frame"""
+    if current_language == "de":
+        return {
+            'title': "Grenzwert-Konfiguration",
+            'mode': "Modus:",
+            'sigma_factor': "σ-Faktor:",
+            'grr_calc': "%GRR Basis:",
+            'total_var': "Total Var",
+            'tolerance': "Toleranz"
+        }
+    else:
+        return {
+            'title': "Limits Configuration",
+            'mode': "Mode:",
+            'sigma_factor': "σ-Factor:",
+            'grr_calc': "%GRR Basis:",
+            'total_var': "Total Var",
+            'tolerance': "Tolerance"
+        }
+
+limits_texts = get_limits_frame_text()
+grr_limits_frame = tk.LabelFrame(grr_control_frame, text=limits_texts['title'], font=("Helvetica", 9, "bold"), bg='#f5f5f5', fg='#1976D2')
+grr_limits_frame.pack(side=tk.LEFT, padx=20, pady=5)
+
+# Row 0: Limit Mode selection
+grr_limit_mode_var = tk.StringVar(value="auto_3sigma")
+tk.Label(grr_limits_frame, text=limits_texts['mode'], font=("Helvetica", 9), bg='#f5f5f5').grid(row=0, column=0, padx=5, pady=3, sticky='w')
+
+grr_limit_auto_radio = tk.Radiobutton(grr_limits_frame, text="Auto (±3σ)", variable=grr_limit_mode_var, value="auto_3sigma", bg='#f5f5f5', font=("Helvetica", 9))
+grr_limit_auto_radio.grid(row=0, column=1, padx=5, pady=3, sticky='w')
+
+grr_limit_manual_radio = tk.Radiobutton(grr_limits_frame, text="Manual", variable=grr_limit_mode_var, value="manual", bg='#f5f5f5', font=("Helvetica", 9))
+grr_limit_manual_radio.grid(row=0, column=2, padx=5, pady=3, sticky='w')
+
+# Manual LSL entry (in percent from mean)
+tk.Label(grr_limits_frame, text="LSL (%):", font=("Helvetica", 9), bg='#f5f5f5').grid(row=0, column=3, padx=(15, 2), pady=3, sticky='w')
+grr_manual_lsl_var = tk.StringVar(value="-10")
+grr_manual_lsl_entry = tk.Entry(grr_limits_frame, textvariable=grr_manual_lsl_var, width=8, font=("Helvetica", 9))
+grr_manual_lsl_entry.grid(row=0, column=4, padx=2, pady=3)
+
+# Manual USL entry (in percent from mean)
+tk.Label(grr_limits_frame, text="USL (%):", font=("Helvetica", 9), bg='#f5f5f5').grid(row=0, column=5, padx=(10, 2), pady=3, sticky='w')
+grr_manual_usl_var = tk.StringVar(value="+10")
+grr_manual_usl_entry = tk.Entry(grr_limits_frame, textvariable=grr_manual_usl_var, width=8, font=("Helvetica", 9))
+grr_manual_usl_entry.grid(row=0, column=6, padx=2, pady=3)
+
+# Sigma multiplier for auto mode
+tk.Label(grr_limits_frame, text=limits_texts['sigma_factor'], font=("Helvetica", 9), bg='#f5f5f5').grid(row=0, column=7, padx=(15, 2), pady=3, sticky='w')
+grr_sigma_factor_var = tk.StringVar(value="3")
+grr_sigma_factor_combo = ttk.Combobox(grr_limits_frame, textvariable=grr_sigma_factor_var, values=["1", "2", "3", "4", "5", "6"], state="readonly", width=4, font=("Helvetica", 9))
+grr_sigma_factor_combo.grid(row=0, column=8, padx=2, pady=3)
+
+# Row 1: %GRR Calculation Method
+tk.Label(grr_limits_frame, text=limits_texts['grr_calc'], font=("Helvetica", 9, "bold"), bg='#f5f5f5', fg='#D32F2F').grid(row=1, column=0, padx=5, pady=3, sticky='w')
+
+grr_calc_mode_var = tk.StringVar(value="total_variation")
+grr_calc_total_var_radio = tk.Radiobutton(grr_limits_frame, text=limits_texts['total_var'], variable=grr_calc_mode_var, value="total_variation", bg='#f5f5f5', font=("Helvetica", 9))
+grr_calc_total_var_radio.grid(row=1, column=1, padx=5, pady=3, sticky='w')
+
+grr_calc_tolerance_radio = tk.Radiobutton(grr_limits_frame, text=limits_texts['tolerance'], variable=grr_calc_mode_var, value="tolerance", bg='#f5f5f5', font=("Helvetica", 9))
+grr_calc_tolerance_radio.grid(row=1, column=2, padx=5, pady=3, sticky='w')
+
+# Row 2: ndc Calculation Method
+tk.Label(grr_limits_frame, text="ndc Berechnung:", font=("Helvetica", 9, "bold"), bg='#f5f5f5', fg='#D32F2F').grid(row=2, column=0, padx=5, pady=3, sticky='w')
+grr_ndc_use_tv_var = tk.BooleanVar(value=False)
+grr_ndc_tv_checkbox = tk.Checkbutton(grr_limits_frame, text="Total Variation für ndc verwenden",
+                                      variable=grr_ndc_use_tv_var, bg='#f5f5f5', font=("Helvetica", 9))
+grr_ndc_tv_checkbox.grid(row=2, column=1, columnspan=2, padx=5, pady=3, sticky='w')
+grr_ndc_info_var = tk.StringVar(value="ndc = 1.41 × (Part Var / GRR)")
+grr_ndc_info_label = tk.Label(grr_limits_frame, textvariable=grr_ndc_info_var, font=("Helvetica", 8, "italic"), bg='#f5f5f5', fg='#666666')
+grr_ndc_info_label.grid(row=2, column=3, columnspan=6, padx=10, pady=3, sticky='w')
+
+def update_grr_ndc_info(*args):
+    if grr_ndc_use_tv_var.get():
+        grr_ndc_info_var.set("ndc = 1.41 × (Total Var / GRR)")
+    else:
+        grr_ndc_info_var.set("ndc = 1.41 × (Part Var / GRR)")
+grr_ndc_use_tv_var.trace_add('write', update_grr_ndc_info)
+
+# Info label for %GRR calculation
+grr_calc_info_var = tk.StringVar(value="%GRR = GRR / Total Var × 100")
+grr_calc_info_label = tk.Label(grr_limits_frame, textvariable=grr_calc_info_var, font=("Helvetica", 8, "italic"), bg='#f5f5f5', fg='#666666')
+grr_calc_info_label.grid(row=1, column=3, columnspan=6, padx=10, pady=3, sticky='w')
+
+def update_grr_calc_info(*args):
+    """Update the info label based on selected %GRR calculation method"""
+    if grr_calc_mode_var.get() == "tolerance":
+        grr_calc_info_var.set("%GRR = GRR / (USL - LSL) × 100")
+    else:
+        grr_calc_info_var.set("%GRR = GRR / Total Var × 100")
+
+grr_calc_mode_var.trace_add('write', update_grr_calc_info)
+
+def update_limit_entry_state(*args):
+    """Enable/disable manual entry fields based on mode selection and replot graph"""
+    if grr_limit_mode_var.get() == "manual":
+        grr_manual_lsl_entry.config(state='normal')
+        grr_manual_usl_entry.config(state='normal')
+        grr_sigma_factor_combo.config(state='disabled')
+    else:
+        grr_manual_lsl_entry.config(state='disabled')
+        grr_manual_usl_entry.config(state='disabled')
+        grr_sigma_factor_combo.config(state='readonly')
+    # Replot graph if data is loaded and a parameter is selected
+    try:
+        if grr_file_data and grr_selected_dies and grr_graph_param_var.get() not in ("Select parameter...", ""):
+            plot_grr_graph()
+    except Exception:
+        pass
+
+def on_grr_limit_value_changed(*args):
+    """Replot graph when manual limit values or sigma factor change"""
+    try:
+        if grr_file_data and grr_selected_dies and grr_graph_param_var.get() not in ("Select parameter...", ""):
+            plot_grr_graph()
+    except Exception:
+        pass
+
+grr_limit_mode_var.trace_add('write', update_limit_entry_state)
+grr_sigma_factor_var.trace_add('write', on_grr_limit_value_changed)
+grr_manual_lsl_var.trace_add('write', on_grr_limit_value_changed)
+grr_manual_usl_var.trace_add('write', on_grr_limit_value_changed)
+update_limit_entry_state()  # Initialize state
+
+def get_grr_limits(mean_val, std_val):
+    """Calculate LSL and USL based on current limit mode settings
+
+    In manual mode: LSL/USL are entered as percentage deviation from mean
+    Example: LSL=-10% means LSL = Mean - (10% of Mean) = Mean * 0.90
+             USL=+10% means USL = Mean + (10% of Mean) = Mean * 1.10
+    """
+    if grr_limit_mode_var.get() == "manual":
+        if mean_val is None:
+            return None, None
+        try:
+            lsl_percent = float(grr_manual_lsl_var.get().replace('+', '').replace('%', '')) if grr_manual_lsl_var.get().strip() else None
+            if lsl_percent is not None:
+                lsl = mean_val * (1 + lsl_percent / 100)  # e.g., -10% -> mean * 0.90
+            else:
+                lsl = None
+        except ValueError:
+            lsl = None
+        try:
+            usl_percent = float(grr_manual_usl_var.get().replace('+', '').replace('%', '')) if grr_manual_usl_var.get().strip() else None
+            if usl_percent is not None:
+                usl = mean_val * (1 + usl_percent / 100)  # e.g., +10% -> mean * 1.10
+            else:
+                usl = None
+        except ValueError:
+            usl = None
+        return lsl, usl
+    else:
+        # Auto mode with configurable sigma factor
+        try:
+            sigma_factor = float(grr_sigma_factor_var.get())
+        except ValueError:
+            sigma_factor = 3.0
+        lsl = mean_val - sigma_factor * std_val if mean_val is not None and std_val is not None else None
+        usl = mean_val + sigma_factor * std_val if mean_val is not None and std_val is not None else None
+        return lsl, usl
 
 # Row 2 - Parameter selection and visualization
 # Parameter selection button (opens multi-select dialog)
@@ -18130,6 +18490,26 @@ grr_analysis_results = {}  # Store results for PPT export
 grr_param_label = tk.Label(grr_left_controls, text="0 selected", font=("Helvetica", 9), bg='#E8F4F8', fg='#2C3E50', width=15, relief='groove')
 grr_param_label.grid(row=1, column=1, padx=5, pady=5)
 
+def _is_plm_param(param):
+    """Check if a parameter name belongs to the PLM group."""
+    p = str(param)
+    p_upper = p.upper()
+    p_lower = p.lower()
+    if p_upper.startswith('PLM_') or p_upper.startswith('PLM-') or p_upper.startswith('PLM '):
+        return True
+    plm_keywords = ['checkersyn', 'invcheckersyn', 'uniformitysyn', 'bridged-pixels',
+                    'blemish-pixels', 'stitched-image', 'plm-stitched']
+    if any(kw in p_lower for kw in plm_keywords):
+        return True
+    stat_suffixes = ('_mean', '_median', '_std', '_min', '_max', '_pixels')
+    if p_lower.endswith(stat_suffixes):
+        base = p.rsplit('_', 1)[0]
+        if any(kw in base.lower() for kw in ['syn', 'plm', 'pixel', 'checker', 'uniform',
+               'blemish', 'bridged', 'stitched', 'image']):
+            return True
+    return False
+
+
 def open_param_selector():
     """Open parameter selection dialog with GROUP support - same style as Multi-Wafer tab"""
     global grr_selected_params, grr_available_params, grr_grouped_parameters
@@ -18139,7 +18519,7 @@ def open_param_selector():
     print(f"[GRR Selector] grr_available_params: {len(grr_available_params) if grr_available_params else 0} params")
     print(f"[GRR Selector] grr_grouped_parameters: {len(grr_grouped_parameters) if grr_grouped_parameters else 0} groups")
 
-    # If no grouped parameters but we have available params, rebuild the groups NOW
+    # If no grouped parameters but we have available params, rebuild the groups NOW using extract_group_from_column
     if (not grr_grouped_parameters or len(grr_grouped_parameters) == 0) and grr_available_params and len(grr_available_params) > 0:
         print(f"[GRR Selector] Rebuilding groups from {len(grr_available_params)} available params...")
         grr_grouped_parameters.clear()
@@ -18147,21 +18527,10 @@ def open_param_selector():
         for param in grr_available_params:
             if param == "BIN":
                 group_name = "BIN"
+            elif _is_plm_param(param):
+                group_name = "PLM"
             else:
-                param_str = str(param)
-                param_upper = param_str.upper()
-
-                if '_' in param_upper:
-                    parts = param_upper.split('_')
-                    if len(parts) >= 2:
-                        group_name = parts[0]
-                        if group_name in ['OPTIC', 'ELEC', 'MECH', 'TEST', 'PARAM']:
-                            if len(parts) >= 3:
-                                group_name = f"{parts[0]}_{parts[1]}"
-                    else:
-                        group_name = parts[0]
-                else:
-                    group_name = param_upper[:6] if len(param_upper) > 6 else param_upper
+                group_name = extract_group_from_column(param)
 
             if group_name not in grr_grouped_parameters:
                 grr_grouped_parameters[group_name] = []
@@ -18196,7 +18565,14 @@ def open_param_selector():
 
     # Populate groups from grr_grouped_parameters
     if grr_grouped_parameters and len(grr_grouped_parameters) > 0:
-        group_names = ["-- Gruppe auswählen --"] + sorted(grr_grouped_parameters.keys())
+        sorted_groups = sorted(grr_grouped_parameters.keys())
+        # Mark PLM group with green label for visibility
+        group_names = ["-- Gruppe auswählen --"]
+        for g in sorted_groups:
+            if g == "PLM":
+                group_names.append("🟢 PLM Image Processing")
+            else:
+                group_names.append(g)
         grr_dialog_group_combo["values"] = group_names
         status_text = f"✅ {len(grr_grouped_parameters)} Gruppen verfügbar"
         status_color = "#4CAF50"
@@ -18251,6 +18627,9 @@ def open_param_selector():
         param_display_to_actual = {}
 
         group = grr_dialog_group_var.get()
+        # Map display name back to actual group key
+        if group == "🟢 PLM Image Processing":
+            group = "PLM"
         print(f"[GRR Selector] Group selected: '{group}'")
 
         if group.startswith("--"):
@@ -18263,18 +18642,17 @@ def open_param_selector():
             print(f"[GRR Selector] Available groups: {list(grr_grouped_parameters.keys())}")
             return
 
+        is_plm_group = (group == "PLM")
+
         # Get parameters for this group
         params = grr_grouped_parameters[group]
         print(f"[GRR Selector] Found {len(params)} params in group '{group}'")
 
-        for param_tuple in params:
-            actual_param = param_tuple[0]  # The actual parameter key/name
+        for idx, param_tuple in enumerate(params):
+            actual_param = param_tuple[0]
 
-            # Create display name like in Multi-Wafer tab
-            # Format: "test_XXXXX: SimplifiedName"
             simple_name = simplify_param_name(str(actual_param))
 
-            # Extract test number if present
             import re as re_module
             test_num_match = re_module.search(r'_(\d{5,})$', str(actual_param))
             if test_num_match:
@@ -18286,8 +18664,44 @@ def open_param_selector():
             param_listbox.insert(tk.END, display_name)
             param_display_to_actual[display_name] = actual_param
 
+            # No special highlighting for individual PLM params (clean look)
+
+        # For PLM group: also add pixel-level options per PLM type
+        if is_plm_group:
+            # Collect unique PLM base types from params
+            plm_types = set()
+            for param_tuple in params:
+                p = str(param_tuple[0])
+                # Extract base type: PLM_CheckerSyn_mean → CheckerSyn, CheckerSyn_mean → CheckerSyn
+                for suffix in ['_mean', '_median', '_std', '_min', '_max', '_pixels']:
+                    if p.lower().endswith(suffix):
+                        base = p[:len(p) - len(suffix)]
+                        if base.startswith('PLM_'):
+                            base = base[4:]
+                        if base:
+                            plm_types.add(base)
+                        break
+
+            if plm_types:
+                param_listbox.insert(tk.END, "")
+                param_listbox.insert(tk.END, "── 🔬 Pixel-Einzelwerte ──")
+                sep_idx = param_listbox.size() - 1
+                param_listbox.itemconfig(sep_idx, bg='#E3F2FD', fg='#1565C0')
+                param_listbox.itemconfig(sep_idx - 1, bg='#FFFFFF')
+
+                for plm_type in sorted(plm_types):
+                    pixel_name = f"PLM_PIXEL_{plm_type}"
+                    display_name = f"🔬 {plm_type} (Pixel-Einzelwerte)"
+                    param_listbox.insert(tk.END, display_name)
+                    pix_idx = param_listbox.size() - 1
+                    param_listbox.itemconfig(pix_idx, bg='#FFECB3', fg='#BF360C')
+                    param_display_to_actual[display_name] = pixel_name
+
         update_selection_info()
-        grr_status_info.config(text=f"✅ Gruppe '{group}': {len(params)} Parameter", fg="#4CAF50")
+        if is_plm_group:
+            grr_status_info.config(text=f"🟢 PLM Image Processing: {len(params)} Statistik-Parameter + Pixel-Optionen", fg="#2E7D32")
+        else:
+            grr_status_info.config(text=f"✅ Gruppe '{group}': {len(params)} Parameter", fg="#4CAF50")
         print(f"[GRR Selector] Listbox now has {param_listbox.size()} items")
 
     grr_dialog_group_combo.bind("<<ComboboxSelected>>", update_param_listbox)
@@ -18377,6 +18791,8 @@ def open_param_selector():
     def add_whole_group():
         """Add ALL parameters from currently selected group to the final selection"""
         group = grr_dialog_group_var.get()
+        if group == "🟢 PLM Image Processing":
+            group = "PLM"
         if group.startswith("--") or group not in grr_grouped_parameters:
             grr_status_info.config(text="⚠️ Bitte erst eine Gruppe auswählen!", fg="#FF9800")
             return
@@ -18422,10 +18838,68 @@ grr_param_btn = tk.Button(grr_left_controls, text="Select...", command=open_para
 grr_param_btn.grid(row=1, column=2, padx=5, pady=5)
 
 # Visualization parameter selection (for wafermap display color)
-tk.Label(grr_left_controls, text="Viz Param:", font=("Helvetica", 10, "bold"), bg='#f5f5f5').grid(row=1, column=3, padx=15, pady=5, sticky='w')
+tk.Label(grr_left_controls, text="Viz Param:", font=("Helvetica", 10, "bold"), bg='#f5f5f5').grid(row=1, column=7, padx=5, pady=5, sticky='w')
 grr_viz_param_var = tk.StringVar(value="None")
-grr_viz_param_combo = ttk.Combobox(grr_left_controls, textvariable=grr_viz_param_var, values=["None"], state="readonly", width=25)
-grr_viz_param_combo.grid(row=1, column=4, columnspan=2, padx=5, pady=5, sticky='w')
+grr_viz_param_combo = ttk.Combobox(grr_left_controls, textvariable=grr_viz_param_var, values=["None"], state="readonly", width=50)
+grr_viz_param_combo.grid(row=1, column=8, columnspan=2, padx=5, pady=5, sticky='w')
+
+def on_grr_viz_group_change(event=None):
+    """Update viz parameter combobox based on selected group"""
+    global grr_grouped_parameters
+
+    selected_group = grr_viz_group_var.get()
+
+    # Build parameter list based on group selection
+    param_options = ["None"]
+
+    if not grr_file_data:
+        grr_viz_param_combo['values'] = param_options
+        grr_viz_param_var.set("None")
+        return
+
+    # Get all available parameters from first file
+    first_df = grr_file_data[0]['data']
+    if first_df is not None and hasattr(first_df, 'columns'):
+        import re as re_mod
+
+        if selected_group == "All Groups" or selected_group not in grr_grouped_parameters:
+            # Show all numeric columns with proper naming
+            for col in first_df.columns:
+                if col not in ['x', 'y', 'bin', 'sbin', 'site', 'head', 'part_id', 'wafer_id']:
+                    # Extract test number and create display name like Multi-Wafer
+                    test_num_match = re_mod.search(r'_(\d{5,})$', str(col))
+                    if test_num_match:
+                        test_num = test_num_match.group(1)
+                        simple_name = simplify_param_name(str(col))
+                        display_name = f"test_{test_num}: {simple_name}"
+                    else:
+                        display_name = str(col)
+                    param_options.append(display_name)
+        else:
+            # Filter to selected group
+            if selected_group in grr_grouped_parameters:
+                group_params = grr_grouped_parameters[selected_group]
+                for param_tuple in group_params:
+                    param_name = param_tuple[0] if isinstance(param_tuple, tuple) else param_tuple
+                    # Find matching column in dataframe
+                    for col in first_df.columns:
+                        if str(col) == param_name or str(param_name) in str(col):
+                            # Extract test number and create display name like Multi-Wafer
+                            test_num_match = re_mod.search(r'_(\d{5,})$', str(col))
+                            if test_num_match:
+                                test_num = test_num_match.group(1)
+                                simple_name = simplify_param_name(str(col))
+                                display_name = f"test_{test_num}: {simple_name}"
+                            else:
+                                display_name = str(col)
+                            param_options.append(display_name)
+                            break
+
+    grr_viz_param_combo['values'] = param_options
+    if grr_viz_param_var.get() not in param_options:
+        grr_viz_param_var.set("None")
+
+grr_viz_group_combo.bind("<<ComboboxSelected>>", on_grr_viz_group_change)
 
 def on_viz_param_change(event=None):
     """Update wafermap visualization when parameter changes"""
@@ -18477,8 +18951,199 @@ grr_clear_btn.pack(side=tk.RIGHT, padx=10, pady=5)
 # ============================================================================
 # Main Notebook for Gage R&R - Two tabs: Maps/Selection and Results/Analysis
 # ============================================================================
-grr_main_notebook = ttk.Notebook(grr_main_frame, style="GRRMain.TNotebook")
-grr_main_notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=2)
+
+# Outer PanedWindow: Wafer List (LEFT) | Notebook with tabs (RIGHT)
+grr_body_paned = tk.PanedWindow(grr_main_frame, orient=tk.HORIZONTAL, sashwidth=4, bg='#cccccc')
+grr_body_paned.pack(fill=tk.BOTH, expand=True, padx=5, pady=2)
+
+# ============================================================================
+# LEFT side: Loaded Wafer List Panel (persistent across tabs)
+# ============================================================================
+grr_wafer_panel = tk.Frame(grr_body_paned, bg='#f0f0f0', width=250)
+grr_body_paned.add(grr_wafer_panel, minsize=200, stretch='never')
+
+# Title for wafer list panel
+grr_wafer_list_title = tk.Label(
+    grr_wafer_panel,
+    text="📋 Loaded Wafers",
+    font=("Helvetica", 11, "bold"),
+    bg="#2196F3",
+    fg="white",
+    pady=6
+)
+grr_wafer_list_title.pack(fill=tk.X)
+
+# Placeholder frame for Load Files button (button added later after load_grr_files is defined)
+grr_load_btn_frame = tk.Frame(grr_wafer_panel, bg='#f0f0f0')
+grr_load_btn_frame.pack(fill=tk.X, padx=5, pady=(5, 2))
+
+# Buttons frame for Select All / Deselect All / Remove
+grr_wafer_list_btn_frame = tk.Frame(grr_wafer_panel, bg='#f0f0f0')
+grr_wafer_list_btn_frame.pack(fill=tk.X, padx=5, pady=4)
+
+grr_wafer_checkbox_vars = []   # List of BooleanVar for each wafer
+grr_wafer_checkbox_widgets = []  # List of Checkbutton widgets
+grr_wafer_path_map = {}  # Map index -> file path for reference
+
+def grr_select_all_wafers():
+    for var in grr_wafer_checkbox_vars:
+        var.set(True)
+
+def grr_deselect_all_wafers():
+    for var in grr_wafer_checkbox_vars:
+        var.set(False)
+
+def grr_remove_selected_wafers():
+    """Remove unchecked wafers from grr_file_data and refresh display"""
+    global grr_file_data
+    new_file_data = []
+    for i, var in enumerate(grr_wafer_checkbox_vars):
+        if var.get() and i < len(grr_file_data):
+            new_file_data.append(grr_file_data[i])
+    grr_file_data = new_file_data
+    # Rebuild parameters from remaining files
+    _rebuild_grr_params_after_load()
+    grr_status_var.set(f"{len(grr_file_data)} wafers remaining after removal")
+
+def grr_remove_all_wafers():
+    """Clear all loaded wafers"""
+    global grr_file_data, grr_selected_dies, grr_selected_params, grr_available_params, grr_grouped_parameters
+    grr_file_data = []
+    grr_selected_dies = []
+    grr_selected_params = []
+    grr_available_params = ["BIN"]
+    grr_grouped_parameters = {}
+    grr_selected_dies_label.config(text="None selected")
+    grr_param_label.config(text="0 selected")
+    grr_viz_group_combo['values'] = ["All Groups"]
+    grr_viz_group_var.set("All Groups")
+    grr_viz_param_combo['values'] = ["None"]
+    grr_viz_param_var.set("None")
+    grr_refresh_wafer_list()
+    update_grr_file_displays()
+    grr_status_var.set("All wafers cleared")
+
+grr_select_all_btn = tk.Button(
+    grr_wafer_list_btn_frame, text="Select All",
+    command=grr_select_all_wafers, font=("Helvetica", 8), width=9
+)
+grr_select_all_btn.pack(side=tk.LEFT, padx=2)
+
+grr_deselect_all_btn = tk.Button(
+    grr_wafer_list_btn_frame, text="Deselect All",
+    command=grr_deselect_all_wafers, font=("Helvetica", 8), width=9
+)
+grr_deselect_all_btn.pack(side=tk.LEFT, padx=2)
+
+grr_remove_sel_btn = tk.Button(
+    grr_wafer_list_btn_frame, text="Remove ✖",
+    command=grr_remove_selected_wafers, font=("Helvetica", 8), width=9,
+    bg='#E74C3C', fg='white'
+)
+grr_remove_sel_btn.pack(side=tk.LEFT, padx=2)
+
+# Second button row
+grr_wafer_list_btn_frame2 = tk.Frame(grr_wafer_panel, bg='#f0f0f0')
+grr_wafer_list_btn_frame2.pack(fill=tk.X, padx=5, pady=(0, 4))
+
+grr_clear_all_btn = tk.Button(
+    grr_wafer_list_btn_frame2, text="🗑️ Clear All",
+    command=grr_remove_all_wafers, font=("Helvetica", 8), width=20,
+    bg='#c0392b', fg='white'
+)
+grr_clear_all_btn.pack(fill=tk.X, padx=2)
+
+# Wafer count label
+grr_wafer_count_var = tk.StringVar(value="0 Wafers loaded")
+grr_wafer_count_label = tk.Label(
+    grr_wafer_panel, textvariable=grr_wafer_count_var,
+    font=("Helvetica", 9, "bold"), bg='#f0f0f0', fg='#2C3E50'
+)
+grr_wafer_count_label.pack(fill=tk.X, padx=5, pady=2)
+
+# Separator
+ttk.Separator(grr_wafer_panel, orient='horizontal').pack(fill=tk.X, padx=5, pady=2)
+
+# Scrollable frame for wafer checkboxes
+grr_wafer_list_canvas = tk.Canvas(grr_wafer_panel, highlightthickness=0, bg='#f0f0f0')
+grr_wafer_list_scrollbar = ttk.Scrollbar(grr_wafer_panel, orient="vertical", command=grr_wafer_list_canvas.yview)
+grr_wafer_list_inner = tk.Frame(grr_wafer_list_canvas, bg='#f0f0f0')
+
+grr_wafer_list_inner.bind(
+    "<Configure>",
+    lambda e: grr_wafer_list_canvas.configure(scrollregion=grr_wafer_list_canvas.bbox("all"))
+)
+
+grr_wafer_list_canvas.create_window((0, 0), window=grr_wafer_list_inner, anchor="nw")
+grr_wafer_list_canvas.configure(yscrollcommand=grr_wafer_list_scrollbar.set)
+
+grr_wafer_list_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+grr_wafer_list_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+def on_grr_wafer_list_mousewheel(event):
+    grr_wafer_list_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+grr_wafer_list_canvas.bind("<MouseWheel>", on_grr_wafer_list_mousewheel)
+grr_wafer_list_inner.bind("<MouseWheel>", on_grr_wafer_list_mousewheel)
+
+def grr_refresh_wafer_list():
+    """Refresh the wafer list panel to show all loaded wafers"""
+    global grr_wafer_checkbox_vars, grr_wafer_checkbox_widgets, grr_wafer_path_map
+
+    for widget in grr_wafer_list_inner.winfo_children():
+        widget.destroy()
+    grr_wafer_checkbox_vars = []
+    grr_wafer_checkbox_widgets = []
+    grr_wafer_path_map = {}
+
+    for i, file_info in enumerate(grr_file_data):
+        var = tk.BooleanVar(value=True)
+        grr_wafer_checkbox_vars.append(var)
+        grr_wafer_path_map[i] = file_info.get('path', '')
+
+        wafer_id = file_info.get('wafer_id', f"Wafer {i+1}")
+        file_path = file_info.get('path', '')
+        folder_name = os.path.basename(os.path.dirname(file_path)) if file_path else ''
+        file_name = os.path.basename(file_path) if file_path else wafer_id
+
+        folder_hash = hash(os.path.dirname(file_path)) % 6
+        colors = ['#E3F2FD', '#E8F5E9', '#FFF3E0', '#F3E5F5', '#E0F7FA', '#FBE9E7']
+        bg_color = colors[folder_hash] if file_path else '#f0f0f0'
+
+        cb_frame = tk.Frame(grr_wafer_list_inner, bg=bg_color, relief='groove', bd=1)
+        cb_frame.pack(fill=tk.X, padx=2, pady=1)
+
+        cb = tk.Checkbutton(
+            cb_frame, variable=var,
+            text=f"#{i+1}: {file_name}",
+            font=("Helvetica", 8),
+            bg=bg_color, anchor='w',
+            wraplength=220
+        )
+        cb.pack(fill=tk.X, padx=2, pady=1)
+        grr_wafer_checkbox_widgets.append(cb)
+
+        if folder_name:
+            folder_lbl = tk.Label(
+                cb_frame, text=f"  📂 {folder_name}",
+                font=("Helvetica", 7), fg='#666666', bg=bg_color, anchor='w'
+            )
+            folder_lbl.pack(fill=tk.X, padx=2)
+
+        cb.bind("<MouseWheel>", on_grr_wafer_list_mousewheel)
+        cb_frame.bind("<MouseWheel>", on_grr_wafer_list_mousewheel)
+
+    grr_wafer_count_var.set(f"{len(grr_file_data)} Wafer(s) loaded")
+    grr_wafer_list_canvas.configure(scrollregion=grr_wafer_list_canvas.bbox("all"))
+
+# ============================================================================
+# RIGHT side: Notebook with tabs
+# ============================================================================
+grr_notebook_frame = tk.Frame(grr_body_paned, bg='white')
+grr_body_paned.add(grr_notebook_frame, stretch='always')
+
+grr_main_notebook = ttk.Notebook(grr_notebook_frame, style="GRRMain.TNotebook")
+grr_main_notebook.pack(fill=tk.BOTH, expand=True)
 
 # Style for the main notebook tabs - reduced size by 50%
 style = ttk.Style()
@@ -18516,8 +19181,22 @@ def on_grr_container_configure(event):
     grr_content_canvas.configure(scrollregion=grr_content_canvas.bbox("all"))
 
 def on_grr_canvas_configure(event):
-    # Make the inner frame at least as wide as the canvas
-    grr_content_canvas.itemconfig(grr_canvas_window, height=max(500, grr_files_container.winfo_reqheight()))
+    # Make the inner frame fill the canvas and trigger resize
+    new_width = event.width
+    new_height = event.height
+    grr_content_canvas.itemconfig(grr_canvas_window, width=new_width)
+    grr_content_canvas.itemconfig(grr_canvas_window, height=max(500, new_height))
+    # Redraw the display if data is loaded - with debounce
+    if grr_file_data:
+        # Cancel previous scheduled resize if exists
+        resize_id = getattr(on_grr_canvas_configure, 'resize_id', None)
+        if resize_id is not None:
+            try:
+                grr_content_canvas.after_cancel(resize_id)
+            except:
+                pass
+        # Schedule new resize
+        on_grr_canvas_configure.resize_id = grr_content_canvas.after(200, update_grr_file_displays)
 
 grr_files_container.bind("<Configure>", on_grr_container_configure)
 grr_content_canvas.bind("<Configure>", on_grr_canvas_configure)
@@ -18793,6 +19472,51 @@ def plot_grr_graph():
             patch.set_facecolor(color)
             patch.set_alpha(0.7)
 
+    # Add Mean, Std, LSL/USL reference lines to boxplot
+    all_flat_bp = [v for values in all_values for v in values if not np.isnan(v)]
+    if all_flat_bp:
+        bp_mean = np.mean(all_flat_bp)
+        bp_std = np.std(all_flat_bp)
+
+        # Get LSL/USL from the limits configuration (auto or manual)
+        bp_lsl, bp_usl = get_grr_limits(bp_mean, bp_std)
+
+        # Mean line
+        ax2.axhline(y=bp_mean, color='green', linestyle='-', linewidth=2, alpha=0.8, label=f'Mean: {bp_mean:.4g}')
+
+        # Std lines (±1σ)
+        ax2.axhline(y=bp_mean + bp_std, color='#FF9800', linestyle=':', linewidth=1.2, alpha=0.7, label=f'+1σ: {bp_mean + bp_std:.4g}')
+        ax2.axhline(y=bp_mean - bp_std, color='#FF9800', linestyle=':', linewidth=1.2, alpha=0.7, label=f'-1σ: {bp_mean - bp_std:.4g}')
+
+        # LSL/USL lines
+        if bp_lsl is not None:
+            ax2.axhline(y=bp_lsl, color='red', linestyle='--', linewidth=2, alpha=0.8, label=f'LSL: {bp_lsl:.4g}')
+        if bp_usl is not None:
+            ax2.axhline(y=bp_usl, color='red', linestyle='--', linewidth=2, alpha=0.8, label=f'USL: {bp_usl:.4g}')
+
+        # Add shaded region between LSL and USL
+        if bp_lsl is not None and bp_usl is not None:
+            ax2.axhspan(bp_lsl, bp_usl, alpha=0.06, color='green')
+
+        # Limit mode info text
+        limit_mode = grr_limit_mode_var.get()
+        if limit_mode == "manual":
+            mode_text = f"Mode: Manual\nLSL%: {grr_manual_lsl_var.get()}\nUSL%: {grr_manual_usl_var.get()}"
+        else:
+            sigma_f = grr_sigma_factor_var.get()
+            mode_text = f"Mode: Auto (±{sigma_f}σ)"
+
+        stats_bp = f"Mean: {bp_mean:.4g}\nStd: {bp_std:.4g}\n{mode_text}"
+        if bp_lsl is not None:
+            stats_bp += f"\nLSL: {bp_lsl:.4g}"
+        if bp_usl is not None:
+            stats_bp += f"\nUSL: {bp_usl:.4g}"
+
+        ax2.text(0.02, 0.98, stats_bp, transform=ax2.transAxes, fontsize=7,
+                verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
+
+        ax2.legend(fontsize=6, loc='upper right')
+
     ax2.set_xlabel("File/Run", fontsize=10)
     ax2.set_ylabel("Value", fontsize=10)
     ax2.set_title(f"Distribution per Run\n{param[:50]}", fontsize=10, fontweight='bold')
@@ -18824,6 +19548,566 @@ grr_graph_placeholder = tk.Label(grr_graph_frame,
 grr_graph_placeholder.pack(pady=50)
 
 grr_graph_canvas = None
+
+# ============================================================================
+# TAB 3: PLM Pixel Analysis Tab
+# ============================================================================
+grr_pixel_tab = tk.Frame(grr_main_notebook, bg='#f5f5f5')
+grr_main_notebook.add(grr_pixel_tab, text="🔬 PLM Pixel Analysis")
+
+plm_pixel_notebook = ttk.Notebook(grr_pixel_tab, style="GRRSub.TNotebook")
+plm_pixel_notebook.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+
+# Global state for PLM pixel analysis
+plm_pixel_state = {
+    'selected_die': None, 'plm_dir': None, 'plm_matrix': None, 'plm_type': None,
+    'rect_start': None, 'rect_id': None,
+    'selection_x': 0, 'selection_y': 0, 'selection_w': 0, 'selection_h': 0,
+    'available_dies': [], 'available_types': [], 'scale_factor': 1.0,
+    '_tk_image': None, '_img_offset_x': 0, '_img_offset_y': 0,
+}
+
+# ── SUBTAB 1: Wafermap Selection ──
+plm_wmap_tab = tk.Frame(plm_pixel_notebook, bg='white')
+plm_pixel_notebook.add(plm_wmap_tab, text="📍 Wafermap Selection")
+
+tk.Label(plm_wmap_tab, text="Schritt 1: Wähle ein Die für die Pixel-Analyse",
+    font=("Helvetica", 11, "bold"), bg='white', fg='#1565C0').pack(pady=8)
+tk.Label(plm_wmap_tab, text="Lade CSV/STDF-Dateien im GRR-Tab. PLM-Verzeichnisse werden automatisch erkannt.\nWähle ein Die und einen PLM-Typ aus der Liste.",
+    font=("Helvetica", 9), bg='white', fg='#555', justify='center').pack(pady=5)
+
+plm_wmap_controls = tk.Frame(plm_wmap_tab, bg='white')
+plm_wmap_controls.pack(fill=tk.X, padx=15, pady=5)
+tk.Label(plm_wmap_controls, text="PLM Typ:", font=("Helvetica", 10, "bold"), bg='white').pack(side=tk.LEFT, padx=5)
+plm_pixel_type_var = tk.StringVar(value="-- Typ wählen --")
+plm_pixel_type_combo = ttk.Combobox(plm_wmap_controls, textvariable=plm_pixel_type_var, state="readonly", width=25)
+plm_pixel_type_combo.pack(side=tk.LEFT, padx=5)
+plm_refresh_btn = tk.Button(plm_wmap_controls, text="🔄 Aktualisieren",
+    font=("Helvetica", 9, "bold"), bg='#1976D2', fg='white', cursor='hand2')
+plm_refresh_btn.pack(side=tk.LEFT, padx=15)
+
+plm_die_frame = tk.LabelFrame(plm_wmap_tab, text="📋 Verfügbare Dies mit PLM-Daten",
+    font=("Helvetica", 10, "bold"), bg='white')
+plm_die_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=5)
+plm_die_listbox = tk.Listbox(plm_die_frame, font=("Consolas", 10), height=12, selectmode=tk.SINGLE)
+plm_die_sb = ttk.Scrollbar(plm_die_frame, orient="vertical", command=plm_die_listbox.yview)
+plm_die_listbox.config(yscrollcommand=plm_die_sb.set)
+plm_die_sb.pack(side=tk.RIGHT, fill=tk.Y)
+plm_die_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+plm_die_status = tk.Label(plm_wmap_tab, text="Keine PLM-Daten geladen",
+    font=("Helvetica", 9), bg='white', fg='#999')
+plm_die_status.pack(pady=5)
+plm_select_die_btn = tk.Button(plm_wmap_tab, text="➡️ Die auswählen & weiter zu PLM Area Selection",
+    font=("Helvetica", 10, "bold"), bg='#4CAF50', fg='white', cursor='hand2', padx=20, pady=6)
+plm_select_die_btn.pack(pady=10)
+
+# ── SUBTAB 2: PLM Area Selection ──
+plm_area_tab = tk.Frame(plm_pixel_notebook, bg='white')
+plm_pixel_notebook.add(plm_area_tab, text="🔲 PLM Area Selection")
+
+tk.Label(plm_area_tab, text="Schritt 2: PLM-Bereich für Pixel-Analyse",
+    font=("Helvetica", 11, "bold"), bg='white', fg='#1565C0').pack(pady=6)
+
+plm_area_top = tk.Frame(plm_area_tab, bg='white')
+plm_area_top.pack(fill=tk.X, padx=10, pady=2)
+plm_define_area_var = tk.BooleanVar(value=False)
+plm_define_area_cb = tk.Checkbutton(plm_area_top, text="☑ Define PLM Area for GRR analysis",
+    variable=plm_define_area_var, font=("Helvetica", 10, "bold"), bg='white', fg='#1565C0',
+    activebackground='white', cursor='hand2')
+plm_define_area_cb.pack(side=tk.LEFT, padx=5)
+plm_default_hint = tk.Label(plm_area_top,
+    text="(Standard: Center 25×25 Pixel)", font=("Helvetica", 9), bg='white', fg='#888')
+plm_default_hint.pack(side=tk.LEFT, padx=10)
+
+plm_area_controls = tk.Frame(plm_area_tab, bg='white')
+plm_area_controls.pack(fill=tk.X, padx=10, pady=5)
+tk.Label(plm_area_controls, text="Breite (X):", font=("Helvetica", 9, "bold"), bg='white').pack(side=tk.LEFT, padx=3)
+plm_area_w_var = tk.IntVar(value=25)
+tk.Spinbox(plm_area_controls, from_=1, to=25, textvariable=plm_area_w_var, width=4, font=("Helvetica", 10)).pack(side=tk.LEFT, padx=3)
+tk.Label(plm_area_controls, text="Höhe (Y):", font=("Helvetica", 9, "bold"), bg='white').pack(side=tk.LEFT, padx=8)
+plm_area_h_var = tk.IntVar(value=25)
+tk.Spinbox(plm_area_controls, from_=1, to=25, textvariable=plm_area_h_var, width=4, font=("Helvetica", 10)).pack(side=tk.LEFT, padx=3)
+plm_area_sel_label = tk.Label(plm_area_controls, text="  Auswahl: -- ", font=("Helvetica", 9), bg='white', fg='#555')
+plm_area_sel_label.pack(side=tk.LEFT, padx=15)
+plm_area_die_label = tk.Label(plm_area_controls, text="", font=("Helvetica", 9, "bold"), bg='white', fg='#2E7D32')
+plm_area_die_label.pack(side=tk.RIGHT, padx=10)
+
+plm_heatmap_frame = tk.Frame(plm_area_tab, bg='#ECEFF1', relief='sunken', bd=2)
+plm_heatmap_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+plm_heatmap_canvas = tk.Canvas(plm_heatmap_frame, bg='#263238', cursor='crosshair')
+plm_heatmap_canvas.pack(fill=tk.BOTH, expand=True)
+
+plm_area_go_btn = tk.Button(plm_area_tab, text="▶️ Pixel-GRR Analyse starten",
+    font=("Helvetica", 11, "bold"), bg='#E65100', fg='white', cursor='hand2', padx=20, pady=6)
+plm_area_go_btn.pack(pady=8)
+
+# ── SUBTAB 3: Result & Analysis ──
+plm_result_tab = tk.Frame(plm_pixel_notebook, bg='#f5f5f5')
+plm_pixel_notebook.add(plm_result_tab, text="📊 Result & Analysis")
+
+tk.Label(plm_result_tab, text="Schritt 3: Pixel-Level Gage R&R Ergebnisse",
+    font=("Helvetica", 11, "bold"), bg='#f5f5f5', fg='#1565C0').pack(pady=8)
+
+plm_result_info_frame = tk.Frame(plm_result_tab, bg='#E8F5E9', relief='groove', bd=1)
+plm_result_info_frame.pack(fill=tk.X, padx=10, pady=5)
+plm_result_info_label = tk.Label(plm_result_info_frame, text="Noch keine Analyse durchgeführt",
+    font=("Helvetica", 10), bg='#E8F5E9', fg='#555', justify='left')
+plm_result_info_label.pack(padx=10, pady=8, anchor='w')
+
+plm_result_text = tk.Text(plm_result_tab, font=("Consolas", 9), wrap='none', state='disabled',
+    bg='white', relief='groove', bd=1)
+plm_result_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+plm_result_graph_frame = tk.Frame(plm_result_tab, bg='white', height=250)
+plm_result_graph_frame.pack(fill=tk.X, padx=10, pady=5)
+plm_result_graph_frame.pack_propagate(False)
+
+# ============================================================================
+# PLM Pixel Analysis Functions
+# ============================================================================
+
+def plm_refresh_dies():
+    """Scan loaded GRR files for PLM directories and list available dies"""
+    plm_die_listbox.delete(0, tk.END)
+    plm_pixel_state['available_dies'] = []
+    plm_pixel_state['available_types'] = []
+
+    if not grr_file_data:
+        plm_die_status.config(text="⚠️ Keine Dateien geladen — lade zuerst CSV/STDF im GRR-Tab", fg='#FF9800')
+        return
+
+    plm_dirs = []
+    for fi in grr_file_data:
+        pd_dir = fi.get('plm_dir')
+        if pd_dir and os.path.isdir(pd_dir):
+            plm_dirs.append(pd_dir)
+
+    if not plm_dirs:
+        plm_die_status.config(text="⚠️ Keine PLM-Verzeichnisse — PLM-Ordner muss neben CSV liegen", fg='#FF9800')
+        return
+
+    plm_dir = plm_dirs[0]
+    plm_pixel_state['plm_dir'] = plm_dir
+
+    plm_ext = ('.txt', '.csv', '.dat', '.plm')
+    files = [f for f in os.listdir(plm_dir) if f.lower().endswith(plm_ext)]
+
+    die_coords = set()
+    plm_types = set()
+    for fname in files:
+        coords = _extract_plm_die_coords(fname)
+        ptype = _extract_plm_type(fname)
+        if coords:
+            die_coords.add(coords)
+        if ptype:
+            plm_types.add(ptype)
+
+    plm_pixel_state['available_dies'] = sorted(die_coords)
+    plm_pixel_state['available_types'] = sorted(plm_types)
+
+    plm_pixel_type_combo['values'] = sorted(plm_types) if plm_types else ["-- Keine Typen --"]
+    if plm_types:
+        plm_pixel_type_var.set(sorted(plm_types)[0])
+
+    for dx, dy in sorted(die_coords):
+        plm_die_listbox.insert(tk.END, f"Die ({dx}, {dy})")
+
+    plm_die_status.config(
+        text=f"✅ {len(die_coords)} Dies, {len(plm_types)} PLM-Typen in: {os.path.basename(plm_dir)}", fg='#4CAF50')
+
+plm_refresh_btn.config(command=plm_refresh_dies)
+
+def plm_select_die_and_go():
+    """Select die and switch to PLM Area Selection tab"""
+    sel = plm_die_listbox.curselection()
+    if not sel:
+        plm_die_status.config(text="⚠️ Bitte ein Die aus der Liste auswählen!", fg='#FF9800')
+        return
+    idx = sel[0]
+    if idx >= len(plm_pixel_state['available_dies']):
+        return
+
+    die_coord = plm_pixel_state['available_dies'][idx]
+    plm_type = plm_pixel_type_var.get()
+    if plm_type.startswith("--"):
+        plm_die_status.config(text="⚠️ Bitte einen PLM-Typ auswählen!", fg='#FF9800')
+        return
+
+    plm_pixel_state['selected_die'] = die_coord
+    plm_pixel_state['plm_type'] = plm_type
+
+    plm_dir = plm_pixel_state['plm_dir']
+    plm_ext = ('.txt', '.csv', '.dat', '.plm')
+    files = [f for f in os.listdir(plm_dir) if f.lower().endswith(plm_ext)]
+
+    matrix = None
+    for fname in files:
+        coords = _extract_plm_die_coords(fname)
+        ftype = _extract_plm_type(fname)
+        if coords == die_coord and ftype and ftype.lower() == plm_type.lower():
+            matrix = load_plm_as_matrix(os.path.join(plm_dir, fname))
+            break
+
+    if matrix is None or matrix.size == 0:
+        plm_die_status.config(text=f"⚠️ Keine Matrix für Die {die_coord} / {plm_type}", fg='#FF9800')
+        return
+
+    plm_pixel_state['plm_matrix'] = matrix
+    print(f"[PLM Pixel] Loaded matrix {matrix.shape} for Die {die_coord}, type={plm_type}")
+    plm_pixel_notebook.select(1)
+    plm_heatmap_canvas.after(100, plm_draw_heatmap)
+
+plm_select_die_btn.config(command=plm_select_die_and_go)
+
+def plm_draw_heatmap():
+    """Draw PLM matrix as heatmap on the canvas"""
+    matrix = plm_pixel_state.get('plm_matrix')
+    if matrix is None:
+        return
+
+    die = plm_pixel_state['selected_die']
+    ptype = plm_pixel_state['plm_type']
+    plm_area_die_label.config(text=f"Die ({die[0]},{die[1]}) — {ptype}  [{matrix.shape[1]}×{matrix.shape[0]} px]")
+
+    plm_heatmap_canvas.delete("all")
+    plm_heatmap_canvas.update_idletasks()
+
+    cw = max(plm_heatmap_canvas.winfo_width(), 400)
+    ch = max(plm_heatmap_canvas.winfo_height(), 300)
+    rows, cols = matrix.shape
+    scale = min(cw / cols, ch / rows, 8)
+    scale = max(scale, 1)
+    plm_pixel_state['scale_factor'] = scale
+
+    img_w = int(cols * scale)
+    img_h = int(rows * scale)
+
+    vmin = np.nanmin(matrix)
+    vmax = np.nanmax(matrix)
+    if vmax == vmin:
+        vmax = vmin + 1
+    norm = ((matrix - vmin) / (vmax - vmin) * 255).astype(np.uint8)
+
+    try:
+        from matplotlib import cm
+        colored = cm.viridis(norm / 255.0)
+        rgb = (colored[:, :, :3] * 255).astype(np.uint8)
+    except:
+        rgb = np.stack([norm, norm, norm], axis=-1)
+
+    from PIL import Image, ImageTk
+    img = Image.fromarray(rgb, 'RGB')
+    img_scaled = img.resize((img_w, img_h), Image.NEAREST)
+
+    plm_pixel_state['_tk_image'] = ImageTk.PhotoImage(img_scaled)
+    ox = (cw - img_w) // 2
+    oy = (ch - img_h) // 2
+    plm_pixel_state['_img_offset_x'] = ox
+    plm_pixel_state['_img_offset_y'] = oy
+
+    plm_heatmap_canvas.create_image(ox, oy, anchor='nw', image=plm_pixel_state['_tk_image'])
+
+    if scale >= 4:
+        for r in range(rows + 1):
+            plm_heatmap_canvas.create_line(ox, oy + r * scale, ox + img_w, oy + r * scale, fill='#444', width=0.5)
+        for c in range(cols + 1):
+            plm_heatmap_canvas.create_line(ox + c * scale, oy, ox + c * scale, oy + img_h, fill='#444', width=0.5)
+
+    plm_pixel_state['rect_id'] = None
+    plm_pixel_state['rect_start'] = None
+    plm_area_sel_label.config(text="  Klicke & ziehe ein Rechteck auf der Heatmap")
+
+def _plm_canvas_to_pixel(event):
+    """Convert canvas coordinates to pixel coordinates"""
+    matrix = plm_pixel_state.get('plm_matrix')
+    if matrix is None:
+        return None, None
+    scale = plm_pixel_state['scale_factor']
+    ox = plm_pixel_state.get('_img_offset_x', 0)
+    oy = plm_pixel_state.get('_img_offset_y', 0)
+    rows, cols = matrix.shape
+    px = max(0, min(int((event.x - ox) / scale), cols))
+    py = max(0, min(int((event.y - oy) / scale), rows))
+    return px, py
+
+def plm_canvas_press(event):
+    """Start rectangle selection"""
+    px, py = _plm_canvas_to_pixel(event)
+    if px is None:
+        return
+    plm_pixel_state['rect_start'] = (px, py)
+    if plm_pixel_state.get('rect_id'):
+        plm_heatmap_canvas.delete(plm_pixel_state['rect_id'])
+        plm_pixel_state['rect_id'] = None
+
+def plm_canvas_drag(event):
+    """Update rectangle during drag"""
+    if plm_pixel_state.get('rect_start') is None:
+        return
+    px, py = _plm_canvas_to_pixel(event)
+    if px is None:
+        return
+
+    sx, sy = plm_pixel_state['rect_start']
+    max_w = min(plm_area_w_var.get(), 50)
+    max_h = min(plm_area_h_var.get(), 50)
+
+    ex, ey = px, py
+    if abs(ex - sx) > max_w:
+        ex = sx + max_w if ex > sx else sx - max_w
+    if abs(ey - sy) > max_h:
+        ey = sy + max_h if ey > sy else sy - max_h
+
+    matrix = plm_pixel_state['plm_matrix']
+    rows, cols = matrix.shape
+    ex = max(0, min(ex, cols))
+    ey = max(0, min(ey, rows))
+
+    if plm_pixel_state.get('rect_id'):
+        plm_heatmap_canvas.delete(plm_pixel_state['rect_id'])
+
+    scale = plm_pixel_state['scale_factor']
+    ox = plm_pixel_state.get('_img_offset_x', 0)
+    oy = plm_pixel_state.get('_img_offset_y', 0)
+    x1 = ox + min(sx, ex) * scale
+    y1 = oy + min(sy, ey) * scale
+    x2 = ox + max(sx, ex) * scale
+    y2 = oy + max(sy, ey) * scale
+
+    plm_pixel_state['rect_id'] = plm_heatmap_canvas.create_rectangle(
+        x1, y1, x2, y2, outline='#FF1744', width=2, dash=(4, 2))
+
+    w, h = abs(ex - sx), abs(ey - sy)
+    plm_area_sel_label.config(text=f"  Auswahl: {w}×{h} = {w*h} Pixel", fg='#E65100' if w * h > 0 else '#999')
+
+def plm_canvas_release(event):
+    """Finalize rectangle selection"""
+    if plm_pixel_state.get('rect_start') is None:
+        return
+    px, py = _plm_canvas_to_pixel(event)
+    if px is None:
+        return
+
+    sx, sy = plm_pixel_state['rect_start']
+    max_w = min(plm_area_w_var.get(), 50)
+    max_h = min(plm_area_h_var.get(), 50)
+    ex, ey = px, py
+    if abs(ex - sx) > max_w:
+        ex = sx + max_w if ex > sx else sx - max_w
+    if abs(ey - sy) > max_h:
+        ey = sy + max_h if ey > sy else sy - max_h
+
+    matrix = plm_pixel_state['plm_matrix']
+    rows, cols = matrix.shape
+    ex = max(0, min(ex, cols))
+    ey = max(0, min(ey, rows))
+
+    x0, x1 = min(sx, ex), max(sx, ex)
+    y0, y1 = min(sy, ey), max(sy, ey)
+    plm_pixel_state['selection_x'] = x0
+    plm_pixel_state['selection_y'] = y0
+    plm_pixel_state['selection_w'] = x1 - x0
+    plm_pixel_state['selection_h'] = y1 - y0
+
+    w, h = x1 - x0, y1 - y0
+    if w > 0 and h > 0:
+        plm_area_sel_label.config(text=f"  ✅ ({x0},{y0})→({x1},{y1}) = {w}×{h} = {w*h} Pixel", fg='#2E7D32')
+    else:
+        plm_area_sel_label.config(text="  ⚠️ Kein Bereich — bitte erneut zeichnen", fg='#FF9800')
+
+plm_heatmap_canvas.bind("<ButtonPress-1>", plm_canvas_press)
+plm_heatmap_canvas.bind("<B1-Motion>", plm_canvas_drag)
+plm_heatmap_canvas.bind("<ButtonRelease-1>", plm_canvas_release)
+
+def run_plm_pixel_grr():
+    """Run pixel-level GRR on the selected rectangle across all loaded files.
+    If no area is defined (checkbox unchecked or no rectangle), uses center 50x50."""
+    sel_x = plm_pixel_state.get('selection_x', 0)
+    sel_y = plm_pixel_state.get('selection_y', 0)
+    sel_w = plm_pixel_state.get('selection_w', 0)
+    sel_h = plm_pixel_state.get('selection_h', 0)
+
+    # Fallback: if checkbox not set or no rectangle drawn → center 50×50
+    use_custom = plm_define_area_var.get() and sel_w > 0 and sel_h > 0
+    if not use_custom:
+        matrix = plm_pixel_state.get('plm_matrix')
+        if matrix is not None:
+            rows, cols = matrix.shape
+            sel_w = min(25, cols)
+            sel_h = min(25, rows)
+            sel_x = max(0, (cols - sel_w) // 2)
+            sel_y = max(0, (rows - sel_h) // 2)
+            print(f"[PLM Pixel GRR] Using CENTER fallback: ({sel_x},{sel_y}) {sel_w}×{sel_h}")
+        else:
+            plm_result_info_label.config(text="⚠️ Keine PLM-Matrix geladen — wähle zuerst ein Die", bg='#FFF3E0', fg='#E65100')
+            plm_pixel_notebook.select(2)
+            return
+
+    plm_type = plm_pixel_state.get('plm_type')
+    die_coord = plm_pixel_state.get('selected_die')
+    if not plm_type or not die_coord:
+        plm_result_info_label.config(text="⚠️ Kein Die/Typ", bg='#FFF3E0', fg='#E65100')
+        plm_pixel_notebook.select(2)
+        return
+
+    print(f"[PLM Pixel GRR] Die={die_coord}, Type={plm_type}, Region=({sel_x},{sel_y}) {sel_w}×{sel_h}")
+
+    file_pixel_values = []
+    file_labels = []
+    plm_ext = ('.txt', '.csv', '.dat', '.plm')
+
+    for file_idx, file_info in enumerate(grr_file_data):
+        pd_dir = file_info.get('plm_dir')
+        if not pd_dir or not os.path.isdir(pd_dir):
+            continue
+
+        plm_files = [f for f in os.listdir(pd_dir) if f.lower().endswith(plm_ext)]
+        matrix = None
+        for fname in plm_files:
+            coords = _extract_plm_die_coords(fname)
+            ftype = _extract_plm_type(fname)
+            if coords == die_coord and ftype and ftype.lower() == plm_type.lower():
+                matrix = load_plm_as_matrix(os.path.join(pd_dir, fname))
+                break
+
+        if matrix is None:
+            continue
+
+        rows, cols = matrix.shape
+        y_end = min(sel_y + sel_h, rows)
+        x_end = min(sel_x + sel_w, cols)
+        region = matrix[sel_y:y_end, sel_x:x_end]
+        vals = region.flatten()
+        if np.issubdtype(matrix.dtype, np.floating):
+            vals = vals[~np.isnan(vals)]
+
+        if len(vals) > 0:
+            file_pixel_values.append(vals)
+            fname_short = os.path.basename(file_info.get('path', f'File {file_idx}'))[:25]
+            file_labels.append(fname_short)
+
+    if len(file_pixel_values) < 2:
+        plm_result_info_label.config(
+            text=f"⚠️ Min. 2 Dateien mit PLM nötig (gefunden: {len(file_pixel_values)})",
+            bg='#FFF3E0', fg='#E65100')
+        plm_pixel_notebook.select(2)
+        return
+
+    min_len = min(len(v) for v in file_pixel_values)
+    aligned = np.array([v[:min_len] for v in file_pixel_values], dtype=float)
+    valid_mask = ~np.any(np.isnan(aligned), axis=0)
+    valid_data = aligned[:, valid_mask]
+
+    if valid_data.shape[1] == 0:
+        plm_result_info_label.config(text="⚠️ Keine gültigen Pixel", bg='#FFF3E0', fg='#E65100')
+        plm_pixel_notebook.select(2)
+        return
+
+    num_runs = valid_data.shape[0]
+    num_pixels = valid_data.shape[1]
+
+    overall_mean = np.nanmean(valid_data)
+    overall_std = np.nanstd(valid_data, ddof=1)
+    ranges_per_px = np.nanmax(valid_data, axis=0) - np.nanmin(valid_data, axis=0)
+    R_bar = np.nanmean(ranges_per_px)
+
+    d2_table = {2: 1.128, 3: 1.693, 4: 2.059, 5: 2.326, 6: 2.534, 7: 2.704, 8: 2.847}
+    d2 = d2_table.get(num_runs, 1.128 + 0.5 * (num_runs - 2))
+
+    grr_total = R_bar / d2
+    px_means = np.nanmean(valid_data, axis=0)
+    part_var = np.nanstd(px_means, ddof=1) if num_pixels > 1 else 0
+    total_var = np.sqrt(part_var**2 + grr_total**2)
+    if total_var == 0 or np.isnan(total_var):
+        total_var = overall_std if overall_std > 0 else 1e-10
+
+    run_means = np.nanmean(valid_data, axis=1)
+    reproducibility = np.nanstd(run_means, ddof=1) if num_runs > 1 else 0
+    repeatability = np.sqrt(max(0, grr_total**2 - reproducibility**2))
+
+    grr_pct = (grr_total / total_var * 100) if total_var > 0 else 0
+    rpt_pct = (repeatability / total_var * 100) if total_var > 0 else 0
+    rpd_pct = (reproducibility / total_var * 100) if total_var > 0 else 0
+    pv_pct = (part_var / total_var * 100) if total_var > 0 else 0
+    ndc = 1.41 * (part_var / grr_total) if grr_total > 0 else 0
+
+    if grr_pct < 10:
+        assessment, ac = "✅ EXCELLENT", "#4CAF50"
+    elif grr_pct < 30:
+        assessment, ac = "⚠️ ACCEPTABLE", "#FF9800"
+    else:
+        assessment, ac = "❌ UNACCEPTABLE", "#F44336"
+
+    plm_result_info_label.config(
+        text=(f"Die ({die_coord[0]},{die_coord[1]}) | {plm_type} | "
+              f"({sel_x},{sel_y})→({sel_x+sel_w},{sel_y+sel_h}) {sel_w}×{sel_h} | "
+              f"{num_runs} Files | {num_pixels} Px | %GRR={grr_pct:.1f}% {assessment}"),
+        bg='#E8F5E9', fg=ac)
+
+    txt = "=" * 90 + "\n"
+    txt += "         🔬 PIXEL-LEVEL GAGE R&R ANALYSIS\n"
+    txt += "=" * 90 + "\n\n"
+    txt += f"  PLM Type:          {plm_type}\n"
+    txt += f"  Die:               ({die_coord[0]}, {die_coord[1]})\n"
+    txt += f"  Region:            ({sel_x},{sel_y}) → ({sel_x+sel_w},{sel_y+sel_h})\n"
+    txt += f"  Size:              {sel_w}×{sel_h} = {sel_w*sel_h} Pixel\n"
+    txt += f"  Valid Pixels:      {num_pixels}\n"
+    txt += f"  Files:             {num_runs}\n\n"
+    txt += "PER-FILE STATISTICS:\n" + "-" * 50 + "\n"
+    for i, label in enumerate(file_labels):
+        fm = np.nanmean(valid_data[i])
+        fs = np.nanstd(valid_data[i], ddof=1)
+        txt += f"  {label:<25s}  Mean={fm:.4g}  Std={fs:.4g}\n"
+    txt += "\nGAGE R&R COMPONENTS:\n" + "-" * 50 + "\n"
+    txt += f"  R̄ (Avg Range):     {R_bar:.6g}\n"
+    txt += f"  d2 (r={num_runs}):           {d2:.3f}\n"
+    txt += f"  Repeatability:     {repeatability:.6g} ({rpt_pct:.2f}%)\n"
+    txt += f"  Reproducibility:   {reproducibility:.6g} ({rpd_pct:.2f}%)\n"
+    txt += f"  Total GRR:         {grr_total:.6g} ({grr_pct:.2f}%)\n"
+    txt += f"  Part Variation:    {part_var:.6g} ({pv_pct:.2f}%)\n"
+    txt += f"  Total Variation:   {total_var:.6g}\n\n"
+    txt += "ASSESSMENT:\n" + "=" * 50 + "\n"
+    txt += f"  %GRR:   {grr_pct:.2f}%\n  ndc:    {ndc:.2f}\n  Result: {assessment}\n"
+    txt += "=" * 50 + "\n"
+
+    plm_result_text.config(state='normal')
+    plm_result_text.delete('1.0', tk.END)
+    plm_result_text.insert('1.0', txt)
+    plm_result_text.config(state='disabled')
+
+    # Draw box plot
+    for w in plm_result_graph_frame.winfo_children():
+        w.destroy()
+    try:
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3))
+        fig.patch.set_facecolor('white')
+        fig.suptitle(f"PLM Pixel GRR: {plm_type} — Die ({die_coord[0]},{die_coord[1]})", fontsize=10, fontweight='bold')
+
+        ax1.boxplot([valid_data[i] for i in range(num_runs)], labels=[f"F{i+1}" for i in range(num_runs)])
+        ax1.set_title("Pixel-Werte pro File", fontsize=9)
+        ax1.set_ylabel("Pixel Value")
+        ax1.grid(True, alpha=0.3)
+
+        ax2.hist(ranges_per_px, bins=min(30, num_pixels // 2 + 1), color='#E65100', alpha=0.7, edgecolor='white')
+        ax2.axvline(R_bar, color='red', linestyle='--', linewidth=2, label=f'R̄={R_bar:.2f}')
+        ax2.set_title("Range-Verteilung (pro Pixel)", fontsize=9)
+        ax2.set_xlabel("Range")
+        ax2.legend(fontsize=8)
+        ax2.grid(True, alpha=0.3)
+
+        fig.tight_layout()
+        from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+        canvas = FigureCanvasTkAgg(fig, master=plm_result_graph_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    except Exception as e:
+        print(f"[PLM Pixel GRR] Graph error: {e}")
+
+    plm_pixel_notebook.select(2)
+
+plm_area_go_btn.config(command=run_plm_pixel_grr)
+
 
 # Function to update the data table with multiple parameters
 def update_grr_multi_param_table(all_param_results, file_names, die_coords):
@@ -18886,44 +20170,96 @@ def update_grr_multi_param_table(all_param_results, file_names, die_coords):
     print(f"[GRR Table] Added {row_count} rows to data table")
 
 def update_grr_summary_table(all_param_results):
-    """Update the summary statistics table for all parameters"""
+    """Update the summary statistics table for all parameters with limits"""
+    global current_language
     print(f"[GRR Summary] Updating summary table with {len(all_param_results)} parameters...")
 
     # Clear existing data
     for item in grr_die_table.get_children():
         grr_die_table.delete(item)
 
-    # Define columns for Gage R&R summary
+    # Get sigma factor for display
+    try:
+        sigma_factor = float(grr_sigma_factor_var.get()) if grr_limit_mode_var.get() == "auto_3sigma" else 3
+    except:
+        sigma_factor = 3
+
+    sigma_label = f"±{int(sigma_factor)}σ" if sigma_factor == int(sigma_factor) else f"±{sigma_factor}σ"
+    limit_mode = grr_limit_mode_var.get()
+
+    # Check calculation method
+    use_tolerance_method = grr_calc_mode_var.get() == "tolerance"
+    grr_label = "%GRR (Tol)" if use_tolerance_method else "%GRR"
+
+    # Define columns for Gage R&R summary with Limits
+    lsl_label = f"LSL ({sigma_label})" if limit_mode == "auto_3sigma" else "LSL (Manual)"
+    usl_label = f"USL ({sigma_label})" if limit_mode == "auto_3sigma" else "USL (Manual)"
+
     columns = ['Parameter', 'Mean', 'Std Dev', 'Min', 'Max', 'Range',
-               'Repeatability', 'Reproducibility', 'GRR Total', '%GRR', 'ndc', 'Assessment']
+               lsl_label, usl_label, 'Repeatability', 'Reproducibility',
+               'GRR Total', 'Part Var', 'Total Var', grr_label, 'ndc', 'Assessment']
     grr_die_table['columns'] = columns
 
     # Configure columns
-    col_widths = {'Parameter': 200, 'Mean': 90, 'Std Dev': 90, 'Min': 90, 'Max': 90,
-                  'Range': 90, 'Repeatability': 100, 'Reproducibility': 110,
-                  'GRR Total': 90, '%GRR': 80, 'ndc': 60, 'Assessment': 100}
+    col_widths = {'Parameter': 180, 'Mean': 75, 'Std Dev': 75, 'Min': 70, 'Max': 70,
+                  'Range': 70, lsl_label: 85, usl_label: 85,
+                  'Repeatability': 85, 'Reproducibility': 90,
+                  'GRR Total': 75, 'Part Var': 75, 'Total Var': 75, grr_label: 70, 'ndc': 50, 'Assessment': 100}
 
     for col in columns:
         grr_die_table.heading(col, text=col)
-        grr_die_table.column(col, width=col_widths.get(col, 80), anchor='center')
+        grr_die_table.column(col, width=col_widths.get(col, 75), anchor='center')
+
+    # Configure tags for color-coding
+    grr_die_table.tag_configure('excellent', background='#C8E6C9', foreground='#1B5E20')  # Green
+    grr_die_table.tag_configure('acceptable', background='#FFF9C4', foreground='#F57F17')  # Yellow
+    grr_die_table.tag_configure('unacceptable', background='#FFCDD2', foreground='#B71C1C')  # Red
 
     # Add row for each parameter
     for param, res in all_param_results.items():
+        # Calculate limits using the configured mode
+        mean_val = res['overall_mean']
+        std_val = res['overall_std']
+        lsl, usl = get_grr_limits(mean_val, std_val)
+
+        # Simplify parameter name for display
+        import re as re_mod
+        test_num_match = re_mod.search(r'_(\d{5,})$', str(param))
+        if test_num_match:
+            test_num = test_num_match.group(1)
+            simple_name = simplify_param_name(str(param))
+            display_param = f"test_{test_num}: {simple_name[:25]}"
+        else:
+            display_param = param[:40]
+
         row_data = [
-            param[:50],
+            display_param,
             f"{res['overall_mean']:.4g}",
             f"{res['overall_std']:.4g}",
             f"{res['overall_min']:.4g}",
             f"{res['overall_max']:.4g}",
             f"{res['range']:.4g}",
+            f"{lsl:.4g}" if lsl is not None else "N/A",
+            f"{usl:.4g}" if usl is not None else "N/A",
             f"{res['repeatability']:.4g}",
             f"{res['reproducibility']:.4g}",
             f"{res['grr_total']:.4g}",
-            f"{res['grr_percent']:.2f}%",
-            f"{res['ndc']:.2f}",
+            f"{res.get('part_variation', 0):.4g}",
+            f"{res['total_variation']:.4g}",
+            f"{res['grr_percent']:.1f}%",
+            f"{res['ndc']:.1f}",
             res['assessment']
         ]
-        grr_die_table.insert('', 'end', values=row_data)
+
+        # Determine tag based on assessment
+        if res['assessment'] == 'EXCELLENT':
+            tag = 'excellent'
+        elif res['assessment'] == 'ACCEPTABLE':
+            tag = 'acceptable'
+        else:
+            tag = 'unacceptable'
+
+        grr_die_table.insert('', 'end', values=row_data, tags=(tag,))
 
     print(f"[GRR Summary] Added {len(all_param_results)} rows to summary table")
 
@@ -18972,7 +20308,10 @@ def run_grr_analysis():
         print("[GRR Analysis] ERROR: Need at least 2 files!")
         return
 
-    if len(grr_selected_dies) < 1:
+    # Check if we have only pixel params (no dies needed for pixel analysis)
+    has_only_pixel_params = all(p.startswith('PLM_PIXEL_') for p in grr_selected_params)
+
+    if len(grr_selected_dies) < 1 and not has_only_pixel_params:
         grr_status_var.set("Error: Select at least 1 die for comparison")
         print("[GRR Analysis] ERROR: No dies selected! Click on wafermap to select dies.")
         return
@@ -18987,7 +20326,157 @@ def run_grr_analysis():
     params_not_found = []
     params_no_data = []
 
-    print(f"[GRR Analysis] Starting loop over {len(grr_selected_params)} parameters...")
+    # ========== SEPARATE PIXEL-LEVEL PLM PARAMS FROM NORMAL PARAMS ==========
+    normal_params = []
+    pixel_params = []
+    for p in grr_selected_params:
+        if p.startswith('PLM_PIXEL_'):
+            pixel_params.append(p)
+        else:
+            normal_params.append(p)
+
+    if pixel_params:
+        print(f"[GRR Analysis] Found {len(pixel_params)} pixel-level PLM params: {pixel_params}")
+
+    # ========== HANDLE PIXEL-LEVEL PLM ANALYSIS ==========
+    for pixel_param in pixel_params:
+        plm_type = pixel_param.replace('PLM_PIXEL_', '')
+        print(f"[GRR Pixel] Analyzing pixel-level data for PLM type: {plm_type}")
+
+        pixel_dfs = []
+        for file_idx, file_info in enumerate(grr_file_data):
+            plm_dir = file_info.get('plm_dir')
+            if not plm_dir:
+                print(f"[GRR Pixel] File {file_idx}: No plm_dir stored, skipping")
+                continue
+
+            pdf = _build_plm_pixel_dataframe(plm_dir, plm_type_filter=[plm_type])
+            if pdf is not None and plm_type in pdf.columns:
+                vals = pdf[plm_type].dropna().values
+                print(f"[GRR Pixel] File {file_idx}: {len(vals)} pixel values from {plm_dir}")
+                pixel_dfs.append(vals)
+            else:
+                print(f"[GRR Pixel] File {file_idx}: No pixel data for type '{plm_type}'")
+
+        if len(pixel_dfs) < 2:
+            print(f"[GRR Pixel] Need at least 2 files with pixel data, got {len(pixel_dfs)}")
+            params_not_found.append(pixel_param)
+            continue
+
+        # Align arrays to same length (minimum across files)
+        min_len = min(len(v) for v in pixel_dfs)
+        if min_len == 0:
+            print(f"[GRR Pixel] No pixel values found for '{plm_type}'")
+            params_no_data.append(pixel_param)
+            continue
+
+        # Truncate all to same length and stack: (num_files, num_pixels)
+        aligned = np.array([v[:min_len] for v in pixel_dfs], dtype=float)
+        print(f"[GRR Pixel] Aligned data shape: {aligned.shape} ({aligned.shape[0]} files x {aligned.shape[1]} pixels)")
+
+        # Subsample if too many pixels (>10000) for performance
+        if aligned.shape[1] > 10000:
+            sample_indices = np.random.choice(aligned.shape[1], 10000, replace=False)
+            sample_indices.sort()
+            aligned = aligned[:, sample_indices]
+            print(f"[GRR Pixel] Subsampled to {aligned.shape[1]} pixels for performance")
+
+        valid_data = aligned[:, ~np.any(np.isnan(aligned), axis=0)]
+        if valid_data.shape[1] == 0:
+            print(f"[GRR Pixel] All pixels have NaN in at least one file")
+            params_no_data.append(pixel_param)
+            continue
+
+        num_runs = valid_data.shape[0]
+        num_parts = valid_data.shape[1]
+        print(f"[GRR Pixel] Valid data: {num_runs} runs x {num_parts} pixels")
+
+        overall_mean = np.nanmean(valid_data)
+        overall_std = np.nanstd(valid_data, ddof=1)
+
+        # Range-based GRR estimation (same as normal params)
+        ranges_per_part = np.nanmax(valid_data, axis=0) - np.nanmin(valid_data, axis=0)
+        R_bar = np.nanmean(ranges_per_part)
+
+        d2_table = {2: 1.128, 3: 1.693, 4: 2.059, 5: 2.326, 6: 2.534, 7: 2.704, 8: 2.847, 9: 2.970, 10: 3.078}
+        d2 = d2_table.get(num_runs, 1.128 + 0.5 * (num_runs - 2))
+
+        grr_total = R_bar / d2
+
+        part_means = np.nanmean(valid_data, axis=0)
+        part_variation = np.nanstd(part_means, ddof=1) if num_parts > 1 else 0
+
+        total_variation = np.sqrt(part_variation**2 + grr_total**2)
+        if total_variation == 0 or np.isnan(total_variation):
+            total_variation = overall_std if overall_std > 0 else 1e-10
+
+        run_means = np.nanmean(valid_data, axis=1)
+        reproducibility = np.nanstd(run_means, ddof=1) if num_runs > 1 else 0
+
+        repeatability_sq = grr_total**2 - reproducibility**2
+        repeatability = np.sqrt(max(0, repeatability_sq))
+
+        use_tolerance_method = grr_calc_mode_var.get() == "tolerance"
+        if use_tolerance_method:
+            lsl, usl = get_grr_limits(overall_mean, overall_std)
+            if lsl is not None and usl is not None and usl > lsl:
+                tolerance = usl - lsl
+                grr_percent = (grr_total / tolerance * 100) if tolerance > 0 else 0
+            else:
+                grr_percent = (grr_total / total_variation * 100) if total_variation > 0 else 0
+        else:
+            grr_percent = (grr_total / total_variation * 100) if total_variation > 0 else 0
+
+        repeatability_percent = (repeatability / total_variation * 100) if total_variation > 0 else 0
+        reproducibility_percent = (reproducibility / total_variation * 100) if total_variation > 0 else 0
+        part_variation_percent = (part_variation / total_variation * 100) if total_variation > 0 else 0
+
+        try:
+            _use_tv_ndc = grr_ndc_use_tv_var.get()
+        except:
+            _use_tv_ndc = False
+        if _use_tv_ndc:
+            ndc = 1.41 * (total_variation / grr_total) if grr_total > 0 else 0
+        else:
+            ndc = 1.41 * (part_variation / grr_total) if grr_total > 0 else 0
+
+        if grr_percent < 10:
+            assessment = "EXCELLENT"
+        elif grr_percent < 30:
+            assessment = "ACCEPTABLE"
+        else:
+            assessment = "UNACCEPTABLE"
+
+        display_name = f"🔬 {plm_type} (Pixel)"
+        print(f"[GRR Pixel] {plm_type}: %GRR={grr_percent:.1f}%, ndc={ndc:.2f}, {assessment}")
+
+        all_param_results[display_name] = {
+            'comparison_data': [v[:min_len].tolist() for v in pixel_dfs],
+            'valid_data': valid_data,
+            'overall_mean': overall_mean,
+            'overall_std': overall_std,
+            'overall_min': np.nanmin(valid_data),
+            'overall_max': np.nanmax(valid_data),
+            'range': np.nanmax(valid_data) - np.nanmin(valid_data),
+            'repeatability': repeatability,
+            'reproducibility': reproducibility,
+            'grr_total': grr_total,
+            'total_variation': total_variation,
+            'part_variation': part_variation,
+            'grr_percent': grr_percent,
+            'repeatability_percent': repeatability_percent,
+            'reproducibility_percent': reproducibility_percent,
+            'part_variation_percent': part_variation_percent,
+            'ndc': ndc,
+            'assessment': assessment,
+            'file_means': run_means,
+            'die_means': part_means[:min(20, len(part_means))],
+            'is_pixel_analysis': True,
+            'pixel_count': num_parts,
+            'plm_type': plm_type,
+        }
+
+    print(f"[GRR Analysis] Starting loop over {len(normal_params)} normal parameters...")
 
     # DEBUG: Check first die data in first file
     if grr_file_data and grr_selected_dies and grr_selected_params:
@@ -19014,7 +20503,10 @@ def run_grr_analysis():
                     similar = [c for c in df.columns if first_param[:20].lower() in c.lower()][:5]
                     print(f"[GRR DEBUG] Similar columns: {similar}")
 
-    for param_idx, param in enumerate(grr_selected_params):
+    for param_idx, param in enumerate(normal_params):
+        # Skip pixel params - already handled above
+        if param.startswith('PLM_PIXEL_'):
+            continue
         # Extract data for selected dies from all files for this parameter
         comparison_data = []
         param_found_in_any_file = False
@@ -19095,38 +20587,115 @@ def run_grr_analysis():
                 print(f"[GRR Analysis] WARNING: Using partial data for '{param[:30]}' (only some files have valid values)")
 
         if valid_data.size > 0 and valid_data.shape[1] > 0:
-            # Calculate repeatability and reproducibility
+            # valid_data shape: (num_files, num_dies)
+            # Rows = files/runs, Columns = dies/parts
             print(f"[GRR Analysis] Param '{param[:30]}': valid_data shape={valid_data.shape}")
 
             overall_mean = np.nanmean(valid_data)
-            overall_std = np.nanstd(valid_data)
+            overall_std = np.nanstd(valid_data, ddof=1)  # Sample std
 
-            # Between-file variation (reproducibility)
-            file_means = np.nanmean(valid_data, axis=1)
-            reproducibility = np.std(file_means)
+            # ============ GAGE R&R CALCULATION (AIAG MSA Method) ============
+            #
+            # Setup: r runs (files), n parts (dies), 1 measurement per part per run
+            #
+            # GRR = Measurement system variation (Repeatability + Reproducibility)
+            # Part Variation (PV) = True variation between parts
+            # Total Variation (TV) = sqrt(PV² + GRR²)
+            #
+            # With only 1 measurement per part per run, we cannot separate
+            # Repeatability from Reproducibility, so we estimate combined GRR.
 
-            # Within-file variation (repeatability)
-            repeatability = np.mean([np.nanstd(row) for row in valid_data])
+            num_runs = valid_data.shape[0]  # r = number of runs/files
+            num_parts = valid_data.shape[1]  # n = number of parts/dies
 
-            # Total GRR
-            grr_total = np.sqrt(repeatability**2 + reproducibility**2)
+            # ---- Method: Range-based estimation (better for small samples) ----
 
-            # Calculate additional metrics
-            total_variation = overall_std
-            grr_percent = (grr_total / total_variation * 100) if total_variation > 0 else 0
+            # For each part (die), calculate the RANGE across runs
+            # Range = Max - Min for each die across all runs
+            ranges_per_part = np.nanmax(valid_data, axis=0) - np.nanmin(valid_data, axis=0)
+            R_bar = np.nanmean(ranges_per_part)  # Average range
+
+            # d2 factor for converting range to std (depends on number of runs)
+            # d2 values: r=2: 1.128, r=3: 1.693, r=4: 2.059, r=5: 2.326, r=6: 2.534
+            d2_table = {2: 1.128, 3: 1.693, 4: 2.059, 5: 2.326, 6: 2.534, 7: 2.704, 8: 2.847, 9: 2.970, 10: 3.078}
+            d2 = d2_table.get(num_runs, 1.128 + 0.5 * (num_runs - 2))  # Approximation for larger r
+
+            # GRR estimated from average range
+            grr_total = R_bar / d2
+
+            # ---- Part Variation ----
+            # Calculate mean value for each part, then std of those means
+            part_means = np.nanmean(valid_data, axis=0)  # shape: (num_parts,)
+
+            # Part variation using sample std
+            part_variation = np.nanstd(part_means, ddof=1) if num_parts > 1 else 0
+
+            # Note: With only 2 runs, we cannot properly separate part variation
+            # from measurement variation. The part_means contain both true part
+            # differences AND measurement error. We use the simple approach here.
+
+            # ---- Total Variation ----
+            total_variation = np.sqrt(part_variation**2 + grr_total**2)
+
+            # Fallback if total_variation is 0
+            if total_variation == 0 or np.isnan(total_variation):
+                total_variation = overall_std if overall_std > 0 else 1e-10
+
+            # ---- Reproducibility and Repeatability (approximation) ----
+            # Reproducibility: variation between run means
+            run_means = np.nanmean(valid_data, axis=1)  # mean per run
+            reproducibility = np.nanstd(run_means, ddof=1) if num_runs > 1 else 0
+
+            # Repeatability: GRR minus reproducibility component
+            repeatability_sq = grr_total**2 - reproducibility**2
+            repeatability = np.sqrt(max(0, repeatability_sq))
+
+            # ---- Percentages ----
+            # Check which %GRR calculation method is selected
+            use_tolerance_method = grr_calc_mode_var.get() == "tolerance"
+
+            if use_tolerance_method:
+                # Calculate tolerance from LSL/USL
+                lsl, usl = get_grr_limits(overall_mean, overall_std)
+                if lsl is not None and usl is not None and usl > lsl:
+                    tolerance = usl - lsl
+                    grr_percent = (grr_total / tolerance * 100) if tolerance > 0 else 0
+                else:
+                    # Fallback to total variation if no valid limits
+                    grr_percent = (grr_total / total_variation * 100) if total_variation > 0 else 0
+            else:
+                # Standard method: %GRR = GRR / Total Variation
+                grr_percent = (grr_total / total_variation * 100) if total_variation > 0 else 0
+
             repeatability_percent = (repeatability / total_variation * 100) if total_variation > 0 else 0
             reproducibility_percent = (reproducibility / total_variation * 100) if total_variation > 0 else 0
+            part_variation_percent = (part_variation / total_variation * 100) if total_variation > 0 else 0
 
-            # Number of distinct categories (ndc)
-            ndc = 1.41 * (total_variation / grr_total) if grr_total > 0 else 0
+            # ---- Number of Distinct Categories (ndc) ----
+            # ndc = 1.41 × (Part Variation / GRR) or 1.41 × (Total Variation / GRR)
+            try:
+                _use_tv_ndc = grr_ndc_use_tv_var.get()
+            except:
+                _use_tv_ndc = False
+            if _use_tv_ndc:
+                ndc = 1.41 * (total_variation / grr_total) if grr_total > 0 else 0
+            else:
+                ndc = 1.41 * (part_variation / grr_total) if grr_total > 0 else 0
 
-            # Assessment
+            # ---- Assessment based on %GRR ----
             if grr_percent < 10:
                 assessment = "EXCELLENT"
             elif grr_percent < 30:
                 assessment = "ACCEPTABLE"
             else:
                 assessment = "UNACCEPTABLE"
+
+            # Debug output for first few parameters
+            if param_idx < 3:
+                print(f"[GRR Calc] {param[:40]}")
+                print(f"  Ranges per part: {ranges_per_part}, R_bar: {R_bar:.6f}, d2: {d2}")
+                print(f"  GRR Total: {grr_total:.6f}, Part Var: {part_variation:.6f}, Total Var: {total_variation:.6f}")
+                print(f"  %GRR: {grr_percent:.1f}%, ndc: {ndc:.2f}, Assessment: {assessment} (ndc uses {'TV' if _use_tv_ndc else 'PV'})")
 
             all_param_results[param] = {
                 'comparison_data': comparison_data,
@@ -19140,12 +20709,15 @@ def run_grr_analysis():
                 'reproducibility': reproducibility,
                 'grr_total': grr_total,
                 'total_variation': total_variation,
+                'part_variation': part_variation,
                 'grr_percent': grr_percent,
                 'repeatability_percent': repeatability_percent,
                 'reproducibility_percent': reproducibility_percent,
+                'part_variation_percent': part_variation_percent,
                 'ndc': ndc,
                 'assessment': assessment,
-                'file_means': file_means
+                'file_means': run_means,
+                'die_means': part_means
             }
         else:
             # No valid data for this parameter
@@ -19223,6 +20795,8 @@ def run_grr_analysis():
     for param, res in all_param_results.items():
         results_text += f"\n{'='*80}\n"
         results_text += f"PARAMETER: {param}\n"
+        if res.get('is_pixel_analysis'):
+            results_text += f"  [PIXEL-LEVEL ANALYSIS: {res.get('pixel_count', '?')} Pixel, PLM Type: {res.get('plm_type', '?')}]\n"
         results_text += f"{'='*80}\n\n"
 
         results_text += "DESCRIPTIVE STATISTICS:\n"
@@ -19275,6 +20849,263 @@ def run_grr_analysis():
     # Switch to Data Table tab to show results
     grr_results_notebook.select(1)
 
+
+def run_grr_analysis_for_params(param_list):
+    """Run Gage R&R analysis for a specific list of parameter column names.
+    Returns a dict of {param: result_dict} - reusable from Report tab.
+    Uses the globally loaded grr_file_data and grr_selected_dies.
+    Also handles PLM_PIXEL_* params for pixel-level analysis."""
+    global grr_file_data, grr_selected_dies
+
+    if len(grr_file_data) < 2 or not param_list:
+        return {}
+
+    # Separate pixel params from normal params
+    normal_params = [p for p in param_list if not p.startswith('PLM_PIXEL_')]
+    pixel_params = [p for p in param_list if p.startswith('PLM_PIXEL_')]
+
+    results = {}
+
+    # ── Handle pixel-level PLM params ──
+    for pixel_param in pixel_params:
+        plm_type = pixel_param.replace('PLM_PIXEL_', '')
+        # Determine pixel region: use plm_pixel_state if available, else center 25x25
+        try:
+            use_custom = plm_define_area_var.get() and plm_pixel_state.get('selection_w', 0) > 0
+        except:
+            use_custom = False
+
+        file_pixel_values = []
+        plm_ext = ('.txt', '.csv', '.dat', '.plm')
+        pixel_size_w, pixel_size_h = 25, 25
+
+        for file_info in grr_file_data:
+            pd_dir = file_info.get('plm_dir')
+            if not pd_dir or not os.path.isdir(pd_dir):
+                continue
+            plm_files = [f for f in os.listdir(pd_dir) if f.lower().endswith(plm_ext)]
+
+            # Pick first die that has this PLM type
+            for fname in plm_files:
+                ftype = _extract_plm_type(fname)
+                if ftype and ftype.lower() == plm_type.lower():
+                    matrix = load_plm_as_matrix(os.path.join(pd_dir, fname))
+                    if matrix is not None and matrix.size > 0:
+                        rows, cols = matrix.shape
+                        if use_custom:
+                            sx = plm_pixel_state.get('selection_x', 0)
+                            sy = plm_pixel_state.get('selection_y', 0)
+                            sw = plm_pixel_state.get('selection_w', 25)
+                            sh = plm_pixel_state.get('selection_h', 25)
+                        else:
+                            sw = min(25, cols)
+                            sh = min(25, rows)
+                            sx = max(0, (cols - sw) // 2)
+                            sy = max(0, (rows - sh) // 2)
+
+                        pixel_size_w, pixel_size_h = sw, sh
+                        region = matrix[sy:min(sy+sh, rows), sx:min(sx+sw, cols)]
+                        vals = region.flatten()
+                        if np.issubdtype(matrix.dtype, np.floating):
+                            vals = vals[~np.isnan(vals)]
+                        if len(vals) > 0:
+                            file_pixel_values.append(vals)
+                    break
+
+        if len(file_pixel_values) < 2:
+            continue
+
+        min_len = min(len(v) for v in file_pixel_values)
+        if min_len == 0:
+            continue
+        aligned = np.array([v[:min_len] for v in file_pixel_values], dtype=float)
+        valid_mask = ~np.any(np.isnan(aligned), axis=0)
+        valid_data = aligned[:, valid_mask]
+        if valid_data.shape[1] == 0:
+            continue
+
+        num_runs = valid_data.shape[0]
+        num_parts = valid_data.shape[1]
+        overall_mean = np.nanmean(valid_data)
+        overall_std = np.nanstd(valid_data, ddof=1)
+        ranges_pp = np.nanmax(valid_data, axis=0) - np.nanmin(valid_data, axis=0)
+        R_bar = np.nanmean(ranges_pp)
+        d2_table = {2: 1.128, 3: 1.693, 4: 2.059, 5: 2.326, 6: 2.534, 7: 2.704}
+        d2 = d2_table.get(num_runs, 1.128 + 0.5 * (num_runs - 2))
+        grr_total = R_bar / d2
+        px_means = np.nanmean(valid_data, axis=0)
+        part_var = np.nanstd(px_means, ddof=1) if num_parts > 1 else 0
+        total_var = np.sqrt(part_var**2 + grr_total**2)
+        if total_var == 0 or np.isnan(total_var):
+            total_var = overall_std if overall_std > 0 else 1e-10
+        run_means = np.nanmean(valid_data, axis=1)
+        reproducibility = np.nanstd(run_means, ddof=1) if num_runs > 1 else 0
+        repeatability = np.sqrt(max(0, grr_total**2 - reproducibility**2))
+        grr_pct = (grr_total / total_var * 100) if total_var > 0 else 0
+        rpt_pct = (repeatability / total_var * 100) if total_var > 0 else 0
+        rpd_pct = (reproducibility / total_var * 100) if total_var > 0 else 0
+        pv_pct = (part_var / total_var * 100) if total_var > 0 else 0
+        ndc = 1.41 * (part_var / grr_total) if grr_total > 0 else 0
+
+        if grr_pct < 10:
+            assessment = "EXCELLENT"
+        elif grr_pct < 30:
+            assessment = "ACCEPTABLE"
+        else:
+            assessment = "UNACCEPTABLE"
+
+        display_name = f"🔬 {plm_type} (Pixel {pixel_size_w}×{pixel_size_h})"
+        results[display_name] = {
+            'comparison_data': [v[:min_len].tolist() for v in file_pixel_values],
+            'valid_data': valid_data,
+            'overall_mean': overall_mean, 'overall_std': overall_std,
+            'overall_min': np.nanmin(valid_data), 'overall_max': np.nanmax(valid_data),
+            'range': np.nanmax(valid_data) - np.nanmin(valid_data),
+            'repeatability': repeatability, 'reproducibility': reproducibility,
+            'grr_total': grr_total, 'total_variation': total_var, 'part_variation': part_var,
+            'grr_percent': grr_pct, 'repeatability_percent': rpt_pct,
+            'reproducibility_percent': rpd_pct, 'part_variation_percent': pv_pct,
+            'ndc': ndc, 'assessment': assessment,
+            'file_means': run_means, 'die_means': px_means[:min(20, len(px_means))],
+            'is_pixel_analysis': True, 'pixel_size': f"{pixel_size_w}×{pixel_size_h}",
+            'plm_type': plm_type,
+        }
+
+    # ── Handle normal params (need dies) ──
+    if len(grr_selected_dies) < 1:
+        return results
+
+    for param in normal_params:
+        comparison_data = []
+        param_found = False
+
+        for file_info in grr_file_data:
+            file_values = []
+            for die_coord in grr_selected_dies:
+                x, y = die_coord
+                if file_info['type'] in ('stdf', 'csv_wafermap'):
+                    df = file_info['data']
+                    param_col = 'bin' if param == 'BIN' else param
+                    if param_col in df.columns:
+                        param_found = True
+                        die_data = df[(df['x'] == x) & (df['y'] == y)]
+                        file_values.append(die_data[param_col].values[0] if len(die_data) > 0 else np.nan)
+                    else:
+                        matching = [c for c in df.columns if c.lower() == param_col.lower()]
+                        if matching:
+                            param_found = True
+                            die_data = df[(df['x'] == x) & (df['y'] == y)]
+                            file_values.append(die_data[matching[0]].values[0] if len(die_data) > 0 else np.nan)
+                        else:
+                            file_values.append(np.nan)
+                else:
+                    data = file_info['data']
+                    if hasattr(data, 'shape') and x < data.shape[0] and y < data.shape[1]:
+                        param_found = True
+                        file_values.append(data[x, y])
+                    else:
+                        file_values.append(np.nan)
+            comparison_data.append(file_values)
+
+        if not param_found:
+            continue
+
+        comparison_array = np.array(comparison_data, dtype=float)
+        valid_count_per_die = np.sum(~np.isnan(comparison_array), axis=0)
+        min_files_required = min(2, len(grr_file_data))
+        valid_cols = valid_count_per_die >= min_files_required
+        valid_data = comparison_array[:, valid_cols]
+
+        if valid_data.size == 0 or valid_data.shape[1] == 0:
+            valid_cols = valid_count_per_die >= 1
+            valid_data = comparison_array[:, valid_cols]
+
+        if valid_data.size == 0 or valid_data.shape[1] == 0:
+            continue
+
+        overall_mean = np.nanmean(valid_data)
+        overall_std = np.nanstd(valid_data, ddof=1)
+        num_runs = valid_data.shape[0]
+        num_parts = valid_data.shape[1]
+
+        ranges_per_part = np.nanmax(valid_data, axis=0) - np.nanmin(valid_data, axis=0)
+        R_bar = np.nanmean(ranges_per_part)
+
+        d2_table = {2: 1.128, 3: 1.693, 4: 2.059, 5: 2.326, 6: 2.534, 7: 2.704, 8: 2.847, 9: 2.970, 10: 3.078}
+        d2 = d2_table.get(num_runs, 1.128 + 0.5 * (num_runs - 2))
+
+        grr_total = R_bar / d2
+        part_means = np.nanmean(valid_data, axis=0)
+        part_variation = np.nanstd(part_means, ddof=1) if num_parts > 1 else 0
+        total_variation = np.sqrt(part_variation**2 + grr_total**2)
+
+        if total_variation == 0 or np.isnan(total_variation):
+            total_variation = overall_std if overall_std > 0 else 1e-10
+
+        run_means = np.nanmean(valid_data, axis=1)
+        reproducibility = np.nanstd(run_means, ddof=1) if num_runs > 1 else 0
+        repeatability = np.sqrt(max(0, grr_total**2 - reproducibility**2))
+
+        try:
+            use_tolerance = grr_calc_mode_var.get() == "tolerance"
+        except:
+            use_tolerance = False
+
+        if use_tolerance:
+            lsl, usl = get_grr_limits(overall_mean, overall_std)
+            if lsl is not None and usl is not None and usl > lsl:
+                tolerance = usl - lsl
+                grr_percent = (grr_total / tolerance * 100) if tolerance > 0 else 0
+            else:
+                grr_percent = (grr_total / total_variation * 100) if total_variation > 0 else 0
+        else:
+            grr_percent = (grr_total / total_variation * 100) if total_variation > 0 else 0
+
+        repeatability_percent = (repeatability / total_variation * 100) if total_variation > 0 else 0
+        reproducibility_percent = (reproducibility / total_variation * 100) if total_variation > 0 else 0
+        part_variation_percent = (part_variation / total_variation * 100) if total_variation > 0 else 0
+
+        try:
+            _use_tv_ndc = grr_ndc_use_tv_var.get()
+        except:
+            _use_tv_ndc = False
+        if _use_tv_ndc:
+            ndc = 1.41 * (total_variation / grr_total) if grr_total > 0 else 0
+        else:
+            ndc = 1.41 * (part_variation / grr_total) if grr_total > 0 else 0
+
+        if grr_percent < 10:
+            assessment = "EXCELLENT"
+        elif grr_percent < 30:
+            assessment = "ACCEPTABLE"
+        else:
+            assessment = "UNACCEPTABLE"
+
+        results[param] = {
+            'comparison_data': comparison_data,
+            'valid_data': valid_data,
+            'overall_mean': overall_mean,
+            'overall_std': overall_std,
+            'overall_min': np.nanmin(valid_data),
+            'overall_max': np.nanmax(valid_data),
+            'range': np.nanmax(valid_data) - np.nanmin(valid_data),
+            'repeatability': repeatability,
+            'reproducibility': reproducibility,
+            'grr_total': grr_total,
+            'total_variation': total_variation,
+            'part_variation': part_variation,
+            'grr_percent': grr_percent,
+            'repeatability_percent': repeatability_percent,
+            'reproducibility_percent': reproducibility_percent,
+            'part_variation_percent': part_variation_percent,
+            'ndc': ndc,
+            'assessment': assessment,
+            'file_means': run_means,
+            'die_means': part_means
+        }
+
+    return results
+
 grr_analyze_btn = tk.Button(
     grr_buttons_frame,
     text="🔬 Run Gage R&R Analysis",
@@ -19286,6 +21117,475 @@ grr_analyze_btn = tk.Button(
     pady=5
 )
 grr_analyze_btn.pack(side=tk.LEFT, padx=10)
+
+# Help button to explain Gage R&R workflow, parameters and PLM integration
+def show_grr_help():
+    """Show comprehensive help dialog for Gage R&R tab - workflow, PLM, parameters - supports EN/DE"""
+    global current_language
+
+    is_german = current_language == "de"
+
+    help_win = tk.Toplevel(main_win)
+    help_win.title("Gage R&R - Hilfe & Anleitung" if is_german else "Gage R&R - Help & Guide")
+    help_win.geometry("850x800")
+    help_win.transient(main_win)
+    help_win.attributes('-topmost', True)
+
+    # Title
+    title_text = "📊 Gage R&R - Hilfe & Anleitung" if is_german else "📊 Gage R&R - Help & Guide"
+    tk.Label(help_win, text=title_text,
+             font=("Helvetica", 14, "bold"), fg="#1976D2").pack(pady=10)
+
+    # Navigation buttons frame
+    nav_frame = tk.Frame(help_win, bg='#E3F2FD')
+    nav_frame.pack(fill=tk.X, padx=15, pady=(0, 5))
+
+    # Create scrollable text area
+    help_frame = tk.Frame(help_win)
+    help_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=5)
+
+    help_scroll = ttk.Scrollbar(help_frame)
+    help_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+    help_text = tk.Text(help_frame, wrap=tk.WORD, font=("Helvetica", 10),
+                       yscrollcommand=help_scroll.set, padx=10, pady=10)
+    help_text.pack(fill=tk.BOTH, expand=True)
+    help_scroll.config(command=help_text.yview)
+
+    # Configure tags for formatting
+    help_text.tag_configure('title', font=("Helvetica", 13, "bold"), foreground="#1976D2")
+    help_text.tag_configure('subtitle', font=("Helvetica", 11, "bold"), foreground="#388E3C")
+    help_text.tag_configure('param', font=("Helvetica", 10, "bold"), foreground="#D32F2F")
+    help_text.tag_configure('formula', font=("Consolas", 10), foreground="#7B1FA2", background="#F3E5F5")
+    help_text.tag_configure('note', font=("Helvetica", 9, "italic"), foreground="#666666")
+    help_text.tag_configure('step', font=("Helvetica", 10, "bold"), foreground="#E65100")
+    help_text.tag_configure('tip', font=("Helvetica", 10, "italic"), foreground="#1565C0", background="#E3F2FD")
+    help_text.tag_configure('section_marker', font=("Helvetica", 1), foreground="#FFFFFF")
+
+    # Section anchors for navigation
+    section_marks = {}
+
+    def scroll_to_section(mark_name):
+        if mark_name in section_marks:
+            help_text.see(section_marks[mark_name])
+
+    if is_german:
+        # ==================== GERMAN VERSION ====================
+
+        # --- SECTION 1: QUICK START ---
+        section_marks['quickstart'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n🚀 SCHNELLANLEITUNG\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "Gage R&R (Repeatability & Reproducibility) prüft,\n")
+        help_text.insert(tk.END, "wie zuverlässig ein Messsystem arbeitet.\n")
+        help_text.insert(tk.END, "Dafür werden mehrere Messungen verglichen.\n\n")
+
+        help_text.insert(tk.END, "GRUNDPRINZIP:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  • Mehrere Dateien (= Messwiederholungen) laden\n")
+        help_text.insert(tk.END, "  • Gleiche Dies/Positionen über alle Dateien vergleichen\n")
+        help_text.insert(tk.END, "  • Variation innerhalb (Repeatability) und zwischen\n")
+        help_text.insert(tk.END, "    (Reproducibility) den Messungen auswerten\n\n")
+
+        # --- SECTION 2: WORKFLOW CSV/STDF ---
+        section_marks['csv_stdf'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n📁 WORKFLOW: CSV / STDF DATEIEN\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "Schritt 1 — Dateityp & Anzahl wählen:\n", 'step')
+        help_text.insert(tk.END, "  • \"File Type\" auf CSV oder STDF setzen\n")
+        help_text.insert(tk.END, "  • \"# Files\" = Anzahl der Messdurchläufe (z.B. 3)\n")
+        help_text.insert(tk.END, "  • \"# Dies\" = Anzahl zu vergleichender Dies (z.B. 10)\n\n")
+
+        help_text.insert(tk.END, "Schritt 2 — Dateien laden:\n", 'step')
+        help_text.insert(tk.END, "  • \"Load Files\" klicken\n")
+        help_text.insert(tk.END, "  • Für jede Datei öffnet sich ein Datei-Dialog\n")
+        help_text.insert(tk.END, "  • Wafermaps werden automatisch angezeigt\n\n")
+
+        help_text.insert(tk.END, "💡 Tipp: PLM-Automatik\n", 'tip')
+        help_text.insert(tk.END, "  Wenn Ihr Ordner einen PLMFiles/ Unterordner enthält,\n", 'tip')
+        help_text.insert(tk.END, "  werden PLM-Statistiken (Mean, Median, Std, etc.) automatisch\n", 'tip')
+        help_text.insert(tk.END, "  als zusätzliche Parameter hinzugefügt!\n\n", 'tip')
+
+        help_text.insert(tk.END, "Schritt 3 — Parameter auswählen:\n", 'step')
+        help_text.insert(tk.END, "  • \"Select Parameters\" klicken\n")
+        help_text.insert(tk.END, "  • Parameter-Gruppen oder Einzel-Parameter anwählen\n")
+        help_text.insert(tk.END, "  • Ggf. auch PLM-Parameter (PLM_*_mean etc.) wählen\n\n")
+
+        help_text.insert(tk.END, "Schritt 4 — Dies auswählen:\n", 'step')
+        help_text.insert(tk.END, "  • \"Auto-Select Dies\" für automatische Auswahl\n")
+        help_text.insert(tk.END, "    (wählt Dies mit gültigen Daten in allen Dateien)\n")
+        help_text.insert(tk.END, "  • Oder manuell: In jeder Wafermap auf Dies klicken\n")
+        help_text.insert(tk.END, "  • Ausgewählte Dies werden rot umrandet dargestellt\n\n")
+
+        help_text.insert(tk.END, "Schritt 5 — Analyse starten:\n", 'step')
+        help_text.insert(tk.END, "  • \"Run Gage R&R Analysis\" klicken\n")
+        help_text.insert(tk.END, "  • Ergebnistabelle und Diagramme werden angezeigt\n")
+        help_text.insert(tk.END, "  • Bewertung: 🟢 <10% | 🟡 10-30% | 🔴 >30%\n\n")
+
+        # --- SECTION 3: WORKFLOW PLM ---
+        section_marks['plm'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n🔬 WORKFLOW: PLM DATEIEN\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "PLM-Dateien enthalten Luminanz-Matrizen pro Die.\n")
+        help_text.insert(tk.END, "Es gibt zwei Methoden, PLM-Daten zu analysieren:\n\n")
+
+        help_text.insert(tk.END, "METHODE A — PLM als eigene Datei laden:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  1. File Type auf \"PLM\" setzen\n")
+        help_text.insert(tk.END, "  2. # Files = Anzahl PLM-Ordner (Messwiederholungen)\n")
+        help_text.insert(tk.END, "  3. \"Load Files\" klicken\n")
+        help_text.insert(tk.END, "  4. PLM-Typ Dialog: Gewünschte Typen auswählen\n")
+        help_text.insert(tk.END, "     (z.B. CheckerSyn, UniformitySyn, etc.)\n")
+        help_text.insert(tk.END, "  5. Modus wählen:\n")
+        help_text.insert(tk.END, "     • Statistik-Modus: Pro Die → Mean, Median, Std, Min, Max\n")
+        help_text.insert(tk.END, "     • Pixel-Modus: Jeder Pixel als einzelner Messpunkt\n")
+        help_text.insert(tk.END, "  6. Für jeden Durchlauf einen PLM-Ordner wählen\n")
+        help_text.insert(tk.END, "  7. Weiter mit Parameter-Auswahl und Analyse\n\n")
+
+        help_text.insert(tk.END, "METHODE B — PLM automatisch zu CSV/STDF hinzufügen:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  1. CSV oder STDF wie gewohnt laden\n")
+        help_text.insert(tk.END, "  2. Das Tool sucht automatisch nach einem PLMFiles/\n")
+        help_text.insert(tk.END, "     Unterordner im gleichen Verzeichnis\n")
+        help_text.insert(tk.END, "  3. Wenn gefunden: PLM-Statistiken werden automatisch\n")
+        help_text.insert(tk.END, "     als neue Spalten hinzugefügt (PLM_*_mean, etc.)\n")
+        help_text.insert(tk.END, "  4. Diese erscheinen als eigene Parameter in der Auswahl\n\n")
+
+        help_text.insert(tk.END, "💡 Unterstützte PLM-Typen:\n", 'tip')
+        help_text.insert(tk.END, "  CheckerSyn, InvCheckerSyn, UniformitySyn, Bridged-Pixels,\n", 'tip')
+        help_text.insert(tk.END, "  PLM-Stitched-Image, Blemish-Pixels + benutzerdefinierte\n\n", 'tip')
+
+        # --- SECTION 4: WAFERMAP & DIES ---
+        section_marks['wafermap'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n🗺️ WAFERMAP & DIE-AUSWAHL\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "Die-Auswahl:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  • Auto-Select Dies: Wählt automatisch die besten Dies\n")
+        help_text.insert(tk.END, "    (vorhanden in allen Dateien, keine NaN-Werte)\n")
+        help_text.insert(tk.END, "  • Manuell: Auf ein Die in der Wafermap klicken\n")
+        help_text.insert(tk.END, "    → Die wird in ALLEN Wafermaps gleichzeitig markiert\n")
+        help_text.insert(tk.END, "  • Erneut klicken zum Abwählen\n\n")
+
+        help_text.insert(tk.END, "Visualisierung:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  • Viz Group: Parametergruppe für Farbdarstellung wählen\n")
+        help_text.insert(tk.END, "  • Viz Param: Einzelner Parameter für Farbdarstellung\n")
+        help_text.insert(tk.END, "  • Grid: Gitterlinien ein-/ausblenden\n\n")
+
+        help_text.insert(tk.END, "Dateiverwaltung:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  • Wafer-Checkboxen: Einzelne Dateien an-/abwählen\n")
+        help_text.insert(tk.END, "  • \"Remove Selected\": Abgewählte Dateien entfernen\n")
+        help_text.insert(tk.END, "  • \"Remove All\": Alle Dateien löschen und neu starten\n\n")
+
+        # --- SECTION 5: LIMITS & CONFIG ---
+        section_marks['limits'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n⚙️ GRENZWERT-KONFIGURATION\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "LSL/USL Modus:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  • Auto (±Nσ): Berechnet automatisch aus den Daten\n")
+        help_text.insert(tk.END, "    → σ-Faktor einstellbar (Standard: 3)\n")
+        help_text.insert(tk.END, "  • Manual: Eigene LSL/USL Werte eingeben\n\n")
+
+        help_text.insert(tk.END, "%GRR Berechnungsbasis:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  • Total Var: %GRR bezogen auf Gesamtvariation\n")
+        help_text.insert(tk.END, "  • Tolerance: %GRR bezogen auf Toleranzbereich (USL-LSL)\n\n")
+
+        # --- SECTION 6: PARAMETERS ---
+        section_marks['params'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n📐 STATISTISCHE PARAMETER\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "GRUNDWERTE\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n\n")
+
+        help_text.insert(tk.END, "Mean (Mittelwert):\n", 'param')
+        help_text.insert(tk.END, "  Durchschnittswert aller Messungen.  ")
+        help_text.insert(tk.END, "Mean = Σ(xi) / n\n\n", 'formula')
+
+        help_text.insert(tk.END, "Std Dev (Standardabweichung):\n", 'param')
+        help_text.insert(tk.END, "  Streuung der Messwerte um den Mittelwert.  ")
+        help_text.insert(tk.END, "σ = √[Σ(xi - Mean)² / n]\n\n", 'formula')
+
+        help_text.insert(tk.END, "Min / Max / Range:\n", 'param')
+        help_text.insert(tk.END, "  Kleinster/größter Wert und deren Differenz.\n\n")
+
+        help_text.insert(tk.END, "GAGE R&R KOMPONENTEN\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n\n")
+
+        help_text.insert(tk.END, "Repeatability (EV):\n", 'param')
+        help_text.insert(tk.END, "  Variation INNERHALB einer Datei.  ")
+        help_text.insert(tk.END, "EV = Mean(σ pro Datei)\n\n", 'formula')
+
+        help_text.insert(tk.END, "Reproducibility (AV):\n", 'param')
+        help_text.insert(tk.END, "  Variation ZWISCHEN den Dateien.  ")
+        help_text.insert(tk.END, "AV = σ(Datei-Mittelwerte)\n\n", 'formula')
+
+        help_text.insert(tk.END, "GRR Total:\n", 'param')
+        help_text.insert(tk.END, "  Gesamte Messsystemvariation.  ")
+        help_text.insert(tk.END, "GRR = √(EV² + AV²)\n\n", 'formula')
+
+        help_text.insert(tk.END, "%GRR:\n", 'param')
+        help_text.insert(tk.END, "  Prozentsatz der Gesamtvariation.  ")
+        help_text.insert(tk.END, "%GRR = (GRR / Total Var) × 100\n\n", 'formula')
+
+        help_text.insert(tk.END, "ndc (Distinct Categories):\n", 'param')
+        help_text.insert(tk.END, "  Unterscheidbare Kategorien.  ")
+        help_text.insert(tk.END, "ndc = 1.41 × (Total Var / GRR)\n\n", 'formula')
+
+        # --- SECTION 7: ASSESSMENT ---
+        section_marks['assessment'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n✅ BEWERTUNG & INTERPRETATION\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "BEWERTUNGSKRITERIEN (AIAG MSA):\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n\n")
+        help_text.insert(tk.END, "  🟢 EXCELLENT:     %GRR < 10%  → Messsystem akzeptabel\n")
+        help_text.insert(tk.END, "  🟡 ACCEPTABLE:    10% ≤ %GRR < 30%  → Bedingt akzeptabel\n")
+        help_text.insert(tk.END, "  🔴 UNACCEPTABLE:  %GRR ≥ 30%  → Verbesserung nötig\n\n")
+
+        help_text.insert(tk.END, "INTERPRETATION:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n\n")
+        help_text.insert(tk.END, "  • Hohe Repeatability → Problem mit dem Messgerät\n")
+        help_text.insert(tk.END, "  • Hohe Reproducibility → Problem mit Operator/Prozess/Zeit\n")
+        help_text.insert(tk.END, "  • ndc sollte ≥ 5 sein\n")
+        help_text.insert(tk.END, "  • Werte außerhalb LSL/USL → Ausreißer\n\n")
+
+        close_btn_text = "Schließen"
+
+        nav_labels = {
+            'quickstart': "🚀 Schnellstart",
+            'csv_stdf': "📁 CSV/STDF",
+            'plm': "🔬 PLM",
+            'wafermap': "🗺️ Wafermap",
+            'limits': "⚙️ Grenzen",
+            'params': "📐 Parameter",
+            'assessment': "✅ Bewertung"
+        }
+    else:
+        # ==================== ENGLISH VERSION ====================
+
+        # --- SECTION 1: QUICK START ---
+        section_marks['quickstart'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n🚀 QUICK START GUIDE\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "Gage R&R (Repeatability & Reproducibility) evaluates\n")
+        help_text.insert(tk.END, "how reliable a measurement system is by comparing\n")
+        help_text.insert(tk.END, "multiple measurements of the same parts.\n\n")
+
+        help_text.insert(tk.END, "BASIC PRINCIPLE:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  • Load multiple files (= measurement repetitions)\n")
+        help_text.insert(tk.END, "  • Compare the same dies/positions across all files\n")
+        help_text.insert(tk.END, "  • Evaluate variation within (Repeatability) and between\n")
+        help_text.insert(tk.END, "    (Reproducibility) measurements\n\n")
+
+        # --- SECTION 2: WORKFLOW CSV/STDF ---
+        section_marks['csv_stdf'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n📁 WORKFLOW: CSV / STDF FILES\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "Step 1 — Choose file type & count:\n", 'step')
+        help_text.insert(tk.END, "  • Set \"File Type\" to CSV or STDF\n")
+        help_text.insert(tk.END, "  • \"# Files\" = number of measurement runs (e.g. 3)\n")
+        help_text.insert(tk.END, "  • \"# Dies\" = number of dies to compare (e.g. 10)\n\n")
+
+        help_text.insert(tk.END, "Step 2 — Load files:\n", 'step')
+        help_text.insert(tk.END, "  • Click \"Load Files\"\n")
+        help_text.insert(tk.END, "  • A file dialog opens for each file\n")
+        help_text.insert(tk.END, "  • Wafermaps are displayed automatically\n\n")
+
+        help_text.insert(tk.END, "💡 Tip: PLM Auto-Integration\n", 'tip')
+        help_text.insert(tk.END, "  If your folder contains a PLMFiles/ subfolder,\n", 'tip')
+        help_text.insert(tk.END, "  PLM statistics (Mean, Median, Std, etc.) are automatically\n", 'tip')
+        help_text.insert(tk.END, "  added as additional parameters!\n\n", 'tip')
+
+        help_text.insert(tk.END, "Step 3 — Select parameters:\n", 'step')
+        help_text.insert(tk.END, "  • Click \"Select Parameters\"\n")
+        help_text.insert(tk.END, "  • Choose parameter groups or individual parameters\n")
+        help_text.insert(tk.END, "  • Optionally select PLM parameters (PLM_*_mean etc.)\n\n")
+
+        help_text.insert(tk.END, "Step 4 — Select dies:\n", 'step')
+        help_text.insert(tk.END, "  • \"Auto-Select Dies\" for automatic selection\n")
+        help_text.insert(tk.END, "    (selects dies with valid data in all files)\n")
+        help_text.insert(tk.END, "  • Or manually: click dies in any wafermap\n")
+        help_text.insert(tk.END, "  • Selected dies are shown with red border\n\n")
+
+        help_text.insert(tk.END, "Step 5 — Run analysis:\n", 'step')
+        help_text.insert(tk.END, "  • Click \"Run Gage R&R Analysis\"\n")
+        help_text.insert(tk.END, "  • Results table and charts are displayed\n")
+        help_text.insert(tk.END, "  • Assessment: 🟢 <10% | 🟡 10-30% | 🔴 >30%\n\n")
+
+        # --- SECTION 3: WORKFLOW PLM ---
+        section_marks['plm'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n🔬 WORKFLOW: PLM FILES\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "PLM files contain luminance matrices per die.\n")
+        help_text.insert(tk.END, "There are two methods to analyze PLM data:\n\n")
+
+        help_text.insert(tk.END, "METHOD A — Load PLM as standalone:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  1. Set File Type to \"PLM\"\n")
+        help_text.insert(tk.END, "  2. # Files = number of PLM folders (repetitions)\n")
+        help_text.insert(tk.END, "  3. Click \"Load Files\"\n")
+        help_text.insert(tk.END, "  4. PLM Type dialog: Select desired types\n")
+        help_text.insert(tk.END, "     (e.g. CheckerSyn, UniformitySyn, etc.)\n")
+        help_text.insert(tk.END, "  5. Choose mode:\n")
+        help_text.insert(tk.END, "     • Stats Mode: Per die → Mean, Median, Std, Min, Max\n")
+        help_text.insert(tk.END, "     • Pixel Mode: Each pixel as individual measurement\n")
+        help_text.insert(tk.END, "  6. Select a PLM folder for each run\n")
+        help_text.insert(tk.END, "  7. Continue with parameter selection and analysis\n\n")
+
+        help_text.insert(tk.END, "METHOD B — Auto-add PLM to CSV/STDF:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  1. Load CSV or STDF files as usual\n")
+        help_text.insert(tk.END, "  2. The tool automatically searches for a PLMFiles/\n")
+        help_text.insert(tk.END, "     subfolder in the same directory\n")
+        help_text.insert(tk.END, "  3. If found: PLM statistics are automatically added\n")
+        help_text.insert(tk.END, "     as new columns (PLM_*_mean, PLM_*_median, etc.)\n")
+        help_text.insert(tk.END, "  4. These appear as parameters in the selection dialog\n\n")
+
+        help_text.insert(tk.END, "💡 Supported PLM types:\n", 'tip')
+        help_text.insert(tk.END, "  CheckerSyn, InvCheckerSyn, UniformitySyn, Bridged-Pixels,\n", 'tip')
+        help_text.insert(tk.END, "  PLM-Stitched-Image, Blemish-Pixels + custom types\n\n", 'tip')
+
+        # --- SECTION 4: WAFERMAP & DIES ---
+        section_marks['wafermap'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n🗺️ WAFERMAP & DIE SELECTION\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "Die Selection:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  • Auto-Select Dies: Automatically picks best dies\n")
+        help_text.insert(tk.END, "    (present in all files, no NaN values)\n")
+        help_text.insert(tk.END, "  • Manual: Click a die in any wafermap\n")
+        help_text.insert(tk.END, "    → Die is marked in ALL wafermaps simultaneously\n")
+        help_text.insert(tk.END, "  • Click again to deselect\n\n")
+
+        help_text.insert(tk.END, "Visualization:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  • Viz Group: Choose parameter group for color display\n")
+        help_text.insert(tk.END, "  • Viz Param: Choose single parameter for color display\n")
+        help_text.insert(tk.END, "  • Grid: Toggle grid lines on/off\n\n")
+
+        help_text.insert(tk.END, "File Management:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  • Wafer checkboxes: Enable/disable individual files\n")
+        help_text.insert(tk.END, "  • \"Remove Selected\": Remove unchecked files\n")
+        help_text.insert(tk.END, "  • \"Remove All\": Clear everything and start fresh\n\n")
+
+        # --- SECTION 5: LIMITS & CONFIG ---
+        section_marks['limits'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n⚙️ LIMITS CONFIGURATION\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "LSL/USL Mode:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  • Auto (±Nσ): Calculated automatically from data\n")
+        help_text.insert(tk.END, "    → σ factor adjustable (default: 3)\n")
+        help_text.insert(tk.END, "  • Manual: Enter custom LSL/USL values\n\n")
+
+        help_text.insert(tk.END, "%GRR Calculation Basis:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n")
+        help_text.insert(tk.END, "  • Total Var: %GRR relative to total variation\n")
+        help_text.insert(tk.END, "  • Tolerance: %GRR relative to tolerance range (USL-LSL)\n\n")
+
+        # --- SECTION 6: PARAMETERS ---
+        section_marks['params'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n📐 STATISTICAL PARAMETERS\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "BASIC VALUES\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n\n")
+
+        help_text.insert(tk.END, "Mean:\n", 'param')
+        help_text.insert(tk.END, "  Average of all measurements.  ")
+        help_text.insert(tk.END, "Mean = Σ(xi) / n\n\n", 'formula')
+
+        help_text.insert(tk.END, "Std Dev (Standard Deviation):\n", 'param')
+        help_text.insert(tk.END, "  Dispersion around the mean.  ")
+        help_text.insert(tk.END, "σ = √[Σ(xi - Mean)² / n]\n\n", 'formula')
+
+        help_text.insert(tk.END, "Min / Max / Range:\n", 'param')
+        help_text.insert(tk.END, "  Smallest/largest value and their difference.\n\n")
+
+        help_text.insert(tk.END, "GAGE R&R COMPONENTS\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n\n")
+
+        help_text.insert(tk.END, "Repeatability (EV):\n", 'param')
+        help_text.insert(tk.END, "  Variation WITHIN a single file.  ")
+        help_text.insert(tk.END, "EV = Mean(σ per file)\n\n", 'formula')
+
+        help_text.insert(tk.END, "Reproducibility (AV):\n", 'param')
+        help_text.insert(tk.END, "  Variation BETWEEN files.  ")
+        help_text.insert(tk.END, "AV = σ(file means)\n\n", 'formula')
+
+        help_text.insert(tk.END, "GRR Total:\n", 'param')
+        help_text.insert(tk.END, "  Total measurement system variation.  ")
+        help_text.insert(tk.END, "GRR = √(EV² + AV²)\n\n", 'formula')
+
+        help_text.insert(tk.END, "%GRR:\n", 'param')
+        help_text.insert(tk.END, "  Percentage of total variation.  ")
+        help_text.insert(tk.END, "%GRR = (GRR / Total Var) × 100\n\n", 'formula')
+
+        help_text.insert(tk.END, "ndc (Distinct Categories):\n", 'param')
+        help_text.insert(tk.END, "  Distinguishable categories.  ")
+        help_text.insert(tk.END, "ndc = 1.41 × (Total Var / GRR)\n\n", 'formula')
+
+        # --- SECTION 7: ASSESSMENT ---
+        section_marks['assessment'] = help_text.index(tk.END)
+        help_text.insert(tk.END, "\n✅ ASSESSMENT & INTERPRETATION\n")
+        help_text.insert(tk.END, "═" * 65 + "\n\n", 'title')
+
+        help_text.insert(tk.END, "ASSESSMENT CRITERIA (AIAG MSA):\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n\n")
+        help_text.insert(tk.END, "  🟢 EXCELLENT:     %GRR < 10%  → System acceptable\n")
+        help_text.insert(tk.END, "  🟡 ACCEPTABLE:    10% ≤ %GRR < 30%  → Conditionally acceptable\n")
+        help_text.insert(tk.END, "  🔴 UNACCEPTABLE:  %GRR ≥ 30%  → Improvement needed\n\n")
+
+        help_text.insert(tk.END, "INTERPRETATION:\n", 'subtitle')
+        help_text.insert(tk.END, "─" * 40 + "\n\n")
+        help_text.insert(tk.END, "  • High Repeatability → Problem with measurement device\n")
+        help_text.insert(tk.END, "  • High Reproducibility → Problem with operator/process/time\n")
+        help_text.insert(tk.END, "  • ndc should be ≥ 5\n")
+        help_text.insert(tk.END, "  • Values outside LSL/USL → Outliers\n\n")
+
+        close_btn_text = "Close"
+
+        nav_labels = {
+            'quickstart': "🚀 Quick Start",
+            'csv_stdf': "📁 CSV/STDF",
+            'plm': "🔬 PLM",
+            'wafermap': "🗺️ Wafermap",
+            'limits': "⚙️ Limits",
+            'params': "📐 Parameters",
+            'assessment': "✅ Assessment"
+        }
+
+    help_text.config(state='disabled')
+
+    # Navigation buttons
+    for key, label in nav_labels.items():
+        btn = tk.Button(nav_frame, text=label,
+                       command=lambda k=key: scroll_to_section(k),
+                       font=("Helvetica", 9), bg='#BBDEFB', fg='#0D47A1',
+                       padx=6, pady=2, cursor='hand2', relief=tk.GROOVE)
+        btn.pack(side=tk.LEFT, padx=2, pady=4)
+
+    # Close button
+    tk.Button(help_win, text=close_btn_text, command=help_win.destroy,
+              font=("Helvetica", 10), bg="#1976D2", fg="white",
+              padx=20, pady=5).pack(pady=10)
 
 # Auto-select dies with valid data button
 def auto_select_valid_dies():
@@ -19386,27 +21686,781 @@ grr_auto_select_btn = tk.Button(
 )
 grr_auto_select_btn.pack(side=tk.LEFT, padx=5)
 
+# ==================== PLM FOLDER LOADING FOR GRR ====================
+def _load_grr_plm_folders(num_folders):
+    """Load PLM folders for Gage R&R analysis.
+    Each folder = one measurement run (wafer). PLM matrix values = measurement points.
+    Dies are identified from PLM filenames (Die_X##_Y##).
+    Supports two modes:
+    - Stats mode: parameters = mean, median, std, min, max per PLM type per die
+    - Raw pixel mode: each pixel position = one measurement point (part) for GRR"""
+    global grr_file_data, grr_selected_dies, grr_available_params, grr_selected_params
+    import re as re_mod
+    import pandas as pd
+
+    # Let user select PLM type(s) and analysis mode via dialog
+    selection = _show_plm_type_selector()
+    if selection is None:
+        return
+
+    plm_type_filter = selection['types']
+    raw_pixel_mode = selection['raw_pixel']
+
+    grr_status_var.set(get_text("plm_select_folders"))
+    main_win.update_idletasks()
+
+    # Select multiple folders (one dialog per folder)
+    selected_folders = []
+    existing_paths = {f['path'] for f in grr_file_data}
+
+    for i in range(num_folders):
+        folder = filedialog.askdirectory(
+            title=get_text("plm_folder_dialog").format(current=i+1, total=num_folders, run=len(grr_file_data) + i + 1)
+        )
+        if not folder:
+            break
+        if folder in existing_paths:
+            print(f"[GRR PLM] Skipping duplicate folder: {folder}")
+            continue
+        selected_folders.append(folder)
+
+    if not selected_folders:
+        grr_status_var.set(get_text("plm_loading_cancelled"))
+        return
+
+    new_count = 0
+    for folder_path in selected_folders:
+        grr_status_var.set(get_text("plm_loading_folder").format(name=os.path.basename(folder_path)))
+        main_win.update_idletasks()
+
+        try:
+            if raw_pixel_mode:
+                df_plm = _build_plm_pixel_dataframe(folder_path, plm_type_filter)
+            else:
+                df_plm = _build_plm_dataframe(folder_path, plm_type_filter)
+
+            if df_plm is None or len(df_plm) == 0:
+                print(f"[GRR PLM] No valid PLM data in {folder_path}")
+                continue
+
+            param_cols = [c for c in df_plm.columns if c not in ('x', 'y')]
+            if not param_cols:
+                print(f"[GRR PLM] No parameter columns extracted from {folder_path}")
+                continue
+
+            file_info = {
+                'path': folder_path,
+                'type': 'csv_wafermap',
+                'data': df_plm,
+                'wafer_id': os.path.basename(folder_path),
+                'params': {col: col for col in param_cols}
+            }
+
+            grr_file_data.append(file_info)
+            new_count += 1
+
+            # Auto-detect PLM files in same folder structure for CSV/STDF files
+            if file_info['type'] in ('csv_wafermap', 'stdf') and hasattr(file_info.get('data'), 'columns'):
+                try:
+                    _auto_integrate_plm_params(file_info, path)
+                except Exception as plm_err:
+                    print(f"[PLM Auto] Error integrating PLM: {plm_err}")
+
+            mode_str = "RAW PIXEL" if raw_pixel_mode else "STATS"
+            print(f"[GRR PLM {mode_str}] Loaded folder: {folder_path}")
+            print(f"  Rows: {len(df_plm)}, Parameters: {len(param_cols)}")
+            print(f"  Params: {param_cols[:10]}{'...' if len(param_cols) > 10 else ''}")
+
+        except Exception as e:
+            print(f"[GRR PLM] Error loading folder {folder_path}: {e}")
+            import traceback
+            traceback.print_exc()
+
+    if new_count == 0:
+        grr_status_var.set(get_text("plm_no_data"))
+        return
+
+    grr_status_var.set(get_text("plm_loaded").format(count=new_count, total=len(grr_file_data)))
+
+    # Rebuild available params from ALL loaded files
+    _rebuild_grr_params_after_load()
+
+
+def _show_plm_type_selector():
+    """Show a dialog to let user select which PLM types to analyze and the analysis mode.
+    Returns dict {'types': list|None, 'raw_pixel': bool} or None if cancelled."""
+
+    selector_win = tk.Toplevel(main_win)
+    selector_win.title(get_text("plm_type_selection_title"))
+    selector_win.geometry("480x580")
+    selector_win.transient(main_win)
+    selector_win.grab_set()
+
+    result = {'value': None}
+
+    tk.Label(selector_win, text=get_text("plm_type_selection_header"),
+             font=("Helvetica", 12, "bold")).pack(pady=10)
+
+    tk.Label(selector_win, text=get_text("plm_type_selection_info"),
+             font=("Helvetica", 9), fg="#555").pack(padx=10, pady=5)
+
+    # ---- Analysis Mode Selection ----
+    mode_frame = tk.LabelFrame(selector_win, text="Analyse-Modus", font=("Helvetica", 10, "bold"), padx=10, pady=5)
+    mode_frame.pack(fill=tk.X, padx=10, pady=5)
+
+    raw_pixel_var = tk.BooleanVar(value=False)
+
+    tk.Radiobutton(mode_frame, text=get_text("plm_stats_mode"),
+                   variable=raw_pixel_var, value=False,
+                   font=("Helvetica", 9)).pack(anchor='w')
+    tk.Radiobutton(mode_frame, text=get_text("plm_raw_pixel_mode"),
+                   variable=raw_pixel_var, value=True,
+                   font=("Helvetica", 9)).pack(anchor='w')
+    tk.Label(mode_frame, text=get_text("plm_raw_pixel_info"),
+             font=("Helvetica", 8), fg="#777").pack(anchor='w', padx=20)
+
+    # ---- PLM Type Selection ----
+    # Try to detect PLM types from the global plm_file_directory or ask user to pick one
+    known_types = [
+        "CheckerSyn", "InvCheckerSyn", "UniformitySyn",
+        "Bridged-Pixels", "PLM-Stitched-Image",
+        "Uniformity", "Checker", "InvChecker",
+        "Current", "Voltage", "Luminance"
+    ]
+
+    # Also try detect from global plm_file_directory
+    try:
+        detected = detect_plm_types()
+        if detected and len(detected) > 1:
+            for t in detected:
+                if t != "All" and t not in known_types:
+                    known_types.append(t)
+    except:
+        pass
+
+    # Checkboxes frame with scrollbar
+    list_frame = tk.Frame(selector_win)
+    list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+    canvas = tk.Canvas(list_frame)
+    scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=canvas.yview)
+    scrollable = tk.Frame(canvas)
+    scrollable.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+    canvas.create_window((0, 0), window=scrollable, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+    canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+    # "All" checkbox
+    all_var = tk.BooleanVar(value=True)
+    type_vars = {}
+
+    def toggle_all():
+        state = all_var.get()
+        for v in type_vars.values():
+            v.set(state)
+
+    all_cb = tk.Checkbutton(scrollable, text=get_text("plm_all_types"), variable=all_var,
+                            font=("Helvetica", 10, "bold"), command=toggle_all)
+    all_cb.pack(anchor='w', padx=5, pady=2)
+
+    ttk.Separator(scrollable, orient='horizontal').pack(fill='x', padx=5, pady=3)
+
+    for ptype in known_types:
+        var = tk.BooleanVar(value=True)
+        type_vars[ptype] = var
+        tk.Checkbutton(scrollable, text=ptype, variable=var,
+                       font=("Helvetica", 9)).pack(anchor='w', padx=15, pady=1)
+
+    # Custom type entry
+    ttk.Separator(scrollable, orient='horizontal').pack(fill='x', padx=5, pady=5)
+    tk.Label(scrollable, text=get_text("plm_custom_type"), font=("Helvetica", 9)).pack(anchor='w', padx=5)
+    custom_entry = tk.Entry(scrollable, width=30)
+    custom_entry.pack(anchor='w', padx=15, pady=2)
+
+    # Buttons
+    btn_frame = tk.Frame(selector_win)
+    btn_frame.pack(pady=10)
+
+    def on_ok():
+        selected = []
+        if all_var.get():
+            selected = None  # None means all types
+        else:
+            for ptype, var in type_vars.items():
+                if var.get():
+                    selected.append(ptype)
+        custom = custom_entry.get().strip()
+        if custom:
+            if selected is None:
+                selected = list(type_vars.keys())
+            selected.append(custom)
+        if selected is None or len(selected) > 0:
+            result['value'] = {'types': selected, 'raw_pixel': raw_pixel_var.get()}
+        else:
+            result['value'] = None
+        selector_win.destroy()
+
+    def on_cancel():
+        result['value'] = None
+        selector_win.destroy()
+
+    tk.Button(btn_frame, text="OK", command=on_ok, width=10,
+              bg='#27AE60', fg='white', font=("Helvetica", 10, "bold")).pack(side=tk.LEFT, padx=10)
+    tk.Button(btn_frame, text="Cancel", command=on_cancel, width=10,
+              font=("Helvetica", 10)).pack(side=tk.LEFT, padx=10)
+
+    selector_win.wait_window()
+    return result['value']
+
+
+def _build_plm_dataframe(folder_path, plm_type_filter=None):
+    """Scan a PLM folder, load all PLM files, extract die coordinates and matrix statistics.
+    Returns a DataFrame with columns: x, y, and PLM-type derived parameters.
+
+    Each PLM file belongs to a specific die (identified by Die_X##_Y## in filename)
+    and a specific PLM type (e.g., CheckerSyn, UniformitySyn).
+    The matrix values are the individual measurement points.
+
+    Parameters per PLM type:
+    - {type}_mean, {type}_median, {type}_std, {type}_min, {type}_max, {type}_pixels
+    """
+    import re as re_mod
+    import pandas as pd
+
+    if not os.path.isdir(folder_path):
+        return None
+
+    # Collect PLM data: {(x, y): {plm_type: matrix_stats_dict}}
+    die_data = {}
+
+    plm_extensions = ('.txt', '.csv', '.dat', '.plm')
+    files = [f for f in os.listdir(folder_path) if f.lower().endswith(plm_extensions)]
+
+    print(f"[PLM Build DF] Scanning {len(files)} files in {folder_path}")
+
+    for filename in files:
+        full_path = os.path.join(folder_path, filename)
+
+        # Extract die coordinates from filename
+        coords = _extract_plm_die_coords(filename)
+        if coords is None:
+            continue
+        x, y = coords
+
+        # Extract PLM type from filename
+        plm_type = _extract_plm_type(filename)
+        if plm_type is None:
+            plm_type = "Unknown"
+
+        # Apply type filter
+        if plm_type_filter is not None:
+            type_matched = False
+            for filt in plm_type_filter:
+                if filt.lower() == plm_type.lower():
+                    type_matched = True
+                    break
+                try:
+                    if re_mod.search(filt, plm_type, re_mod.IGNORECASE):
+                        type_matched = True
+                        break
+                except:
+                    pass
+            if not type_matched:
+                continue
+
+        # Load PLM matrix
+        matrix = load_plm_as_matrix(full_path)
+        if matrix is None or matrix.size == 0:
+            continue
+
+        # Compute statistics from the matrix (all valid pixel values)
+        valid_values = matrix[~np.isnan(matrix)] if np.issubdtype(matrix.dtype, np.floating) else matrix.flatten()
+        if len(valid_values) == 0:
+            continue
+
+        stats = {
+            f"{plm_type}_mean": float(np.mean(valid_values)),
+            f"{plm_type}_median": float(np.median(valid_values)),
+            f"{plm_type}_std": float(np.std(valid_values)),
+            f"{plm_type}_min": float(np.min(valid_values)),
+            f"{plm_type}_max": float(np.max(valid_values)),
+            f"{plm_type}_pixels": int(len(valid_values)),
+        }
+
+        if (x, y) not in die_data:
+            die_data[(x, y)] = {}
+        die_data[(x, y)].update(stats)
+
+    if not die_data:
+        print(f"[PLM Build DF] No valid PLM data found in {folder_path}")
+        return None
+
+    # Build DataFrame
+    rows = []
+    for (x, y), params in die_data.items():
+        row = {'x': int(x), 'y': int(y)}
+        row.update(params)
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+
+    # Convert all param columns to numeric
+    for col in df.columns:
+        if col not in ('x', 'y'):
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    print(f"[PLM Build DF] Created DataFrame: {len(df)} dies, {len(df.columns)-2} parameters")
+    return df
+
+
+def _build_plm_pixel_dataframe(folder_path, plm_type_filter=None):
+    """Scan a PLM folder in RAW PIXEL mode for GRR analysis.
+    Each pixel position in the PLM matrix becomes a separate measurement point (part).
+
+    Uses compact sequential coordinates to avoid memory issues:
+    - Each die+pixel combination gets a unique sequential index
+    - x = sequential_index, y = 0 (flat list, no 2D grid needed)
+
+    Parameters (columns) = one per PLM type, value = raw pixel value.
+    Rows = one per pixel position per die.
+    """
+    import re as re_mod
+    import pandas as pd
+
+    if not os.path.isdir(folder_path):
+        return None
+
+    plm_extensions = ('.txt', '.csv', '.dat', '.plm')
+    files = [f for f in os.listdir(folder_path) if f.lower().endswith(plm_extensions)]
+
+    print(f"[PLM Pixel DF] Scanning {len(files)} files in {folder_path}")
+
+    # First pass: collect all PLM data organized by die and type
+    die_plm_data = {}
+
+    for filename in files:
+        full_path = os.path.join(folder_path, filename)
+
+        coords = _extract_plm_die_coords(filename)
+        if coords is None:
+            continue
+        die_x, die_y = coords
+
+        plm_type = _extract_plm_type(filename)
+        if plm_type is None:
+            plm_type = "Unknown"
+
+        # Apply type filter
+        if plm_type_filter is not None:
+            type_matched = False
+            for filt in plm_type_filter:
+                if filt.lower() == plm_type.lower():
+                    type_matched = True
+                    break
+                try:
+                    if re_mod.search(filt, plm_type, re_mod.IGNORECASE):
+                        type_matched = True
+                        break
+                except:
+                    pass
+            if not type_matched:
+                continue
+
+        matrix = load_plm_as_matrix(full_path)
+        if matrix is None or matrix.size == 0:
+            continue
+
+        if (die_x, die_y) not in die_plm_data:
+            die_plm_data[(die_x, die_y)] = {}
+        die_plm_data[(die_x, die_y)][plm_type] = matrix
+
+    if not die_plm_data:
+        print(f"[PLM Pixel DF] No valid PLM data found in {folder_path}")
+        return None
+
+    # Second pass: build rows with compact sequential coordinates
+    # Each pixel gets a simple sequential (x=index, y=0) coordinate
+    rows = []
+    pixel_idx = 0
+
+    for (die_x, die_y), type_matrices in sorted(die_plm_data.items()):
+        ref_type = list(type_matrices.keys())[0]
+        ref_matrix = type_matrices[ref_type]
+        n_rows, n_cols = ref_matrix.shape
+
+        for pr in range(n_rows):
+            for pc in range(n_cols):
+                row = {'x': pixel_idx, 'y': 0}
+
+                for plm_type, matrix in type_matrices.items():
+                    if pr < matrix.shape[0] and pc < matrix.shape[1]:
+                        val = matrix[pr, pc]
+                        row[plm_type] = float(val) if not np.isnan(val) else np.nan
+                    else:
+                        row[plm_type] = np.nan
+
+                rows.append(row)
+                pixel_idx += 1
+
+    if not rows:
+        return None
+
+    df = pd.DataFrame(rows)
+
+    # Convert all param columns to numeric
+    for col in df.columns:
+        if col not in ('x', 'y'):
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    # Remove rows where ALL parameter values are NaN
+    param_cols = [c for c in df.columns if c not in ('x', 'y')]
+    df = df.dropna(subset=param_cols, how='all').reset_index(drop=True)
+
+    total_dies = len(die_plm_data)
+    print(f"[PLM Pixel DF] Created DataFrame: {len(df)} pixel-rows from {total_dies} dies, {len(param_cols)} PLM types as params")
+    return df
+
+
+def _auto_integrate_plm_params(file_info, file_path):
+    """Auto-detect PLM files in the same folder structure as a loaded CSV/STDF file.
+    Scans for PLMFiles/ subdirectory (or PLM/) and adds PLM statistics as extra columns
+    to the existing DataFrame. This way PLM parameters appear alongside STDF/CSV params.
+
+    Search strategy: Go up to 3 levels up from the CSV file, search for any folder
+    named PLMFiles, PLM, or containing 'plm' in its name.
+    """
+    import pandas as pd
+
+    df = file_info['data']
+    if 'x' not in df.columns or 'y' not in df.columns:
+        return
+
+    file_dir = os.path.dirname(file_path)
+    plm_dir = None
+
+    print(f"[PLM Auto] Searching for PLM directory near: {file_dir}")
+
+    candidates = []
+    search_dir = file_dir
+    plm_folder_names_lower = {'plmfiles', 'plm', 'plm_files', 'plmdata', 'plm-files'}
+
+    def _scan_for_plm_dir(base_dir, max_depth=3, current_depth=0):
+        """Recursively scan for PLM directories up to max_depth levels deep."""
+        found = []
+        if current_depth > max_depth:
+            return found
+        try:
+            for entry in os.listdir(base_dir):
+                entry_path = os.path.join(base_dir, entry)
+                if os.path.isdir(entry_path):
+                    entry_lower = entry.lower()
+                    if entry_lower in plm_folder_names_lower:
+                        found.append(entry_path)
+                        return found  # found it, stop searching
+                    elif current_depth < max_depth:
+                        # Keep scanning deeper into subdirectories
+                        found.extend(_scan_for_plm_dir(entry_path, max_depth, current_depth + 1))
+                        if found:
+                            return found  # found it deeper, stop searching
+        except (PermissionError, OSError):
+            pass
+        return found
+
+    # Search strategy: go up 3 levels, at each level scan subdirs for PLMFiles
+    for level in range(4):
+        # Direct PLMFiles in this directory
+        for plm_name in plm_folder_names_lower:
+            direct = os.path.join(search_dir, plm_name)
+            if os.path.isdir(direct):
+                candidates.append(direct)
+
+        # Scan subdirectories (limit depth to avoid slowness)
+        scan_depth = 3 - level  # deeper scan for closer dirs, shallower for higher levels
+        if scan_depth > 0 and not candidates:
+            found_plm = _scan_for_plm_dir(search_dir, max_depth=scan_depth, current_depth=0)
+            candidates.extend(found_plm)
+
+        if candidates:
+            break  # found at least one PLM dir, stop going up
+
+        # Move one level up
+        parent = os.path.dirname(search_dir)
+        if parent == search_dir:
+            break
+        search_dir = parent
+
+    # Also check if the file_dir itself contains PLM files
+    plm_extensions = ('.txt', '.csv', '.dat', '.plm')
+    dir_has_plm = False
+    try:
+        for f in os.listdir(file_dir):
+            if f.lower().endswith(plm_extensions) and ('PLM' in f or 'plm' in f.lower()):
+                dir_has_plm = True
+                break
+    except:
+        pass
+
+    print(f"[PLM Auto] Checking {len(candidates)} candidate paths...")
+    for candidate in candidates:
+        if os.path.isdir(candidate):
+            print(f"[PLM Auto] ✓ FOUND: {candidate}")
+            plm_dir = candidate
+            break
+
+    if plm_dir is None and dir_has_plm:
+        plm_dir = file_dir
+
+    if plm_dir is None:
+        print(f"[PLM Auto] ✗ No PLM directory found near {file_dir}")
+        return
+
+    print(f"[PLM Auto] Found PLM directory: {plm_dir}")
+
+    # Scan PLM files and build per-die statistics
+    plm_files = [f for f in os.listdir(plm_dir) if f.lower().endswith(plm_extensions)]
+    if not plm_files:
+        print(f"[PLM Auto] ✗ No PLM files found in {plm_dir}")
+        return
+
+    print(f"[PLM Auto] Found {len(plm_files)} PLM files")
+    print(f"[PLM Auto] Sample files: {plm_files[:3]}")
+
+    # Collect stats: {(x, y): {param_name: value}}
+    die_plm_stats = {}
+    plm_param_names = set()
+    skipped_no_coords = 0
+    skipped_no_matrix = 0
+
+    for filename in plm_files:
+        full_path = os.path.join(plm_dir, filename)
+
+        coords = _extract_plm_die_coords(filename)
+        if coords is None:
+            skipped_no_coords += 1
+            continue
+        die_x, die_y = coords
+
+        plm_type = _extract_plm_type(filename)
+        if plm_type is None:
+            plm_type = "PLM"
+
+        matrix = load_plm_as_matrix(full_path)
+        if matrix is None or matrix.size == 0:
+            skipped_no_matrix += 1
+            continue
+
+        valid_values = matrix.flatten()
+        if np.issubdtype(matrix.dtype, np.floating):
+            valid_values = valid_values[~np.isnan(valid_values)]
+        if len(valid_values) == 0:
+            continue
+
+        stats = {
+            f"PLM_{plm_type}_mean": float(np.mean(valid_values)),
+            f"PLM_{plm_type}_median": float(np.median(valid_values)),
+            f"PLM_{plm_type}_std": float(np.std(valid_values)),
+            f"PLM_{plm_type}_min": float(np.min(valid_values)),
+            f"PLM_{plm_type}_max": float(np.max(valid_values)),
+        }
+
+        plm_param_names.update(stats.keys())
+
+        if (die_x, die_y) not in die_plm_stats:
+            die_plm_stats[(die_x, die_y)] = {}
+        die_plm_stats[(die_x, die_y)].update(stats)
+
+    print(f"[PLM Auto] Parsed: {len(die_plm_stats)} dies with PLM data, {len(plm_param_names)} param types")
+    print(f"[PLM Auto] Skipped: {skipped_no_coords} no coords, {skipped_no_matrix} no matrix")
+    if die_plm_stats:
+        sample_coords = list(die_plm_stats.keys())[:5]
+        print(f"[PLM Auto] PLM die coords sample: {sample_coords}")
+    if plm_param_names:
+        print(f"[PLM Auto] PLM param names: {sorted(plm_param_names)[:6]}")
+
+    if not die_plm_stats:
+        print(f"[PLM Auto] ✗ No matching PLM data found in {plm_dir}")
+        return
+
+    # Show CSV die coordinate range for comparison
+    csv_coords = set(zip(df['x'].astype(int), df['y'].astype(int)))
+    plm_coords = set(die_plm_stats.keys())
+    overlap = csv_coords & plm_coords
+    print(f"[PLM Auto] CSV dies: {len(csv_coords)}, PLM dies: {len(plm_coords)}, OVERLAP: {len(overlap)}")
+    if len(overlap) == 0:
+        csv_sample = list(csv_coords)[:5]
+        plm_sample = list(plm_coords)[:5]
+        print(f"[PLM Auto] ⚠ NO COORDINATE MATCH!")
+        print(f"[PLM Auto]   CSV coords sample: {csv_sample}")
+        print(f"[PLM Auto]   PLM coords sample: {plm_sample}")
+
+    # Add PLM columns to the existing DataFrame
+    for param_name in sorted(plm_param_names):
+        df[param_name] = np.nan
+
+    matched_count = 0
+    for idx, row in df.iterrows():
+        x, y = int(row['x']), int(row['y'])
+        if (x, y) in die_plm_stats:
+            for param_name, value in die_plm_stats[(x, y)].items():
+                df.at[idx, param_name] = value
+            matched_count += 1
+
+    # Update file_info params with new PLM columns
+    if file_info.get('params') is None:
+        file_info['params'] = {}
+    for param_name in sorted(plm_param_names):
+        file_info['params'][param_name] = param_name
+
+    print(f"[PLM Auto] Added {len(plm_param_names)} PLM parameters to {matched_count}/{len(df)} dies")
+    print(f"[PLM Auto] New PLM params: {sorted(plm_param_names)[:8]}...")
+
+    # Store PLM directory path in file_info for pixel-level analysis later
+    file_info['plm_dir'] = plm_dir
+
+
+def _extract_plm_die_coords(filename):
+    """Extract die coordinates (x, y) from PLM filename.
+    Supports patterns: Die_X##_Y##, W##-X##-Y##, _X##_Y##, -X##-Y##"""
+    import re as re_mod
+
+    # Pattern: Die_X31_Y28
+    m = re_mod.search(r'Die_X(\d+)_Y(\d+)', filename, re_mod.IGNORECASE)
+    if m:
+        return (int(m.group(1)), int(m.group(2)))
+
+    # Pattern: W21-X31-Y28
+    m = re_mod.search(r'W\d+-X(\d+)-Y(\d+)', filename, re_mod.IGNORECASE)
+    if m:
+        return (int(m.group(1)), int(m.group(2)))
+
+    # Pattern: _X31_Y28_ or _X31_Y28.
+    m = re_mod.search(r'[_\-]X(\d+)[_\-]Y(\d+)[_\-\.]', filename, re_mod.IGNORECASE)
+    if m:
+        return (int(m.group(1)), int(m.group(2)))
+
+    return None
+
+
+def _extract_plm_type(filename):
+    """Extract PLM measurement type from filename.
+    Examples: PLM-CheckerSyn-..., PLM-UniformitySyn-..., _CheckerSyn_timestamp.txt"""
+    import re as re_mod
+
+    # Pattern: PLM-TypeName- (most common)
+    m = re_mod.search(r'PLM-([A-Za-z][A-Za-z0-9\-]+)-', filename, re_mod.IGNORECASE)
+    if m:
+        return m.group(1)
+
+    # Pattern: _TypeName_timestamp.ext (alternative naming)
+    m = re_mod.search(r'_([A-Za-z][A-Za-z0-9\-]+)_\d{14}\.', filename)
+    if m:
+        return m.group(1)
+
+    # Pattern: _TypeName.ext (simple)
+    m = re_mod.search(r'_([A-Za-z][A-Za-z0-9\-]+)\.\w+$', filename)
+    if m:
+        candidate = m.group(1)
+        if candidate.lower() not in ('txt', 'csv', 'dat', 'plm', 'xml', 'json'):
+            return candidate
+
+    return None
+
+
+def _rebuild_grr_params_after_load():
+    """Rebuild available params and update UI after loading files (shared by all file types)."""
+    global grr_available_params, grr_grouped_parameters
+    import re as re_mod
+
+    grr_available_params = ["BIN"]
+    for file_info in grr_file_data:
+        if file_info.get('params'):
+            if file_info['type'] == 'stdf':
+                for k, v in file_info['params'].items():
+                    param_name = f"{k}: {v}"
+                    if param_name not in grr_available_params:
+                        grr_available_params.append(param_name)
+            elif file_info['type'] == 'csv_wafermap':
+                for col in file_info['params']:
+                    if col not in grr_available_params:
+                        grr_available_params.append(col)
+
+    print(f"[GRR Rebuild] Total available params: {len(grr_available_params)}")
+    print(f"[GRR Rebuild] Params sample: {grr_available_params[:15]}...")
+
+    grr_grouped_parameters = {}
+    for param in grr_available_params:
+        if param == "BIN":
+            group_name = "BIN"
+        elif _is_plm_param(param):
+            group_name = "PLM"
+        else:
+            group_name = extract_group_from_column(param)
+        if group_name not in grr_grouped_parameters:
+            grr_grouped_parameters[group_name] = []
+        grr_grouped_parameters[group_name].append((param, param, param))
+
+    print(f"[GRR Rebuild] Groups: {sorted(grr_grouped_parameters.keys())}")
+    for gname, gparams in grr_grouped_parameters.items():
+        print(f"  [{gname}] → {len(gparams)} params")
+        if group_name not in grr_grouped_parameters:
+            grr_grouped_parameters[group_name] = []
+        grr_grouped_parameters[group_name].append((param, param, param))
+
+    grr_viz_group_combo['values'] = ["All Groups"] + sorted(grr_grouped_parameters.keys())
+    grr_viz_group_var.set("All Groups")
+
+    viz_params = ["None"]
+    for p in grr_available_params:
+        if p != "BIN":
+            test_num_match = re_mod.search(r'_(\d{5,})$', str(p))
+            if test_num_match:
+                test_num = test_num_match.group(1)
+                simple_name = simplify_param_name(str(p))
+                display_name = f"test_{test_num}: {simple_name}"
+            else:
+                display_name = str(p)
+            viz_params.append(display_name)
+
+    grr_viz_param_combo['values'] = viz_params
+    grr_viz_param_var.set("None")
+
+    try:
+        populate_grr_group_data()
+    except NameError:
+        pass
+
+    update_grr_file_displays()
+    grr_refresh_wafer_list()
+
+
 # Load files button
 def load_grr_files():
-    """Load files for Gage R&R comparison based on selected file type"""
+    """Load files for Gage R&R comparison - APPENDS to existing loaded wafers"""
     global grr_file_data, grr_selected_dies, grr_available_params, grr_selected_params
 
     num_files = int(grr_num_files_var.get())
     file_type = grr_file_type_var.get()
 
+    # ==================== PLM LOADING BRANCH ====================
+    if file_type == "PLM":
+        _load_grr_plm_folders(num_files)
+        return
+
+    # ==================== STDF / CSV LOADING BRANCH ====================
     # Set file filter based on selected type
     if file_type == "STDF":
         filetypes = [
             ("STDF files", "*.stdf"),
             ("All files", "*.*")
         ]
-        title = f"Select {num_files} STDF files for Gage R&R comparison"
+        title = f"Select STDF files for Gage R&R comparison (currently {len(grr_file_data)} loaded)"
     else:  # CSV
         filetypes = [
             ("CSV files", "*.csv"),
             ("All files", "*.*")
         ]
-        title = f"Select {num_files} CSV wafermap files for Gage R&R comparison"
+        title = f"Select CSV wafermap files for Gage R&R comparison (currently {len(grr_file_data)} loaded)"
 
     file_paths = filedialog.askopenfilenames(
         title=title,
@@ -19416,19 +22470,19 @@ def load_grr_files():
     if not file_paths:
         return
 
-    if len(file_paths) != num_files:
-        grr_status_var.set(f"Warning: Selected {len(file_paths)} files, expected {num_files}")
+    # Track already loaded paths to avoid duplicates
+    existing_paths = {f['path'] for f in grr_file_data}
+    new_count = 0
+    skipped_count = 0
 
-    # Clear existing data
-    grr_file_data = []
-    grr_selected_dies = []
-    grr_selected_params = []
-    grr_available_params = ["BIN"]
-    grr_selected_dies_label.config(text="None selected")
-    grr_param_label.config(text="0 selected")
-
-    # Load each file
+    # Load each file - APPEND to existing data
     for path in file_paths:
+        # Skip duplicates
+        if path in existing_paths:
+            print(f"[GRR Load] Skipping duplicate: {os.path.basename(path)}")
+            skipped_count += 1
+            continue
+
         file_ext = os.path.splitext(path)[1].lower()
         file_info = {'path': path, 'type': None, 'data': None, 'wafer_id': None}
 
@@ -19440,13 +22494,6 @@ def load_grr_files():
                 file_info['data'] = df
                 file_info['wafer_id'] = wafer_id
                 file_info['params'] = params
-
-                # Update available parameters with STDF parameters
-                if params:
-                    for k, v in params.items():
-                        param_name = f"{k}: {v}"
-                        if param_name not in grr_available_params:
-                            grr_available_params.append(param_name)
 
             elif file_ext == '.csv':
                 # Load CSV wafermap file - header row + data with comma delimiter
@@ -19490,12 +22537,6 @@ def load_grr_files():
                         file_info['data'] = df_csv
                         file_info['wafer_id'] = os.path.basename(path)
                         file_info['params'] = {col: col for col in param_cols}
-
-                        # Update available parameters list
-                        if param_cols:
-                            for col in param_cols:
-                                if col not in grr_available_params:
-                                    grr_available_params.append(col)
 
                         print(f"CSV wafermap loaded: {path}, dies={len(df_csv)}, params={len(param_cols)}")
                         print(f"  X range: {df_csv['x'].min()} to {df_csv['x'].max()}")
@@ -19556,63 +22597,37 @@ def load_grr_files():
                     print(f"TXT loaded: {path}, shape={data.shape}, min={np.min(valid):.3g}, max={np.max(valid):.3g}")
 
             grr_file_data.append(file_info)
+            new_count += 1
+
+            # Auto-detect PLM files in same folder structure for CSV/STDF files
+            if file_info['type'] in ('csv_wafermap', 'stdf') and hasattr(file_info.get('data'), 'columns'):
+                print(f"[PLM Auto] Trying PLM auto-integration for {os.path.basename(path)} (type={file_info['type']})")
+                try:
+                    _auto_integrate_plm_params(file_info, path)
+                    # Show params count after integration
+                    print(f"[PLM Auto] After integration: {len(file_info.get('params', {}))} params in file_info")
+                except Exception as plm_err:
+                    print(f"[PLM Auto] ✗ Error integrating PLM: {plm_err}")
+                    import traceback
+                    traceback.print_exc()
+            else:
+                print(f"[PLM Auto] Skipping PLM integration for {os.path.basename(path)} (type={file_info.get('type')}, has_columns={hasattr(file_info.get('data'), 'columns')})")
 
         except Exception as e:
             print(f"Error loading {path}: {e}")
             grr_status_var.set(f"Error loading {os.path.basename(path)}: {str(e)[:50]}")
 
-    grr_status_var.set(f"Loaded {len(grr_file_data)} files successfully")
+    status_msg = f"Loaded {len(grr_file_data)} files total ({new_count} new"
+    if skipped_count > 0:
+        status_msg += f", {skipped_count} skipped duplicates"
+    status_msg += ")"
+    grr_status_var.set(status_msg)
 
-    # Build grouped parameters for Gage R&R
-    global grr_grouped_parameters
-    grr_grouped_parameters = {}
-
-    print(f"[GRR Load] Building groups from {len(grr_available_params)} available params")
-    print(f"[GRR Load] First 5 available params: {grr_available_params[:5]}")
-
-    # Group parameters by prefix (first part of name before underscore or number)
-    for param in grr_available_params:
-        if param == "BIN":
-            group_name = "BIN"
-        else:
-            # Extract group from parameter name - use UPPER for grouping but keep original param name
-            param_upper = str(param).upper()
-
-            # Try to find a meaningful group prefix
-            if '_' in param_upper:
-                parts = param_upper.split('_')
-                # Use first 1-2 parts as group name
-                if len(parts) >= 2:
-                    group_name = parts[0]
-                    # Common prefixes to expand
-                    if group_name in ['OPTIC', 'ELEC', 'MECH', 'TEST', 'PARAM']:
-                        if len(parts) >= 3:
-                            group_name = f"{parts[0]}_{parts[1]}"
-                else:
-                    group_name = parts[0]
-            else:
-                # No underscore - use first 6 chars or whole name
-                group_name = param_upper[:6] if len(param_upper) > 6 else param_upper
-
-        # Add to group
-        if group_name not in grr_grouped_parameters:
-            grr_grouped_parameters[group_name] = []
-
-        # Store as tuple (param_name, param_name, param_name) for compatibility
-        grr_grouped_parameters[group_name].append((param, param, param))
-
-    print(f"GRR: Created {len(grr_grouped_parameters)} parameter groups: {list(grr_grouped_parameters.keys())[:10]}...")
-
-    # Update visualization parameter combobox
-    viz_params = ["None"] + [p for p in grr_available_params if p != "BIN"]
-    grr_viz_param_combo['values'] = viz_params
-    grr_viz_param_var.set("None")
-
-    # Update display
-    update_grr_file_displays()
+    # Rebuild available params and update UI
+    _rebuild_grr_params_after_load()
 
 grr_load_btn = tk.Button(
-    grr_buttons_frame,
+    grr_load_btn_frame,
     text="📁 Load Files",
     command=load_grr_files,
     font=("Helvetica", 10, "bold"),
@@ -19621,7 +22636,7 @@ grr_load_btn = tk.Button(
     padx=20,
     pady=5
 )
-grr_load_btn.pack(side=tk.LEFT, padx=10)
+grr_load_btn.pack(fill=tk.X)
 
 # Export results button
 def export_grr_results():
@@ -19687,43 +22702,424 @@ grr_export_btn.pack(side=tk.LEFT, padx=10)
 
 
 def update_grr_file_displays():
-      """Update GRR file displays - restore simple working version"""
-      global grr_file_canvases, grr_file_frames
+    """Update GRR file displays - Multi-Wafer style with automatic sizing"""
+    global grr_file_canvases, grr_file_frames, grr_main_fig_canvas, grr_plot_data_cache
 
-      # Clear existing displays
-      for widget in grr_files_container.winfo_children():
-          widget.destroy()
+    # Clear existing displays
+    for widget in grr_files_container.winfo_children():
+        widget.destroy()
 
-      grr_file_canvases = []
-      grr_file_frames = []
+    grr_file_canvases = []
+    grr_file_frames = []
 
-      if not grr_file_data:
-          placeholder = tk.Label(grr_files_container, text="No files loaded. Click 'Load Files' to begin.",
-                                font=("Helvetica", 11), bg='white', fg='#666666')
-          placeholder.pack(pady=30, padx=30)
-          return
+    if not grr_file_data:
+        placeholder = tk.Label(grr_files_container, text="No files loaded. Click 'Load Files' to begin.",
+                              font=("Helvetica", 11), bg='white', fg='#666666')
+        placeholder.pack(pady=30, padx=30)
+        return
 
-      # Create a display panel for each file
-      for idx, file_info in enumerate(grr_file_data):
-          file_frame = tk.Frame(grr_files_container, bg='white', relief='raised', bd=2, width=400, height=380)
-          file_frame.pack(side=tk.LEFT, padx=8, pady=8)
-          file_frame.pack_propagate(False)
-          grr_file_frames.append(file_frame)
+    num_files = len(grr_file_data)
 
-          file_name = os.path.basename(file_info['path'])
-          title_text = f"File {idx + 1}: {file_name[:20]}..." if len(file_name) > 20 else f"File {idx + 1}: {file_name}"
-          title_label = tk.Label(file_frame, text=title_text, font=("Helvetica", 8, "bold"), bg='white', fg='#2C3E50')
-          title_label.pack(pady=3)
+    # Layout: always 3 per row, new row starting from the 4th file
+    if num_files <= 3:
+        cols = num_files
+    else:
+        cols = 3
 
-          # Create wafermap/data display
-          if file_info['type'] == 'stdf' or file_info['type'] == 'csv_wafermap':
-              create_grr_stdf_display(file_frame, file_info, idx)
-          else:
-              create_grr_data_display(file_frame, file_info, idx)
+    rows = (num_files + cols - 1) // cols
 
-      # Update scroll region
-      grr_files_container.update_idletasks()
-      grr_content_canvas.configure(scrollregion=grr_content_canvas.bbox("all"))
+    # Get container size for auto-scaling
+    grr_files_container.update_idletasks()
+    container_width = grr_content_canvas.winfo_width() - 20
+    container_height = grr_content_canvas.winfo_height() - 20
+
+    if container_width < 200:
+        container_width = 1400
+    if container_height < 200:
+        container_height = 900
+
+    # Calculate optimal figure size - scale to container, generous sizing
+    fig_width = max(16, container_width / 60)
+    fig_height_per_row = max(7, (container_height / 72) / max(rows, 1))
+    fig_height = fig_height_per_row * rows
+
+    # Create figure with GridSpec for consistent layout like Multi-Wafer
+    fig = plt.figure(figsize=(fig_width, fig_height), facecolor='white')
+
+    from matplotlib.gridspec import GridSpec
+    gs = GridSpec(rows, cols, figure=fig, wspace=0.25, hspace=0.35)
+
+    # Get visualization parameter
+    viz_param_display = grr_viz_param_var.get() if grr_viz_param_var else "None"
+
+    # Convert display name back to actual column name
+    # Format is "test_XXXXX: SimplifiedName" or just column name
+    viz_param = None
+    if viz_param_display and viz_param_display != "None":
+        import re as re_mod
+        # Check if it's in the "test_XXXXX: SimplifiedName" format
+        test_match = re_mod.match(r'^test_(\d+):', viz_param_display)
+        if test_match:
+            test_num = test_match.group(1)
+            # Find the actual column name with this test number
+            if grr_file_data and grr_file_data[0]['data'] is not None:
+                first_df = grr_file_data[0]['data']
+                for col in first_df.columns:
+                    if str(col).endswith(f'_{test_num}'):
+                        viz_param = col
+                        break
+        else:
+            # It's a direct column name
+            viz_param = viz_param_display
+
+    # Collect all values for autoscaling if visualizing a parameter
+    all_values = []
+    if viz_param and viz_param != "None":
+        for file_info in grr_file_data:
+            df = file_info['data']
+            if df is not None and hasattr(df, 'columns') and viz_param in df.columns:
+                mask = df[viz_param].notna()
+                values = df.loc[mask, viz_param].values
+                if len(values) > 0:
+                    all_values.extend(values)
+
+    all_values = np.array(all_values) if all_values else np.array([])
+    if len(all_values) > 0:
+        all_values = all_values[~np.isnan(all_values)]
+        global_min = np.nanmin(all_values)
+        global_max = np.nanmax(all_values)
+    else:
+        global_min = 0
+        global_max = 1
+
+    # Initialize cache for click handler
+    grr_plot_data_cache = {
+        'axes_info': [],
+        'viz_param': viz_param
+    }
+
+    # Create wafermap plots for each file
+    for idx, file_info in enumerate(grr_file_data):
+        row_idx = idx // cols
+        col_idx = idx % cols
+        ax = fig.add_subplot(gs[row_idx, col_idx])
+
+        df = file_info['data']
+        file_name = os.path.basename(file_info['path'])
+        short_name = file_name[:20] + "..." if len(file_name) > 20 else file_name
+
+        if df is None or (hasattr(df, 'empty') and df.empty):
+            ax.set_title(f"W{idx + 1}: {short_name}\nNo data", fontsize=8)
+            ax.axis('off')
+            continue
+
+        # Check for x,y columns (STDF/CSV wafermap data)
+        if 'x' in df.columns and 'y' in df.columns:
+            plot_data = df[df['x'].notna() & df['y'].notna()]
+
+            if len(plot_data) == 0:
+                ax.set_title(f"W{idx + 1}: {short_name}\nNo valid points", fontsize=8)
+                ax.axis('off')
+                continue
+
+            # Compute grid like Multi-Wafer
+            x_vals = plot_data['x'].values.astype(int)
+            y_vals = plot_data['y'].values.astype(int)
+            x_min, x_max = x_vals.min(), x_vals.max()
+            y_min, y_max = y_vals.min(), y_vals.max()
+            grid_width = x_max - x_min + 1
+            grid_height = y_max - y_min + 1
+
+            # Safety check: prevent memory explosion for pixel-mode PLM data
+            max_grid_cells = 500000  # ~4MB for float64
+            if grid_width * grid_height > max_grid_cells:
+                # Too large for grid display - use scatter plot instead
+                if viz_param and viz_param != "None" and viz_param in plot_data.columns:
+                    sc = ax.scatter(x_vals, y_vals, c=plot_data[viz_param].values,
+                                    cmap='viridis', s=1, marker='s')
+                else:
+                    ax.scatter(x_vals, y_vals, c='#3498DB', s=1, marker='s')
+                ax.set_title(f"W{idx + 1}: {short_name}\n{len(plot_data)} points", fontsize=7, fontweight='bold')
+                ax.set_aspect('equal')
+                ax.tick_params(labelsize=5)
+                grr_file_canvases.append(None)
+                continue
+
+            # Create grid
+            grid = np.full((grid_height, grid_width), np.nan)
+
+            if viz_param and viz_param != "None" and viz_param in plot_data.columns:
+                # Color by parameter value
+                param_values = plot_data[viz_param].values
+                for i, (x, y, val) in enumerate(zip(x_vals, y_vals, param_values)):
+                    grid[y - y_min, x - x_min] = val
+
+                im = ax.imshow(
+                    grid,
+                    cmap='viridis',
+                    aspect='equal',
+                    interpolation='nearest',
+                    origin='upper',
+                    vmin=global_min,
+                    vmax=global_max
+                )
+            else:
+                # Use bin or just show positions
+                if 'bin' in plot_data.columns:
+                    bin_values = plot_data['bin'].values
+                    for i, (x, y, b) in enumerate(zip(x_vals, y_vals, bin_values)):
+                        grid[y - y_min, x - x_min] = b
+                    # Custom bin colormap
+                    unique_bins = set(plot_data['bin'].dropna().unique())
+                    cmap, norm = get_bin_colormap(unique_bins)
+                    im = ax.imshow(
+                        grid,
+                        cmap=cmap,
+                        norm=norm,
+                        aspect='equal',
+                        interpolation='nearest',
+                        origin='upper'
+                    )
+                else:
+                    # Just show presence/absence
+                    for x, y in zip(x_vals, y_vals):
+                        grid[y - y_min, x - x_min] = 1
+                    im = ax.imshow(
+                        grid,
+                        cmap='Blues',
+                        aspect='equal',
+                        interpolation='nearest',
+                        origin='upper'
+                    )
+
+            # Store axes info for click handler
+            grr_plot_data_cache['axes_info'].append({
+                'ax': ax,
+                'x_min': x_min,
+                'y_min': y_min,
+                'x_max': x_max,
+                'y_max': y_max,
+                'df': df,
+                'file_idx': idx,
+                'grid_width': grid_width,
+                'grid_height': grid_height
+            })
+
+            # Highlight selected dies with RED BORDER
+            for die_coord in grr_selected_dies:
+                dx, dy = die_coord
+                if x_min <= dx <= x_max and y_min <= dy <= y_max:
+                    rect = plt.Rectangle(
+                        (dx - x_min - 0.5, dy - y_min - 0.5), 1, 1,
+                        fill=False, edgecolor='red', linewidth=2.5, zorder=10
+                    )
+                    ax.add_patch(rect)
+
+            # Set axis labels and ticks
+            ax.set_title(f"W{idx + 1}: {short_name}", fontsize=8, fontweight='bold', color='#2C3E50')
+            ax.set_xlabel("X", fontsize=7)
+            ax.set_ylabel("Y", fontsize=7)
+            ax.tick_params(axis='both', labelsize=6)
+
+            # Set tick labels to show real coordinates
+            num_x_ticks = min(5, grid_width)
+            num_y_ticks = min(5, grid_height)
+            if grid_width > 1:
+                x_tick_positions = np.linspace(0, grid_width - 1, num_x_ticks)
+                ax.set_xticks(x_tick_positions)
+                ax.set_xticklabels([f"{int(x_min + pos)}" for pos in x_tick_positions])
+            if grid_height > 1:
+                y_tick_positions = np.linspace(0, grid_height - 1, num_y_ticks)
+                ax.set_yticks(y_tick_positions)
+                ax.set_yticklabels([f"{int(y_min + pos)}" for pos in y_tick_positions])
+
+            # Show grid if enabled
+            if grr_grid_var.get():
+                ax.set_xticks(np.arange(-0.5, grid_width, 1), minor=True)
+                ax.set_yticks(np.arange(-0.5, grid_height, 1), minor=True)
+                ax.grid(which="minor", color="black", linewidth=0.2)
+                ax.tick_params(which="minor", size=0)
+
+            # Border styling - color based on assessment if available
+            border_color = '#cccccc'  # Default gray
+            border_width = 1.5
+
+            if viz_param and viz_param != "None" and grr_analysis_results:
+                for param_key, res in grr_analysis_results.items():
+                    if param_key == '_meta':
+                        continue
+                    if param_key == viz_param or viz_param.endswith(param_key.split('_')[-1] if '_' in param_key else param_key):
+                        assessment = res.get('assessment', '')
+                        if assessment == 'EXCELLENT':
+                            border_color = '#4CAF50'  # Green
+                            border_width = 3
+                        elif assessment == 'ACCEPTABLE':
+                            border_color = '#FFC107'  # Yellow/Amber
+                            border_width = 3
+                        else:  # UNACCEPTABLE
+                            border_color = '#F44336'  # Red
+                            border_width = 3
+                        break
+
+            for spine in ax.spines.values():
+                spine.set_linewidth(border_width)
+                spine.set_color(border_color)
+
+        else:
+            # Handle array/matrix data (CSV without x,y)
+            data = df if isinstance(df, np.ndarray) else np.array(df)
+            if data.ndim == 1:
+                n = len(data)
+                cols_arr = int(np.ceil(np.sqrt(n)))
+                rows_arr = int(np.ceil(n / cols_arr))
+                padded = np.full(rows_arr * cols_arr, np.nan)
+                padded[:n] = data
+                data = padded.reshape(rows_arr, cols_arr)
+
+            im = ax.imshow(data, cmap='viridis', aspect='auto', interpolation='nearest')
+            ax.set_title(f"W{idx + 1}: {short_name}", fontsize=8, fontweight='bold')
+            ax.set_xlabel("Column", fontsize=7)
+            ax.set_ylabel("Row", fontsize=7)
+            ax.tick_params(axis='both', labelsize=6)
+
+            # Highlight selected cells
+            for die_coord in grr_selected_dies:
+                dx, dy = die_coord
+                if 0 <= dx < data.shape[0] and 0 <= dy < data.shape[1]:
+                    rect = plt.Rectangle(
+                        (dy - 0.5, dx - 0.5), 1, 1,
+                        fill=False, edgecolor='red', linewidth=2.5, zorder=10
+                    )
+                    ax.add_patch(rect)
+
+            grr_plot_data_cache['axes_info'].append({
+                'ax': ax,
+                'x_min': 0,
+                'y_min': 0,
+                'x_max': data.shape[1] - 1,
+                'y_max': data.shape[0] - 1,
+                'df': df,
+                'file_idx': idx,
+                'grid_width': data.shape[1],
+                'grid_height': data.shape[0]
+            })
+
+    # Add overall title with assessment color if parameter has results
+    param_label = viz_param if viz_param and viz_param != "None" else "Die Selection"
+
+    # Check if we have analysis results for this parameter
+    assessment_color = None
+    assessment_text = ""
+    if viz_param and viz_param != "None" and grr_analysis_results:
+        # Look for this parameter in analysis results
+        for param_key, res in grr_analysis_results.items():
+            if param_key == '_meta':
+                continue
+            # Check if this is the same parameter (handle different naming)
+            if param_key == viz_param or viz_param.endswith(param_key.split('_')[-1] if '_' in param_key else param_key):
+                assessment = res.get('assessment', '')
+                grr_percent = res.get('grr_percent', 0)
+                if assessment == 'EXCELLENT':
+                    assessment_color = '#4CAF50'  # Green
+                    assessment_text = f" - EXCELLENT ({grr_percent:.1f}% GRR) ✓"
+                elif assessment == 'ACCEPTABLE':
+                    assessment_color = '#FFC107'  # Yellow/Amber
+                    assessment_text = f" - ACCEPTABLE ({grr_percent:.1f}% GRR) ⚠"
+                else:
+                    assessment_color = '#F44336'  # Red
+                    assessment_text = f" - UNACCEPTABLE ({grr_percent:.1f}% GRR) ✗"
+                break
+
+    title_text = f"Gage R&R Wafer Maps - {param_label}{assessment_text}"
+    title_color = assessment_color if assessment_color else '#2C3E50'
+    fig.suptitle(title_text, fontsize=10, fontweight='bold', y=0.98, color=title_color)
+
+    # Adjust layout
+    try:
+        fig.tight_layout(rect=[0, 0.02, 1, 0.95])
+    except:
+        pass  # Ignore tight_layout warnings
+
+    # Create canvas widget
+    canvas = FigureCanvasTkAgg(fig, master=grr_files_container)
+    canvas_widget = canvas.get_tk_widget()
+    canvas_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+    canvas.draw()
+
+    # Store main canvas reference
+    grr_main_fig_canvas = canvas
+
+    # Click handler for die selection
+    def on_grr_click(event):
+        if event.inaxes is None or event.button != 1:
+            return
+        if event.xdata is None or event.ydata is None:
+            return
+
+        # Find which axis was clicked
+        for info in grr_plot_data_cache.get('axes_info', []):
+            if info['ax'] == event.inaxes:
+                # Convert click position to die coordinates
+                grid_x = int(round(event.xdata))
+                grid_y = int(round(event.ydata))
+                x_coord = info['x_min'] + grid_x
+                y_coord = info['y_min'] + grid_y
+
+                # Verify the die exists
+                df = info['df']
+                if 'x' in df.columns and 'y' in df.columns:
+                    if ((df['x'] == x_coord) & (df['y'] == y_coord)).any():
+                        toggle_grr_die_selection(x_coord, y_coord)
+                else:
+                    # Array data - use grid position directly
+                    if 0 <= grid_x < info['grid_width'] and 0 <= grid_y < info['grid_height']:
+                        toggle_grr_die_selection(grid_y, grid_x)
+                break
+
+    canvas.mpl_connect('button_press_event', on_grr_click)
+
+    # Scroll to zoom handler
+    def on_grr_scroll(event):
+        if event.inaxes is None:
+            return
+        ax = event.inaxes
+        cur_xlim = ax.get_xlim()
+        cur_ylim = ax.get_ylim()
+
+        xdata = event.xdata
+        ydata = event.ydata
+
+        if xdata is None or ydata is None:
+            return
+
+        base_scale = 1.3
+        if event.button == 'up':
+            scale_factor = 1 / base_scale
+        elif event.button == 'down':
+            scale_factor = base_scale
+        else:
+            return
+
+        new_width = (cur_xlim[1] - cur_xlim[0]) * scale_factor
+        new_height = (cur_ylim[1] - cur_ylim[0]) * scale_factor
+
+        relx = (cur_xlim[1] - xdata) / (cur_xlim[1] - cur_xlim[0])
+        rely = (cur_ylim[1] - ydata) / (cur_ylim[1] - cur_ylim[0])
+
+        ax.set_xlim([xdata - new_width * (1 - relx), xdata + new_width * relx])
+        ax.set_ylim([ydata - new_height * (1 - rely), ydata + new_height * rely])
+
+        canvas.draw_idle()
+
+    canvas.mpl_connect('scroll_event', on_grr_scroll)
+
+    # Update scroll region
+    grr_files_container.update_idletasks()
+    grr_content_canvas.configure(scrollregion=grr_content_canvas.bbox("all"))
+
+# Global variable to store the main figure canvas for GRR
+grr_main_fig_canvas = None
+grr_plot_data_cache = {}
 
 
 def create_grr_stdf_display(parent_frame, file_info, file_idx):
@@ -20012,57 +23408,11 @@ def toggle_grr_die_selection(x, y):
 
 
 def update_grr_wafermaps():
-      """Update all wafermap displays to show current selection with interactive zoom and selection"""
-      global grr_file_canvases
+    """Update all wafermap displays to show current selection - now uses unified display"""
+    global grr_main_fig_canvas, grr_plot_data_cache
 
-      for canvas_info in grr_file_canvases:
-          canvas = canvas_info['canvas']
-          fig = canvas_info['fig']
-          ax = canvas_info['ax']
-          file_idx = canvas_info['file_idx']
-          df = canvas_info['data']
-
-          if file_idx < len(grr_file_data):
-              # Clear and redraw
-              ax.clear()
-
-              if 'x' in df.columns and 'y' in df.columns:
-                  plot_data = df[df['x'].notna() & df['y'].notna()]
-
-                  if len(plot_data) > 0:
-                      # Plot all dies as blue
-                      ax.scatter(
-                          plot_data["x"].values,
-                          plot_data["y"].values,
-                          c='#3498DB',
-                          s=30,
-                          edgecolors="gray",
-                          linewidth=0.3
-                      )
-
-                      # Highlight selected dies in red
-                      for die_coord in grr_selected_dies:
-                          x, y = die_coord
-                          if ((plot_data['x'] == x) & (plot_data['y'] == y)).any():
-                              ax.scatter([x], [y], c='red', s=50, edgecolors='black', linewidth=2)
-
-                      ax.set_xlabel("X", fontsize=9)
-                      ax.set_ylabel("Y", fontsize=9)
-                      ax.set_title(f"Click to select - W{file_idx + 1}", fontsize=9, color='#3498DB', fontweight='bold')
-                      ax.set_aspect("equal")
-                      ax.tick_params(axis='both', labelsize=7)
-
-                      # Border for selection (highlight when selected)
-                      for spine in ax.spines.values():
-                          spine.set_linewidth(2)
-                          spine.set_color('#cccccc')
-                      canvas_info['spines'] = ax.spines
-
-              # Store reference for click/zoom handlers
-              canvas_info['is_selected'] = [False]  # Track if this is the selected canvas
-
-              fig.tight_layout()
-              canvas.draw()
+    # Simply refresh the entire display - this will redraw with new selections
+    update_grr_file_displays()
 
 
 # ============================================================================
@@ -21379,12 +24729,9 @@ def update_pptx_report_group_combobox():
     except NameError:
         pass
 
-    # Gage R&R tab
+    # Gage R&R tab - populate group data for multi-group selection
     try:
-        pptx_grr_report_group_combobox["values"] = groups
-        pptx_grr_report_group_combobox.set("-- Select Group --")
-        pptx_grr_report_param_combobox["values"] = ["-- Select Parameter --"]
-        pptx_grr_report_param_combobox.set("-- Select Parameter --")
+        populate_grr_group_data()
     except NameError:
         pass
 
@@ -22691,6 +26038,13 @@ def update_grr_slide_tabs(*args):
                 grr_slides_notebook.forget(grr_multi_slide_data[i]["tab_frame"])
                 del grr_multi_slide_data[i]
 
+    # Update group listbox to reflect new slide counts
+    try:
+        refresh_grr_group_listbox()
+        update_grr_report_summary()
+    except NameError:
+        pass
+
 grr_slide_count_var.trace_add("write", update_grr_slide_tabs)
 
 # Create initial Gage R&R slide tab
@@ -22717,6 +26071,7 @@ def toggle_grr_all():
     pptx_grr_variance_var.set(state)
     pptx_grr_charts_var.set(state)
     pptx_grr_anova_var.set(state)
+    pptx_grr_calcparam_var.set(state)
 
 grr_select_all_check = tk.Checkbutton(
     grr_content_frame,
@@ -22734,20 +26089,208 @@ pptx_grr_summary_var = tk.BooleanVar(value=True)
 pptx_grr_variance_var = tk.BooleanVar(value=True)
 pptx_grr_charts_var = tk.BooleanVar(value=True)
 pptx_grr_anova_var = tk.BooleanVar(value=True)
+pptx_grr_calcparam_var = tk.BooleanVar(value=False)
 
-# ===== Parameter-Auswahl für Gage R&R =====
-grr_param_group_frame = tk.LabelFrame(grr_content_frame, text="Parameter-Auswahl", font=("Helvetica", 9, "bold"))
-grr_param_group_frame.pack(fill=tk.X, pady=10, padx=20)
+# Slide element checkboxes visible to user
+grr_elements_frame = tk.LabelFrame(grr_content_frame, text="📊 Slide Elements", font=("Helvetica", 9, "bold"))
+grr_elements_frame.pack(fill=tk.X, pady=(0, 5), padx=20)
 
-# Group selection
-grr_group_row = tk.Frame(grr_param_group_frame)
-grr_group_row.pack(fill=tk.X, padx=5, pady=5)
+tk.Checkbutton(grr_elements_frame, text="Summary Table", variable=pptx_grr_summary_var,
+               font=("Helvetica", 9)).pack(anchor="w", padx=20, pady=1)
+tk.Checkbutton(grr_elements_frame, text="Variance Chart", variable=pptx_grr_variance_var,
+               font=("Helvetica", 9)).pack(anchor="w", padx=20, pady=1)
+tk.Checkbutton(grr_elements_frame, text="%GRR / ndc Charts", variable=pptx_grr_charts_var,
+               font=("Helvetica", 9)).pack(anchor="w", padx=20, pady=1)
+tk.Checkbutton(grr_elements_frame, text="Calculation Parameters (Formulas)", variable=pptx_grr_calcparam_var,
+               font=("Helvetica", 9)).pack(anchor="w", padx=20, pady=1)
 
-tk.Label(grr_group_row, text="Gruppe:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=5)
+# ===== Gruppen-Auswahl für Gage R&R Report (Multi-Gruppen mit Folienanzahl) =====
+grr_report_group_frame = tk.LabelFrame(grr_content_frame, text="📁 Gruppen-Auswahl für Report", font=("Helvetica", 9, "bold"))
+grr_report_group_frame.pack(fill=tk.X, pady=10, padx=20)
+
+# Storage: {group_name: {"selected": BooleanVar, "params": [list of param strings], "slide_count": int}}
+pptx_grr_group_data = {}
+pptx_grr_selected_params = []  # backward compatibility - flat list of all selected params
+
+# --- Top row: Select All / Deselect All groups ---
+grr_group_btn_row = tk.Frame(grr_report_group_frame)
+grr_group_btn_row.pack(fill=tk.X, padx=5, pady=(5, 2))
+
+def grr_report_select_all_groups():
+    """Select all groups for GRR report"""
+    for gname, gdata in pptx_grr_group_data.items():
+        gdata["selected"].set(True)
+    refresh_grr_group_listbox()
+    update_grr_report_summary()
+
+def grr_report_deselect_all_groups():
+    """Deselect all groups for GRR report"""
+    for gname, gdata in pptx_grr_group_data.items():
+        gdata["selected"].set(False)
+    refresh_grr_group_listbox()
+    update_grr_report_summary()
+
+tk.Button(grr_group_btn_row, text="✅ Alle Gruppen", font=("Helvetica", 8), command=grr_report_select_all_groups).pack(side=tk.LEFT, padx=3)
+tk.Button(grr_group_btn_row, text="❌ Keine Gruppen", font=("Helvetica", 8), command=grr_report_deselect_all_groups).pack(side=tk.LEFT, padx=3)
+
+# --- Group listbox with checkboxes and slide count display ---
+grr_group_list_frame = tk.Frame(grr_report_group_frame)
+grr_group_list_frame.pack(fill=tk.X, padx=5, pady=5)
+
+# Header row
+grr_group_header = tk.Frame(grr_group_list_frame)
+grr_group_header.pack(fill=tk.X)
+tk.Label(grr_group_header, text="Gruppe", font=("Helvetica", 8, "bold"), width=25, anchor="w").pack(side=tk.LEFT, padx=5)
+tk.Label(grr_group_header, text="Parameter", font=("Helvetica", 8, "bold"), width=10, anchor="center").pack(side=tk.LEFT, padx=5)
+tk.Label(grr_group_header, text="Folien", font=("Helvetica", 8, "bold"), width=8, anchor="center").pack(side=tk.LEFT, padx=5)
+
+# Scrollable group checkbox area
+grr_group_canvas = tk.Canvas(grr_group_list_frame, height=250)
+grr_group_scrollbar = ttk.Scrollbar(grr_group_list_frame, orient="vertical", command=grr_group_canvas.yview)
+grr_group_inner_frame = tk.Frame(grr_group_canvas)
+
+grr_group_inner_frame.bind(
+    "<Configure>",
+    lambda e: grr_group_canvas.configure(scrollregion=grr_group_canvas.bbox("all"))
+)
+grr_group_canvas.create_window((0, 0), window=grr_group_inner_frame, anchor="nw")
+grr_group_canvas.configure(yscrollcommand=grr_group_scrollbar.set)
+
+grr_group_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+grr_group_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+# Enable mousewheel scrolling on canvas and ALL child widgets
+def _on_grr_group_mousewheel(event):
+    grr_group_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
+def _bind_grr_mousewheel_recursive(widget):
+    """Bind mousewheel to a widget and all its descendants."""
+    widget.bind("<MouseWheel>", _on_grr_group_mousewheel)
+    for child in widget.winfo_children():
+        _bind_grr_mousewheel_recursive(child)
+
+grr_group_canvas.bind("<MouseWheel>", _on_grr_group_mousewheel)
+grr_group_inner_frame.bind("<MouseWheel>", _on_grr_group_mousewheel)
+
+def get_grr_group_slide_count(group_name):
+    """Get the number of slides that will be generated for this group.
+    Counts: 1 Overview + Summary pages (if enabled, paginated at 50) + Variance (if enabled) + Charts (if enabled)."""
+    if group_name in pptx_grr_group_data:
+        num_params = len(pptx_grr_group_data[group_name]["params"])
+    elif grr_grouped_parameters and group_name in grr_grouped_parameters:
+        num_params = len(grr_grouped_parameters[group_name])
+    else:
+        num_params = 0
+    if num_params == 0:
+        return 0
+    slide_count = 1  # Overview slide is always created
+    try:
+        if pptx_grr_calcparam_var.get():
+            slide_count += 1
+        if pptx_grr_summary_var.get():
+            slide_count += (num_params + 49) // 50  # 50 params per table slide
+        if pptx_grr_variance_var.get():
+            slide_count += 1
+        if pptx_grr_charts_var.get():
+            slide_count += 1
+    except:
+        slide_count = 5
+    return slide_count
+
+def refresh_grr_group_listbox():
+    """Rebuild the group checkbox list from pptx_grr_group_data"""
+    for widget in grr_group_inner_frame.winfo_children():
+        widget.destroy()
+
+    for gname in sorted(pptx_grr_group_data.keys()):
+        gdata = pptx_grr_group_data[gname]
+        row = tk.Frame(grr_group_inner_frame)
+        row.pack(fill=tk.X, pady=1)
+
+        cb = tk.Checkbutton(
+            row, text=gname, variable=gdata["selected"],
+            font=("Helvetica", 8), anchor="w", width=24,
+            command=lambda g=gname: on_grr_group_toggled(g)
+        )
+        cb.pack(side=tk.LEFT, padx=5)
+
+        param_count = len(gdata["params"])
+        tk.Label(row, text=str(param_count), font=("Helvetica", 8), width=10, anchor="center").pack(side=tk.LEFT, padx=5)
+
+        slide_count = get_grr_group_slide_count(gname)
+        slide_label = tk.Label(row, text=str(slide_count), font=("Helvetica", 8, "bold"), width=8, anchor="center",
+                               fg="#1976D2" if gdata["selected"].get() else "#999999")
+        slide_label.pack(side=tk.LEFT, padx=5)
+        gdata["_slide_label"] = slide_label
+
+    # Bind mousewheel to all newly created child widgets
+    _bind_grr_mousewheel_recursive(grr_group_inner_frame)
+
+def on_grr_group_toggled(group_name):
+    """Called when a group checkbox is toggled"""
+    update_grr_report_summary()
+    # Update color of slide label
+    if group_name in pptx_grr_group_data:
+        gdata = pptx_grr_group_data[group_name]
+        if "_slide_label" in gdata:
+            gdata["_slide_label"].config(fg="#1976D2" if gdata["selected"].get() else "#999999")
+    # If this group is currently shown in param editor, keep it
+    update_grr_param_editor()
+
+# --- Summary label: total selected groups and slides ---
+grr_report_summary_frame = tk.Frame(grr_report_group_frame)
+grr_report_summary_frame.pack(fill=tk.X, padx=5, pady=5)
+
+grr_report_summary_label = tk.Label(
+    grr_report_summary_frame,
+    text="Keine Gruppen ausgewählt",
+    font=("Helvetica", 9, "bold"),
+    fg="#666666"
+)
+grr_report_summary_label.pack(side=tk.LEFT, padx=5)
+
+def update_grr_report_summary():
+    """Update the summary label showing selected groups and total slide count"""
+    selected_groups = [g for g, d in pptx_grr_group_data.items() if d["selected"].get()]
+    total_slides = sum(get_grr_group_slide_count(g) for g in selected_groups)
+    total_params = sum(len(pptx_grr_group_data[g]["params"]) for g in selected_groups)
+
+    if selected_groups:
+        grr_report_summary_label.config(
+            text=f"✅ {len(selected_groups)} Gruppen | {total_params} Parameter | {total_slides} Folien gesamt",
+            fg="#1976D2"
+        )
+    else:
+        grr_report_summary_label.config(
+            text="Keine Gruppen ausgewählt",
+            fg="#666666"
+        )
+
+    # Rebuild flat pptx_grr_selected_params for backward compatibility
+    rebuild_grr_selected_params_flat()
+
+def rebuild_grr_selected_params_flat():
+    """Rebuild the flat pptx_grr_selected_params list from all selected groups"""
+    global pptx_grr_selected_params
+    pptx_grr_selected_params = []
+    for gname in sorted(pptx_grr_group_data.keys()):
+        gdata = pptx_grr_group_data[gname]
+        if gdata["selected"].get():
+            pptx_grr_selected_params.extend(gdata["params"])
+
+# ===== Parameter-Editor für ausgewählte Gruppe =====
+grr_param_editor_frame = tk.LabelFrame(grr_content_frame, text="📝 Parameter bearbeiten (Gruppe auswählen oben)", font=("Helvetica", 9, "bold"))
+grr_param_editor_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+
+# Group selector for param editing
+grr_param_edit_group_row = tk.Frame(grr_param_editor_frame)
+grr_param_edit_group_row.pack(fill=tk.X, padx=5, pady=5)
+
+tk.Label(grr_param_edit_group_row, text="Gruppe bearbeiten:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=5)
 
 pptx_grr_report_group_var = tk.StringVar(value="-- Gruppe auswählen --")
 pptx_grr_report_group_combobox = ttk.Combobox(
-    grr_group_row,
+    grr_param_edit_group_row,
     textvariable=pptx_grr_report_group_var,
     state="readonly",
     width=30,
@@ -22756,154 +26299,272 @@ pptx_grr_report_group_combobox = ttk.Combobox(
 pptx_grr_report_group_combobox["values"] = ["-- Gruppe auswählen --"]
 pptx_grr_report_group_combobox.pack(side=tk.LEFT, padx=5)
 
-# Parameter selection
-grr_param_row = tk.Frame(grr_param_group_frame)
-grr_param_row.pack(fill=tk.X, padx=5, pady=5)
+# Two-panel layout: Available params | Selected params
+grr_param_panels = tk.Frame(grr_param_editor_frame)
+grr_param_panels.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-tk.Label(grr_param_row, text="Parameter:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=5)
+# LEFT: Available parameters for this group
+grr_avail_frame = tk.LabelFrame(grr_param_panels, text="Verfügbare Parameter", font=("Helvetica", 8))
+grr_avail_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 2))
 
-pptx_grr_report_param_var = tk.StringVar(value="-- Parameter auswählen --")
-pptx_grr_report_param_combobox = ttk.Combobox(
-    grr_param_row,
-    textvariable=pptx_grr_report_param_var,
-    state="readonly",
-    width=50,
-    font=("Helvetica", 9)
+grr_avail_listbox = tk.Listbox(
+    grr_avail_frame,
+    font=("Helvetica", 8),
+    height=8,
+    selectmode=tk.EXTENDED
 )
-pptx_grr_report_param_combobox["values"] = ["-- Parameter auswählen --"]
-pptx_grr_report_param_combobox.pack(side=tk.LEFT, padx=5)
+grr_avail_scrollbar = ttk.Scrollbar(grr_avail_frame, orient="vertical", command=grr_avail_listbox.yview)
+grr_avail_listbox.configure(yscrollcommand=grr_avail_scrollbar.set)
+grr_avail_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+grr_avail_listbox.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 
-# Add/Remove buttons
-grr_btn_row = tk.Frame(grr_param_group_frame)
-grr_btn_row.pack(fill=tk.X, padx=5, pady=5)
+# CENTER: Add/Remove buttons
+grr_param_btn_frame = tk.Frame(grr_param_panels)
+grr_param_btn_frame.pack(side=tk.LEFT, padx=5, pady=10)
 
-pptx_grr_add_btn = tk.Button(
-    grr_btn_row,
-    text="➕ Hinzufügen",
-    font=("Helvetica", 9),
-    command=lambda: add_grr_param_to_report()
-)
-pptx_grr_add_btn.pack(side=tk.LEFT, padx=5)
+tk.Button(grr_param_btn_frame, text="▶▶\nAlle hinzu", font=("Helvetica", 7), width=10,
+          command=lambda: grr_param_add_all()).pack(pady=2)
+tk.Button(grr_param_btn_frame, text="▶\nHinzufügen", font=("Helvetica", 7), width=10,
+          command=lambda: grr_param_add_selected()).pack(pady=2)
+tk.Button(grr_param_btn_frame, text="◀\nEntfernen", font=("Helvetica", 7), width=10,
+          command=lambda: grr_param_remove_selected()).pack(pady=2)
+tk.Button(grr_param_btn_frame, text="◀◀\nAlle entfernen", font=("Helvetica", 7), width=10,
+          command=lambda: grr_param_remove_all()).pack(pady=2)
 
-def add_grr_group_to_report():
-    """Add ALL parameters from selected group to GRR report list"""
-    global pptx_grr_selected_params, grouped_parameters
-
-    group = pptx_grr_report_group_var.get()
-    if not grouped_parameters or group == "-- Gruppe auswählen --":
-        return
-
-    if group not in grouped_parameters:
-        return
-
-    added_count = 0
-    for param_tuple in grouped_parameters[group]:
-        test_num = param_tuple[0]
-        full_name = param_tuple[2] if len(param_tuple) > 2 else param_tuple[1]
-        simple_name = simplify_param_name(full_name)
-        param_str = f"test_{test_num}: {simple_name}"
-
-        if param_str not in pptx_grr_selected_params:
-            pptx_grr_selected_params.append(param_str)
-            pptx_grr_params_listbox.insert(tk.END, param_str)
-            added_count += 1
-
-    print(f"Added {added_count} parameters from group '{group}' to Gage R&R report")
-
-pptx_grr_add_group_btn = tk.Button(
-    grr_btn_row,
-    text="📁 Ganze Gruppe hinzufügen",
-    font=("Helvetica", 9, "bold"),
-    bg="#4CAF50",
-    fg="white",
-    command=add_grr_group_to_report
-)
-pptx_grr_add_group_btn.pack(side=tk.LEFT, padx=5)
-
-pptx_grr_remove_btn = tk.Button(
-    grr_btn_row,
-    text="➖ Entfernen",
-    font=("Helvetica", 9),
-    command=lambda: remove_grr_param_from_report()
-)
-pptx_grr_remove_btn.pack(side=tk.LEFT, padx=5)
-
-pptx_grr_clear_btn = tk.Button(
-    grr_btn_row,
-    text="🗑️ Alle löschen",
-    font=("Helvetica", 9),
-    command=lambda: clear_grr_params_from_report()
-)
-pptx_grr_clear_btn.pack(side=tk.LEFT, padx=5)
-
-# Selected parameters listbox
-grr_selected_frame = tk.LabelFrame(grr_content_frame, text="Ausgewählte Parameter für Report", font=("Helvetica", 9))
-grr_selected_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+# RIGHT: Selected parameters for this group
+grr_selected_frame = tk.LabelFrame(grr_param_panels, text="Ausgewählte Parameter (für Report)", font=("Helvetica", 8))
+grr_selected_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(2, 0))
 
 pptx_grr_params_listbox = tk.Listbox(
     grr_selected_frame,
-    font=("Helvetica", 9),
+    font=("Helvetica", 8),
     height=8,
-    selectmode=tk.SINGLE
+    selectmode=tk.EXTENDED
 )
-pptx_grr_params_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+grr_sel_scrollbar = ttk.Scrollbar(grr_selected_frame, orient="vertical", command=pptx_grr_params_listbox.yview)
+pptx_grr_params_listbox.configure(yscrollcommand=grr_sel_scrollbar.set)
+grr_sel_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+pptx_grr_params_listbox.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 
-pptx_grr_selected_params = []
+# Param count label
+grr_param_count_label = tk.Label(grr_param_editor_frame, text="", font=("Helvetica", 8), fg="#666666")
+grr_param_count_label.pack(anchor="w", padx=10)
 
-def update_grr_param_combobox(event=None):
-    """Update parameter combobox based on selected group"""
-    global grouped_parameters
+def _format_grr_param(actual_param):
+    """Format a raw parameter name to display string"""
+    import re as re_mod
+    simple_name = simplify_param_name(str(actual_param))
+    test_num_match = re_mod.search(r'_(\d{5,})$', str(actual_param))
+    if test_num_match:
+        test_num = test_num_match.group(1)
+        return f"test_{test_num}: {simple_name}"
+    return actual_param
 
+def _format_grr_chart_label(raw_param, group_name=""):
+    """Format parameter name for chart x-axis: show only test number + name after group prefix.
+    Example: 'ANLG_ADCSTATIC_I3CSDA-AT-VBG10DIV3BY4_X_X_X_X_NV_PEQA_X_11620201' with group 'ANLG_ADC'
+    -> '11620201: STATIC_I3CSDA-AT-VBG10DIV3BY4'"""
+    import re as re_mod
+    name = str(raw_param)
+    # Extract test number from end
+    test_num = ""
+    test_match = re_mod.search(r'_(\d{5,})$', name)
+    if test_match:
+        test_num = test_match.group(1)
+        name = name[:test_match.start()]
+    # Remove group prefix - try the group name AND common alternative prefixes
+    # that map to the same group (e.g. OPTICAL_ANSI -> OPTIC_ANSI, ANALOG_ADC -> ANLG_ADC)
+    if group_name:
+        _alt_prefixes = {
+            'OPTIC': 'OPTICAL', 'ANLG': 'ANALOG', 'FUNC': 'FUNCTIONAL', 'INIT': 'INITIALIZE',
+            'OPTICAL': 'OPTIC', 'ANALOG': 'ANLG', 'FUNCTIONAL': 'FUNC', 'INITIALIZE': 'INIT',
+        }
+        gn_upper = group_name.upper()
+        name_upper = name.upper()
+        # Build list of prefixes to try: group_name itself + alternative forms
+        prefixes_to_try = [gn_upper]
+        # If group is e.g. "OPTIC_ANSI", try "OPTICAL_ANSI" too
+        for short_form, long_form in _alt_prefixes.items():
+            if gn_upper.startswith(short_form + "_"):
+                alt = long_form + gn_upper[len(short_form):]
+                if alt not in prefixes_to_try:
+                    prefixes_to_try.append(alt)
+            elif gn_upper == short_form:
+                if long_form not in prefixes_to_try:
+                    prefixes_to_try.append(long_form)
+        # Try each prefix (with and without trailing underscore)
+        stripped = False
+        for pfx in prefixes_to_try:
+            if name_upper.startswith(pfx + "_"):
+                name = name[len(pfx) + 1:]
+                stripped = True
+                break
+            elif name_upper.startswith(pfx):
+                name = name[len(pfx):]
+                stripped = True
+                break
+    # Clean up _X_X_X patterns and noise
+    name = re_mod.sub(r'(_X)+(_|$)', '_', name)
+    name = re_mod.sub(r'_NV_', '_', name)
+    name = re_mod.sub(r'_PEQA_', '_', name)
+    name = re_mod.sub(r'_+', '_', name)
+    name = name.strip('_')
+    if test_num:
+        return f"{test_num}: {name}"
+    return name
+
+def populate_grr_group_data():
+    """Build pptx_grr_group_data from grr_grouped_parameters. Called when groups become available."""
+    global pptx_grr_group_data
+    if not grr_grouped_parameters:
+        return
+
+    existing_selections = {}
+    for gname, gdata in pptx_grr_group_data.items():
+        existing_selections[gname] = {
+            "selected": gdata["selected"].get(),
+            "params": list(gdata["params"])
+        }
+
+    pptx_grr_group_data.clear()
+
+    for gname in sorted(grr_grouped_parameters.keys()):
+        all_display = []
+        display_to_raw = {}
+        for pt in grr_grouped_parameters[gname]:
+            raw_col = pt[0]
+            display_name = _format_grr_param(raw_col)
+            all_display.append(display_name)
+            display_to_raw[display_name] = raw_col
+
+        # For PLM group: also add pixel-level options per PLM type
+        if gname == "PLM":
+            plm_types = set()
+            for pt in grr_grouped_parameters[gname]:
+                p = str(pt[0])
+                for suffix in ['_mean', '_median', '_std', '_min', '_max', '_pixels']:
+                    if p.lower().endswith(suffix):
+                        base = p[:len(p) - len(suffix)]
+                        if base.startswith('PLM_'):
+                            base = base[4:]
+                        if base:
+                            plm_types.add(base)
+                        break
+            for plm_type in sorted(plm_types):
+                pixel_display = f"🔬 {plm_type} (Pixel-Einzelwerte)"
+                pixel_raw = f"PLM_PIXEL_{plm_type}"
+                all_display.append(pixel_display)
+                display_to_raw[pixel_display] = pixel_raw
+
+        if gname in existing_selections:
+            sel_var = tk.BooleanVar(value=existing_selections[gname]["selected"])
+            kept_params = [p for p in existing_selections[gname]["params"] if p in all_display]
+            if not kept_params:
+                kept_params = list(all_display)
+        else:
+            sel_var = tk.BooleanVar(value=False)
+            kept_params = list(all_display)
+
+        pptx_grr_group_data[gname] = {
+            "selected": sel_var,
+            "params": kept_params,
+            "all_params": all_display,
+            "display_to_raw": display_to_raw,
+        }
+
+    # Update group combobox for param editor
+    group_names = ["-- Gruppe auswählen --"] + sorted(pptx_grr_group_data.keys())
+    pptx_grr_report_group_combobox["values"] = group_names
+
+    refresh_grr_group_listbox()
+    update_grr_report_summary()
+    print(f"[GRR Report] Populated {len(pptx_grr_group_data)} groups for report selection")
+
+def update_grr_param_editor(event=None):
+    """Update the parameter editor panels for the selected group"""
     group = pptx_grr_report_group_var.get()
-    if not grouped_parameters or group == "-- Gruppe auswählen --":
-        pptx_grr_report_param_combobox["values"] = ["-- Parameter auswählen --"]
-        pptx_grr_report_param_var.set("-- Parameter auswählen --")
+    grr_avail_listbox.delete(0, tk.END)
+    pptx_grr_params_listbox.delete(0, tk.END)
+
+    if group == "-- Gruppe auswählen --" or group not in pptx_grr_group_data:
+        grr_param_editor_frame.config(text="📝 Parameter bearbeiten (Gruppe auswählen oben)")
+        grr_param_count_label.config(text="")
         return
 
-    params = []
-    if group in grouped_parameters:
-        for param_tuple in grouped_parameters[group]:
-            test_num = param_tuple[0]
-            full_name = param_tuple[2] if len(param_tuple) > 2 else param_tuple[1]
-            simple_name = simplify_param_name(full_name)
-            params.append(f"test_{test_num}: {simple_name}")
+    gdata = pptx_grr_group_data[group]
+    grr_param_editor_frame.config(text=f"📝 Parameter bearbeiten: {group}")
 
-    pptx_grr_report_param_combobox["values"] = ["-- Parameter auswählen --"] + sorted(params)
-    pptx_grr_report_param_var.set("-- Parameter auswählen --")
+    selected_params = set(gdata["params"])
+    all_params = gdata["all_params"]
 
-pptx_grr_report_group_combobox.bind("<<ComboboxSelected>>", update_grr_param_combobox)
+    # Available = all params in group that are NOT in selected
+    for p in sorted(all_params):
+        if p not in selected_params:
+            grr_avail_listbox.insert(tk.END, p)
 
-def add_grr_param_to_report():
-    """Add selected parameter to GRR report list"""
-    global pptx_grr_selected_params
+    # Selected = current selection for this group
+    for p in gdata["params"]:
+        pptx_grr_params_listbox.insert(tk.END, p)
 
-    param = pptx_grr_report_param_var.get()
-    if param == "-- Parameter auswählen --":
+    slide_count = get_grr_group_slide_count(group)
+    grr_param_count_label.config(
+        text=f"Ausgewählt: {len(gdata['params'])} von {len(all_params)} Parametern | {slide_count} Folien für diese Gruppe"
+    )
+
+pptx_grr_report_group_combobox.bind("<<ComboboxSelected>>", update_grr_param_editor)
+
+def grr_param_add_selected():
+    """Add selected params from available to selected list"""
+    group = pptx_grr_report_group_var.get()
+    if group not in pptx_grr_group_data:
         return
+    selection = grr_avail_listbox.curselection()
+    if not selection:
+        return
+    params_to_add = [grr_avail_listbox.get(i) for i in selection]
+    gdata = pptx_grr_group_data[group]
+    for p in params_to_add:
+        if p not in gdata["params"]:
+            gdata["params"].append(p)
+    update_grr_param_editor()
+    refresh_grr_group_listbox()
+    update_grr_report_summary()
 
-    if param not in pptx_grr_selected_params:
-        pptx_grr_selected_params.append(param)
-        pptx_grr_params_listbox.insert(tk.END, param)
-
-def remove_grr_param_from_report():
-    """Remove selected parameter from GRR report list"""
-    global pptx_grr_selected_params
-
+def grr_param_remove_selected():
+    """Remove selected params from selected list back to available"""
+    group = pptx_grr_report_group_var.get()
+    if group not in pptx_grr_group_data:
+        return
     selection = pptx_grr_params_listbox.curselection()
     if not selection:
         return
+    params_to_remove = [pptx_grr_params_listbox.get(i) for i in selection]
+    gdata = pptx_grr_group_data[group]
+    gdata["params"] = [p for p in gdata["params"] if p not in params_to_remove]
+    update_grr_param_editor()
+    refresh_grr_group_listbox()
+    update_grr_report_summary()
 
-    idx = selection[0]
-    pptx_grr_params_listbox.delete(idx)
-    if idx < len(pptx_grr_selected_params):
-        pptx_grr_selected_params.pop(idx)
+def grr_param_add_all():
+    """Add all available params to selected list"""
+    group = pptx_grr_report_group_var.get()
+    if group not in pptx_grr_group_data:
+        return
+    gdata = pptx_grr_group_data[group]
+    gdata["params"] = list(gdata["all_params"])
+    update_grr_param_editor()
+    refresh_grr_group_listbox()
+    update_grr_report_summary()
 
-def clear_grr_params_from_report():
-    """Clear all parameters from GRR report list"""
-    global pptx_grr_selected_params
-
-    pptx_grr_params_listbox.delete(0, tk.END)
-    pptx_grr_selected_params = []
+def grr_param_remove_all():
+    """Remove all params from selected list"""
+    group = pptx_grr_report_group_var.get()
+    if group not in pptx_grr_group_data:
+        return
+    pptx_grr_group_data[group]["params"] = []
+    update_grr_param_editor()
+    refresh_grr_group_listbox()
+    update_grr_report_summary()
 
 # Hidden but kept for compatibility
 pptx_grr_param_summary_var = tk.BooleanVar(value=True)
@@ -24345,397 +28006,809 @@ def create_powerpoint_presentation():
 
                     print(f"Added {num_slides} boxplot slide(s) for {len(params_to_plot)} parameters from '{selected_group}'")
 
-        # ============ Gage R&R Slides ============
-        if include_grr and grr_analysis_results and '_meta' in grr_analysis_results:
-            meta = grr_analysis_results['_meta']
+        # ============ Gage R&R Slides (per Group) ============
+        if include_grr:
+            # Determine which groups are selected and get their raw column names
+            selected_groups = []
+            try:
+                for gname in sorted(pptx_grr_group_data.keys()):
+                    gdata = pptx_grr_group_data[gname]
+                    if gdata["selected"].get() and len(gdata["params"]) > 0:
+                        # Convert display names back to raw column names
+                        raw_params = []
+                        d2r = gdata.get("display_to_raw", {})
+                        for dp in gdata["params"]:
+                            if dp in d2r:
+                                raw_params.append(d2r[dp])
+                            else:
+                                raw_params.append(dp)
+                        selected_groups.append((gname, gdata["params"], raw_params))
+            except NameError:
+                pass
 
-            # Filter out metadata key to get only parameter results
-            param_results = {k: v for k, v in grr_analysis_results.items() if k != '_meta'}
+            # Fallback: if no groups selected, use existing grr_analysis_results
+            if not selected_groups:
+                if grr_analysis_results and '_meta' in grr_analysis_results:
+                    existing = {k: v for k, v in grr_analysis_results.items() if k != '_meta'}
+                    if existing:
+                        selected_groups = [("All Parameters", list(existing.keys()), list(existing.keys()))]
 
-            if param_results:
-                # Calculate overall assessment summary for context
-                excellent_count = sum(1 for r in param_results.values() if r['assessment'] == 'EXCELLENT')
-                acceptable_count = sum(1 for r in param_results.values() if r['assessment'] == 'ACCEPTABLE')
-                unacceptable_count = sum(1 for r in param_results.values() if r['assessment'] == 'UNACCEPTABLE')
-                total_params = len(param_results)
+            if not selected_groups:
+                print("[GRR Report] No groups selected and no existing analysis results")
+            else:
+                # Check prerequisites
+                if len(grr_file_data) < 2:
+                    print("[GRR Report] WARNING: Need at least 2 GRR files loaded for analysis")
+                elif len(grr_selected_dies) < 1:
+                    print("[GRR Report] WARNING: Need at least 1 die selected for analysis")
 
-                # Find worst parameters for context
-                worst_params = [(p, r['grr_percent']) for p, r in param_results.items() if r['assessment'] == 'UNACCEPTABLE']
-                worst_params.sort(key=lambda x: x[1], reverse=True)
+                # Build meta info
+                meta = {
+                    'file_names': [os.path.basename(f['path']) for f in grr_file_data] if grr_file_data else [],
+                    'die_coords': list(grr_selected_dies),
+                    'num_files': len(grr_file_data),
+                    'num_dies': len(grr_selected_dies),
+                    'num_params': sum(len(rp) for _, _, rp in selected_groups)
+                }
 
-                # Generate conclusion text
-                if unacceptable_count == 0:
-                    overall_status = "PASS"
-                    status_color = '#4CAF50'
-                    if excellent_count == total_params:
-                        conclusion_text = "✓ All parameters show EXCELLENT measurement system capability. No action required."
+                for group_name, display_params, raw_params in selected_groups:
+                    pptx_status_label.config(text=f"Analyzing Gage R&R for group: {group_name}...", fg="blue")
+                    main_win.update()
+
+                    # Run analysis directly for this group's raw parameters
+                    param_results = run_grr_analysis_for_params(raw_params)
+
+                    if not param_results:
+                        print(f"[GRR Report] No valid analysis results for group '{group_name}', skipping")
+                        continue
+
+                    print(f"[GRR Report] Group '{group_name}': analyzed {len(param_results)} parameters")
+
+                    # Calculate overall assessment summary for this group
+                    excellent_count = sum(1 for r in param_results.values() if r['assessment'] == 'EXCELLENT')
+                    acceptable_count = sum(1 for r in param_results.values() if r['assessment'] == 'ACCEPTABLE')
+                    unacceptable_count = sum(1 for r in param_results.values() if r['assessment'] == 'UNACCEPTABLE')
+                    total_params = len(param_results)
+
+                    # Find worst parameters for context
+                    worst_params = [(p, r['grr_percent']) for p, r in param_results.items() if r['assessment'] == 'UNACCEPTABLE']
+                    worst_params.sort(key=lambda x: x[1], reverse=True)
+
+                    # Generate conclusion text
+                    if unacceptable_count == 0:
+                        overall_status = "PASS"
+                        status_color = '#4CAF50'
+                        if excellent_count == total_params:
+                            conclusion_text = "✓ All parameters show EXCELLENT measurement system capability. No action required."
+                        else:
+                            conclusion_text = f"✓ Measurement system is acceptable. {excellent_count} excellent, {acceptable_count} acceptable parameters."
                     else:
-                        conclusion_text = f"✓ Measurement system is acceptable. {excellent_count} excellent, {acceptable_count} acceptable parameters."
-                else:
-                    overall_status = "FAIL"
-                    status_color = '#F44336'
-                    failed_names = ", ".join([p[:25] for p, _ in worst_params[:3]])
-                    conclusion_text = f"✗ Gage R&R FAILED for {unacceptable_count} parameter(s) due to excessive measurement variation (>30%).\n"
-                    conclusion_text += f"   Failing parameters: {failed_names}"
-                    if len(worst_params) > 3:
-                        conclusion_text += f" (+{len(worst_params)-3} more)"
-                    conclusion_text += "\n   Recommendation: Review measurement equipment, operator training, or test methodology."
+                        overall_status = "FAIL"
+                        status_color = '#F44336'
+                        failed_names = ", ".join([p[:25] for p, _ in worst_params[:3]])
+                        conclusion_text = f"✗ Gage R&R FAILED for {unacceptable_count} parameter(s) due to excessive measurement variation (>30%).\n"
+                        conclusion_text += f"   Failing parameters: {failed_names}"
+                        if len(worst_params) > 3:
+                            conclusion_text += f" (+{len(worst_params)-3} more)"
+                        conclusion_text += "\n   Recommendation: Review measurement equipment, operator training, or test methodology."
 
-                # ==================== SLIDE 1: Overview with Wafermaps ====================
-                slide = prs.slides.add_slide(content_slide_layout)
+                    # Add pixel analysis note if any pixel params were analyzed
+                    pixel_results = {p: r for p, r in param_results.items() if r.get('is_pixel_analysis')}
+                    if pixel_results:
+                        pixel_note = "\n\n🔬 PIXEL-LEVEL ANALYSIS NOTE:\n"
+                        for pname, pr in pixel_results.items():
+                            pixel_note += f"   • {pr.get('plm_type', '?')}: Pixel region {pr.get('pixel_size', '25×25')} (center)"
+                            pixel_note += f" — %GRR={pr['grr_percent']:.1f}%, {pr['assessment']}\n"
+                        conclusion_text += pixel_note
 
-                # Title
-                title_box = slide.shapes.add_textbox(Inches(0.3), Inches(0.15), Inches(12.733), Inches(0.5))
-                title_frame = title_box.text_frame
-                title_para = title_frame.paragraphs[0]
-                title_para.text = "Gage R&R Study Overview"
-                title_para.font.size = Pt(28)
-                title_para.font.bold = True
-
-                # LEFT: Wafermap visualization
-                if grr_file_data and len(grr_file_data) > 0:
-                    num_files = min(len(grr_file_data), 4)
-                    fig_wafers, axes = plt.subplots(1, num_files, figsize=(2.5 * num_files, 2.5))
-                    if num_files == 1:
-                        axes = [axes]
-
-                    for idx, (ax, file_info) in enumerate(zip(axes, grr_file_data[:4])):
-                        df = file_info.get('data')
-                        file_name = os.path.basename(file_info.get('path', f'File {idx+1}'))[:15]
-
-                        if df is not None and hasattr(df, 'columns') and 'x' in df.columns and 'y' in df.columns:
-                            plot_data = df[df['x'].notna() & df['y'].notna()]
-                            if len(plot_data) > 0:
-                                ax.scatter(plot_data['x'], plot_data['y'], c='#B3E5FC', s=15, edgecolors='gray', linewidth=0.2)
-                                for die_coord in meta.get('die_coords', []):
-                                    x, y = die_coord
-                                    if ((plot_data['x'] == x) & (plot_data['y'] == y)).any():
-                                        ax.scatter([x], [y], c='red', s=25, edgecolors='black', linewidth=1)
-                                ax.set_aspect('equal')
-                        ax.set_title(file_name, fontsize=7, fontweight='bold')
-                        ax.tick_params(axis='both', labelsize=5)
-
-                    fig_wafers.suptitle(f'Selected Dies: {len(meta.get("die_coords", []))} locations (red)', fontsize=8, y=0.02)
-                    fig_wafers.tight_layout()
-                    img_stream = figure_to_image_bytes(fig_wafers, dpi=200)
-                    slide.shapes.add_picture(img_stream, Inches(0.3), Inches(0.75), width=Inches(6.0))
-                    plt.close(fig_wafers)
-
-                # RIGHT: Study info and parameters
-                info_box = slide.shapes.add_textbox(Inches(6.5), Inches(0.75), Inches(6.5), Inches(2.8))
-                tf = info_box.text_frame
-                tf.word_wrap = True
-
-                p = tf.paragraphs[0]
-                p.text = "Study Configuration"
-                p.font.size = Pt(14)
-                p.font.bold = True
-
-                p = tf.add_paragraph()
-                p.text = f"• Files/Trials: {meta['num_files']}   • Dies/Parts: {meta['num_dies']}   • Parameters: {meta['num_params']}"
-                p.font.size = Pt(10)
-
-                p = tf.add_paragraph()
-                p.text = f"\nParameters Analyzed:"
-                p.font.size = Pt(12)
-                p.font.bold = True
-
-                for i, param in enumerate(list(param_results.keys())[:6]):
-                    p = tf.add_paragraph()
-                    p.text = f"  {i+1}. {param[:45]}"
-                    p.font.size = Pt(9)
-                    p.font.name = "Consolas"
-                if len(param_results) > 6:
-                    p = tf.add_paragraph()
-                    p.text = f"  ... +{len(param_results)-6} more"
-                    p.font.size = Pt(9)
-
-                # BOTTOM: Conclusion box
-                conclusion_box = slide.shapes.add_textbox(Inches(0.3), Inches(3.8), Inches(12.7), Inches(1.5))
-                tf = conclusion_box.text_frame
-                tf.word_wrap = True
-
-                p = tf.paragraphs[0]
-                p.text = f"Overall Result: {overall_status}"
-                p.font.size = Pt(16)
-                p.font.bold = True
-                p.font.color.rgb = RGBColor(244, 67, 54) if overall_status == "FAIL" else RGBColor(76, 175, 80)
-
-                p = tf.add_paragraph()
-                p.text = conclusion_text
-                p.font.size = Pt(11)
-
-                # Assessment summary
-                p = tf.add_paragraph()
-                p.text = f"\nAssessment: {excellent_count} Excellent | {acceptable_count} Acceptable | {unacceptable_count} Unacceptable"
-                p.font.size = Pt(10)
-                p.font.color.rgb = RGBColor(100, 100, 100)
-
-                # ==================== SLIDE 2: GRR Summary Table ====================
-                if pptx_grr_summary_var.get():
+                    # ==================== SLIDE 1: Overview with Wafermaps ====================
+                    # Use layout from Slide Layout Preview (slide tab 0)
+                    sl_boxes = grr_multi_slide_data[0]["layout_boxes"] if 0 in grr_multi_slide_data else get_default_grr_layout()
+                    sl_enables = grr_multi_slide_data[0]["box_enable_vars"] if 0 in grr_multi_slide_data else {}
                     slide = prs.slides.add_slide(content_slide_layout)
 
-                    # Slide title
-                    title_box = slide.shapes.add_textbox(Inches(0.3), Inches(0.2), Inches(12.733), Inches(0.6))
+                    # Title with group name - from layout preview
+                    t_b = sl_boxes.get("title", {"x": 0.3, "y": 0.15, "width": 12.733, "height": 0.5})
+                    title_box = slide.shapes.add_textbox(Inches(t_b["x"]), Inches(t_b["y"]), Inches(t_b["width"]), Inches(t_b["height"]))
                     title_frame = title_box.text_frame
                     title_para = title_frame.paragraphs[0]
-                    title_para.text = "Gage R&R Analysis Summary"
+                    title_para.text = f"Gage R&R Study Overview - {group_name}"
                     title_para.font.size = Pt(28)
                     title_para.font.bold = True
 
-                    # Study info
-                    info_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.9), Inches(5), Inches(1.2))
-                    info_frame = info_box.text_frame
-                    info_text = f"Study Information:\n"
-                    info_text += f"  • Files (Operators/Trials): {meta['num_files']}\n"
-                    info_text += f"  • Dies (Parts): {meta['num_dies']}\n"
-                    info_text += f"  • Parameters Analyzed: {meta['num_params']}"
-                    info_para = info_frame.paragraphs[0]
-                    info_para.text = info_text
-                    info_para.font.size = Pt(12)
-                    info_para.font.name = "Consolas"
+                    # LEFT: Wafermap visualization - use grr_summary box position
+                    gs_b = sl_boxes.get("grr_summary", {"x": 0.3, "y": 0.7, "width": 6.0, "height": 3.0})
+                    if grr_file_data and len(grr_file_data) > 0:
+                        num_files = min(len(grr_file_data), 4)
+                        # Constrain figure to left half of slide (gs_b width)
+                        fig_w_inches = min(gs_b["width"], 6.0)
+                        fig_h_inches = min(gs_b["height"], 3.0)
+                        fig_wafers, axes = plt.subplots(1, num_files, figsize=(fig_w_inches, fig_h_inches))
+                        if num_files == 1:
+                            axes = [axes]
 
-                    # Create summary table figure
-                    fig_summary, ax_summary = plt.subplots(figsize=(12, 5))
-                    ax_summary.axis('off')
+                        # Determine viz parameter from GRR analysis
+                        viz_param = None
+                        if grr_viz_param_var and grr_viz_param_var.get() and grr_viz_param_var.get() != "None":
+                            import re as re_mod
+                            viz_param_display = grr_viz_param_var.get()
+                            test_match = re_mod.match(r'^test_(\d+):', viz_param_display)
+                            if test_match:
+                                test_num = test_match.group(1)
+                                if grr_file_data and grr_file_data[0]['data'] is not None:
+                                    first_df = grr_file_data[0]['data']
+                                    for col in first_df.columns:
+                                        if str(col).endswith(f'_{test_num}'):
+                                            viz_param = col
+                                            break
+                            else:
+                                viz_param = viz_param_display
 
-                    # Prepare table data
-                    table_data = [['Parameter', 'Mean', 'Std Dev', '%GRR', 'ndc', 'Assessment']]
-                    cell_colors = [['#E3F2FD'] * 6]
-
-                    for param, res in param_results.items():
-                        param_short = param[:35] if len(param) > 35 else param
-                        assessment = res['assessment']
-
-                        # Color based on assessment
-                        if assessment == 'EXCELLENT':
-                            row_color = '#E8F5E9'  # Light green
-                        elif assessment == 'ACCEPTABLE':
-                            row_color = '#FFF8E1'  # Light yellow
+                        # Collect global min/max for consistent color scaling
+                        all_values = []
+                        if viz_param:
+                            for fi in grr_file_data[:4]:
+                                df_tmp = fi.get('data')
+                                if df_tmp is not None and viz_param in df_tmp.columns:
+                                    vals = df_tmp[viz_param].dropna().values
+                                    if len(vals) > 0:
+                                        all_values.extend(vals)
+                        if all_values:
+                            global_min = np.nanmin(all_values)
+                            global_max = np.nanmax(all_values)
                         else:
-                            row_color = '#FFEBEE'  # Light red
+                            global_min, global_max = 0, 1
 
-                        table_data.append([
-                            param_short,
-                            f"{res['overall_mean']:.4g}",
-                            f"{res['overall_std']:.4g}",
-                            f"{res['grr_percent']:.2f}%",
-                            f"{res['ndc']:.2f}",
-                            assessment
-                        ])
-                        cell_colors.append([row_color] * 6)
+                        for idx, (ax, file_info) in enumerate(zip(axes, grr_file_data[:4])):
+                            df = file_info.get('data')
+                            file_name = os.path.basename(file_info.get('path', f'File {idx+1}'))[:15]
 
-                    table = ax_summary.table(
-                        cellText=table_data,
-                        cellColours=cell_colors,
-                        loc='center',
-                        cellLoc='center'
-                    )
-                    table.auto_set_font_size(False)
-                    table.set_fontsize(9)
-                    table.scale(1.2, 1.8)
+                            if df is not None and hasattr(df, 'columns') and 'x' in df.columns and 'y' in df.columns:
+                                plot_data = df[df['x'].notna() & df['y'].notna()]
+                                if len(plot_data) > 0:
+                                    x_vals = plot_data['x'].values.astype(int)
+                                    y_vals = plot_data['y'].values.astype(int)
+                                    x_min_w, x_max_w = x_vals.min(), x_vals.max()
+                                    y_min_w, y_max_w = y_vals.min(), y_vals.max()
+                                    grid_w = x_max_w - x_min_w + 1
+                                    grid_h = y_max_w - y_min_w + 1
 
-                    # Style header row
-                    for j in range(6):
-                        table[(0, j)].set_text_props(fontweight='bold')
+                                    grid = np.full((grid_h, grid_w), np.nan)
 
-                    fig_summary.tight_layout()
+                                    if viz_param and viz_param in plot_data.columns:
+                                        param_values = plot_data[viz_param].values
+                                        for i, (x, y, val) in enumerate(zip(x_vals, y_vals, param_values)):
+                                            grid[y - y_min_w, x - x_min_w] = val
+                                        ax.imshow(grid, cmap='viridis', aspect='equal',
+                                                  interpolation='nearest', origin='upper',
+                                                  vmin=global_min, vmax=global_max)
+                                    elif 'bin' in plot_data.columns:
+                                        bin_values = plot_data['bin'].values
+                                        for i, (x, y, b) in enumerate(zip(x_vals, y_vals, bin_values)):
+                                            grid[y - y_min_w, x - x_min_w] = b
+                                        unique_bins = set(plot_data['bin'].dropna().unique())
+                                        cmap_b, norm_b = get_bin_colormap(unique_bins)
+                                        ax.imshow(grid, cmap=cmap_b, norm=norm_b, aspect='equal',
+                                                  interpolation='nearest', origin='upper')
+                                    else:
+                                        for x, y in zip(x_vals, y_vals):
+                                            grid[y - y_min_w, x - x_min_w] = 1
+                                        ax.imshow(grid, cmap='Blues', aspect='equal',
+                                                  interpolation='nearest', origin='upper')
 
-                    img_stream = figure_to_image_bytes(fig_summary, dpi=200)
-                    slide.shapes.add_picture(img_stream, Inches(0.5), Inches(2.2), width=Inches(12.3))
-                    plt.close(fig_summary)
+                                    # Highlight selected dies with red rectangles
+                                    for die_coord in meta.get('die_coords', []):
+                                        dx, dy = die_coord
+                                        if x_min_w <= dx <= x_max_w and y_min_w <= dy <= y_max_w:
+                                            rect = plt.Rectangle(
+                                                (dx - x_min_w - 0.5, dy - y_min_w - 0.5), 1, 1,
+                                                fill=False, edgecolor='red', linewidth=2, zorder=10
+                                            )
+                                            ax.add_patch(rect)
 
-                # Slide 2: Variance Components Chart
-                if pptx_grr_variance_var.get() and len(param_results) > 0:
-                    slide = prs.slides.add_slide(content_slide_layout)
+                                    # Coordinate ticks
+                                    num_xt = min(5, grid_w)
+                                    num_yt = min(5, grid_h)
+                                    if grid_w > 1:
+                                        xtp = np.linspace(0, grid_w - 1, num_xt)
+                                        ax.set_xticks(xtp)
+                                        ax.set_xticklabels([f"{int(x_min_w + p)}" for p in xtp], fontsize=5)
+                                    if grid_h > 1:
+                                        ytp = np.linspace(0, grid_h - 1, num_yt)
+                                        ax.set_yticks(ytp)
+                                        ax.set_yticklabels([f"{int(y_min_w + p)}" for p in ytp], fontsize=5)
+                                else:
+                                    ax.text(0.5, 0.5, 'No data', ha='center', va='center', fontsize=7, transform=ax.transAxes)
+                                    ax.axis('off')
+                            else:
+                                ax.text(0.5, 0.5, 'No x/y data', ha='center', va='center', fontsize=7, transform=ax.transAxes)
+                                ax.axis('off')
 
-                    # Slide title
-                    title_box = slide.shapes.add_textbox(Inches(0.3), Inches(0.15), Inches(12.733), Inches(0.5))
-                    title_frame = title_box.text_frame
-                    title_para = title_frame.paragraphs[0]
-                    title_para.text = "Gage R&R - Variance Components Analysis"
-                    title_para.font.size = Pt(26)
-                    title_para.font.bold = True
+                            ax.set_title(file_name, fontsize=7, fontweight='bold')
+                            ax.tick_params(axis='both', labelsize=5)
 
-                    # Create variance chart
-                    fig_var, ax_var = plt.subplots(figsize=(10, 4.5))
+                        fig_wafers.suptitle(f'Selected Dies: {len(meta.get("die_coords", []))} locations (red)', fontsize=8, y=0.02)
+                        fig_wafers.tight_layout()
+                        img_stream = figure_to_image_bytes(fig_wafers, dpi=200)
+                        slide.shapes.add_picture(img_stream, Inches(gs_b["x"]), Inches(gs_b["y"]),
+                                                 width=Inches(gs_b["width"]), height=Inches(gs_b["height"]))
+                        plt.close(fig_wafers)
 
-                    params = list(param_results.keys())
-                    x_pos = np.arange(len(params))
-
-                    repeatability = [param_results[p]['repeatability_percent'] for p in params]
-                    reproducibility = [param_results[p]['reproducibility_percent'] for p in params]
-
-                    width = 0.35
-                    bars1 = ax_var.bar(x_pos - width/2, repeatability, width, label='Repeatability %', color='#3498DB', alpha=0.8)
-                    bars2 = ax_var.bar(x_pos + width/2, reproducibility, width, label='Reproducibility %', color='#E74C3C', alpha=0.8)
-
-                    ax_var.set_ylabel('% of Total Variation', fontsize=11)
-                    ax_var.set_xlabel('Parameter', fontsize=11)
-                    ax_var.set_title('Variance Components by Parameter', fontsize=14, fontweight='bold')
-                    ax_var.set_xticks(x_pos)
-
-                    # Truncate parameter names for x-axis
-                    param_labels = [p[:15] + '...' if len(p) > 15 else p for p in params]
-                    ax_var.set_xticklabels(param_labels, rotation=45, ha='right', fontsize=8)
-                    ax_var.legend(loc='upper right')
-                    ax_var.grid(True, alpha=0.3, axis='y')
-
-                    # Add reference lines
-                    ax_var.axhline(y=10, color='green', linestyle='--', linewidth=1, alpha=0.7, label='10% (Excellent)')
-                    ax_var.axhline(y=30, color='orange', linestyle='--', linewidth=1, alpha=0.7, label='30% (Acceptable)')
-
-                    fig_var.tight_layout()
-
-                    img_stream = figure_to_image_bytes(fig_var, dpi=200)
-                    slide.shapes.add_picture(img_stream, Inches(0.5), Inches(0.7), width=Inches(12.3), height=Inches(4.5))
-                    plt.close(fig_var)
-
-                    # Context box at bottom
-                    context_box = slide.shapes.add_textbox(Inches(0.5), Inches(5.4), Inches(12.3), Inches(1.8))
-                    tf = context_box.text_frame
-                    tf.word_wrap = True
-
-                    # Find which component is dominant
-                    avg_repeat = np.mean(repeatability)
-                    avg_reprod = np.mean(reproducibility)
-
-                    p = tf.paragraphs[0]
-                    p.text = "Interpretation:"
-                    p.font.size = Pt(12)
-                    p.font.bold = True
-
-                    p = tf.add_paragraph()
-                    p.text = "• Repeatability (blue): Variation when same operator measures same part multiple times (equipment variation)"
-                    p.font.size = Pt(10)
-
-                    p = tf.add_paragraph()
-                    p.text = "• Reproducibility (red): Variation between different operators/trials measuring same part (operator variation)"
-                    p.font.size = Pt(10)
-
-                    p = tf.add_paragraph()
-                    if avg_repeat > avg_reprod:
-                        p.text = f"→ Analysis: Repeatability ({avg_repeat:.1f}%) > Reproducibility ({avg_reprod:.1f}%). Equipment/method variation is dominant. Consider equipment calibration or method refinement."
-                    else:
-                        p.text = f"→ Analysis: Reproducibility ({avg_reprod:.1f}%) > Repeatability ({avg_repeat:.1f}%). Operator/trial variation is dominant. Consider operator training or standardization."
-                    p.font.size = Pt(10)
-                    p.font.italic = True
-                    p.font.color.rgb = RGBColor(0, 100, 150)
-
-                # Slide 3: %GRR and ndc Chart
-                if pptx_grr_charts_var.get() and len(param_results) > 0:
-                    slide = prs.slides.add_slide(content_slide_layout)
-
-                    # Slide title
-                    title_box = slide.shapes.add_textbox(Inches(0.3), Inches(0.2), Inches(12.733), Inches(0.6))
-                    title_frame = title_box.text_frame
-                    title_para = title_frame.paragraphs[0]
-                    title_para.text = "Gage R&R - %GRR and ndc Analysis"
-                    title_para.font.size = Pt(28)
-                    title_para.font.bold = True
-
-                    # Create figure with two subplots
-                    fig_charts, (ax_grr, ax_ndc) = plt.subplots(1, 2, figsize=(12, 5))
-
-                    params = list(param_results.keys())
-                    grr_values = [param_results[p]['grr_percent'] for p in params]
-                    ndc_values = [param_results[p]['ndc'] for p in params]
-
-                    # %GRR bar chart with color coding
-                    colors_grr = []
-                    for grr in grr_values:
-                        if grr < 10:
-                            colors_grr.append('#4CAF50')  # Green - Excellent
-                        elif grr < 30:
-                            colors_grr.append('#FFC107')  # Yellow - Acceptable
-                        else:
-                            colors_grr.append('#F44336')  # Red - Unacceptable
-
-                    x_pos = np.arange(len(params))
-                    bars_grr = ax_grr.bar(x_pos, grr_values, color=colors_grr, alpha=0.8, edgecolor='black', linewidth=0.5)
-
-                    # Add reference lines
-                    ax_grr.axhline(y=10, color='green', linestyle='--', linewidth=1.5, label='10% (Excellent)')
-                    ax_grr.axhline(y=30, color='red', linestyle='--', linewidth=1.5, label='30% (Acceptable limit)')
-
-                    ax_grr.set_ylabel('%GRR', fontsize=11)
-                    ax_grr.set_xlabel('Parameter', fontsize=11)
-                    ax_grr.set_title('%GRR by Parameter', fontsize=12, fontweight='bold')
-                    ax_grr.set_xticks(x_pos)
-                    param_labels = [p[:12] + '...' if len(p) > 12 else p for p in params]
-                    ax_grr.set_xticklabels(param_labels, rotation=45, ha='right', fontsize=7)
-                    ax_grr.legend(loc='upper right', fontsize=8)
-                    ax_grr.grid(True, alpha=0.3, axis='y')
-
-                    # Add value labels on bars
-                    for bar, val in zip(bars_grr, grr_values):
-                        ax_grr.annotate(f'{val:.1f}%', xy=(bar.get_x() + bar.get_width()/2, bar.get_height()),
-                                       xytext=(0, 3), textcoords='offset points', ha='center', va='bottom', fontsize=7)
-
-                    # ndc bar chart
-                    colors_ndc = ['#4CAF50' if n >= 5 else '#FFC107' if n >= 2 else '#F44336' for n in ndc_values]
-                    bars_ndc = ax_ndc.bar(x_pos, ndc_values, color=colors_ndc, alpha=0.8, edgecolor='black', linewidth=0.5)
-
-                    ax_ndc.axhline(y=5, color='green', linestyle='--', linewidth=1.5, label='ndc ≥ 5 (Good)')
-                    ax_ndc.axhline(y=2, color='orange', linestyle='--', linewidth=1.5, label='ndc ≥ 2 (Minimum)')
-
-                    ax_ndc.set_ylabel('ndc (Number of Distinct Categories)', fontsize=11)
-                    ax_ndc.set_xlabel('Parameter', fontsize=11)
-                    ax_ndc.set_title('ndc by Parameter', fontsize=12, fontweight='bold')
-                    ax_ndc.set_xticks(x_pos)
-                    ax_ndc.set_xticklabels(param_labels, rotation=45, ha='right', fontsize=7)
-                    ax_ndc.legend(loc='upper right', fontsize=8)
-                    ax_ndc.grid(True, alpha=0.3, axis='y')
-
-                    # Add value labels on bars
-                    for bar, val in zip(bars_ndc, ndc_values):
-                        ax_ndc.annotate(f'{val:.2f}', xy=(bar.get_x() + bar.get_width()/2, bar.get_height()),
-                                       xytext=(0, 3), textcoords='offset points', ha='center', va='bottom', fontsize=7)
-
-                    fig_charts.tight_layout()
-
-                    img_stream = figure_to_image_bytes(fig_charts, dpi=200)
-                    slide.shapes.add_picture(img_stream, Inches(0.5), Inches(0.7), width=Inches(12.3), height=Inches(4.3))
-                    plt.close(fig_charts)
-
-                    # Context box at bottom
-                    context_box = slide.shapes.add_textbox(Inches(0.5), Inches(5.2), Inches(12.3), Inches(2.0))
-                    tf = context_box.text_frame
+                    # RIGHT: Study info and parameters - use variance box position
+                    va_b = sl_boxes.get("variance", {"x": 6.5, "y": 0.7, "width": 6.5, "height": 3.0})
+                    info_box = slide.shapes.add_textbox(Inches(va_b["x"]), Inches(va_b["y"]), Inches(va_b["width"]), Inches(va_b["height"]))
+                    tf = info_box.text_frame
                     tf.word_wrap = True
 
                     p = tf.paragraphs[0]
-                    p.text = "Acceptance Criteria & Interpretation:"
-                    p.font.size = Pt(12)
+                    p.text = "Study Configuration"
+                    p.font.size = Pt(14)
                     p.font.bold = True
 
                     p = tf.add_paragraph()
-                    p.text = "• %GRR < 10%: EXCELLENT - Measurement system is excellent for this application"
-                    p.font.size = Pt(9)
-                    p.font.color.rgb = RGBColor(76, 175, 80)
+                    p.text = f"• Files/Trials: {meta['num_files']}   • Dies/Parts: {meta['num_dies']}   • Parameters: {meta['num_params']}"
+                    p.font.size = Pt(10)
 
                     p = tf.add_paragraph()
-                    p.text = "• %GRR 10-30%: ACCEPTABLE - May be acceptable depending on application criticality"
-                    p.font.size = Pt(9)
-                    p.font.color.rgb = RGBColor(255, 152, 0)
+                    p.text = f"\nParameters Analyzed:"
+                    p.font.size = Pt(12)
+                    p.font.bold = True
 
-                    p = tf.add_paragraph()
-                    p.text = "• %GRR > 30%: UNACCEPTABLE - Measurement system needs improvement"
-                    p.font.size = Pt(9)
-                    p.font.color.rgb = RGBColor(244, 67, 54)
-
-                    p = tf.add_paragraph()
-                    p.text = f"\n• ndc (Number of Distinct Categories): Indicates how many distinct categories the measurement can reliably distinguish. ndc ≥ 5 is recommended."
-                    p.font.size = Pt(9)
-
-                    # Add specific findings
-                    low_ndc_params = [p for p, r in param_results.items() if r['ndc'] < 5]
-                    if low_ndc_params:
+                    for i, param in enumerate(list(param_results.keys())[:8]):
                         p = tf.add_paragraph()
-                        p.text = f"⚠ Warning: {len(low_ndc_params)} parameter(s) have ndc < 5: {', '.join([p[:20] for p in low_ndc_params[:3]])}"
+                        p.text = f"  {i+1}. {_format_grr_chart_label(param, group_name)[:45]}"
+                        p.font.size = Pt(9)
+                        p.font.name = "Consolas"
+                    if len(param_results) > 8:
+                        p = tf.add_paragraph()
+                        p.text = f"  ... +{len(param_results)-8} more"
+                        p.font.size = Pt(9)
+
+                    # BOTTOM: Conclusion box - use charts box position
+                    ch_b = sl_boxes.get("charts", {"x": 0.3, "y": 3.8, "width": 6.0, "height": 3.0})
+                    an_b = sl_boxes.get("anova", {"x": 6.5, "y": 3.8, "width": 6.5, "height": 3.0})
+                    conc_x = min(ch_b["x"], an_b["x"])
+                    conc_y = ch_b["y"]
+                    conc_w = max(ch_b["x"] + ch_b["width"], an_b["x"] + an_b["width"]) - conc_x
+                    conclusion_box = slide.shapes.add_textbox(Inches(conc_x), Inches(conc_y), Inches(conc_w), Inches(1.5))
+                    tf = conclusion_box.text_frame
+                    tf.word_wrap = True
+
+                    p = tf.paragraphs[0]
+                    p.text = f"Overall Result: {overall_status}"
+                    p.font.size = Pt(16)
+                    p.font.bold = True
+                    p.font.color.rgb = RGBColor(244, 67, 54) if overall_status == "FAIL" else RGBColor(76, 175, 80)
+
+                    p = tf.add_paragraph()
+                    p.text = conclusion_text
+                    p.font.size = Pt(11)
+
+                    # Assessment summary
+                    p = tf.add_paragraph()
+                    p.text = f"\nAssessment: {excellent_count} Excellent | {acceptable_count} Acceptable | {unacceptable_count} Unacceptable"
+                    p.font.size = Pt(10)
+                    p.font.color.rgb = RGBColor(100, 100, 100)
+
+                    # ==================== SLIDE: Calculation Parameters (Formulas) ====================
+                    if pptx_grr_calcparam_var.get():
+                        slide_calc = prs.slides.add_slide(content_slide_layout)
+
+                        # Title
+                        calc_title = slide_calc.shapes.add_textbox(Inches(0.3), Inches(0.15), Inches(12.733), Inches(0.5))
+                        _ctf = calc_title.text_frame
+                        _cp = _ctf.paragraphs[0]
+                        _cp.text = f"Gage R&R - Calculation Parameters - {group_name}"
+                        _cp.font.size = Pt(26)
+                        _cp.font.bold = True
+
+                        # LEFT column: Basic Statistics + GRR Components
+                        left_box = slide_calc.shapes.add_textbox(Inches(0.3), Inches(0.8), Inches(6.2), Inches(6.5))
+                        ltf = left_box.text_frame
+                        ltf.word_wrap = True
+
+                        _lp = ltf.paragraphs[0]
+                        _lp.text = "BASIC STATISTICAL VALUES"
+                        _lp.font.size = Pt(13)
+                        _lp.font.bold = True
+                        _lp.font.color.rgb = RGBColor(56, 142, 60)
+
+                        _formulas_left = [
+                            ("Mean (Mittelwert):", "Mean = Σ(xi) / n",
+                             "Average of all measurements across all files and dies."),
+                            ("Std Dev (Standardabweichung):", "σ = √[Σ(xi - Mean)² / n]",
+                             "Measure of dispersion around the mean."),
+                            ("Range (Spannweite):", "Range = Max - Min",
+                             "Difference between maximum and minimum."),
+                            ("LSL / USL (Spec Limits):", "LSL = Mean - kσ   |   USL = Mean + kσ",
+                             "Statistical limits (k = sigma factor)."),
+                        ]
+                        for title, formula, desc in _formulas_left:
+                            _lp = ltf.add_paragraph()
+                            _lp.text = ""
+                            _lp = ltf.add_paragraph()
+                            _lp.text = title
+                            _lp.font.size = Pt(10)
+                            _lp.font.bold = True
+                            _lp.font.color.rgb = RGBColor(211, 47, 47)
+                            _lp = ltf.add_paragraph()
+                            _lp.text = f"  {desc}"
+                            _lp.font.size = Pt(8)
+                            _lp.font.color.rgb = RGBColor(100, 100, 100)
+                            _lp = ltf.add_paragraph()
+                            _lp.text = f"  {formula}"
+                            _lp.font.size = Pt(9)
+                            _lp.font.name = "Consolas"
+                            _lp.font.color.rgb = RGBColor(123, 31, 162)
+
+                        # GRR Components section
+                        _lp = ltf.add_paragraph()
+                        _lp.text = ""
+                        _lp = ltf.add_paragraph()
+                        _lp.text = "GAGE R&R COMPONENTS"
+                        _lp.font.size = Pt(13)
+                        _lp.font.bold = True
+                        _lp.font.color.rgb = RGBColor(56, 142, 60)
+
+                        _formulas_grr = [
+                            ("Repeatability (EV):", "EV = Mean(σ within each file)",
+                             "Variation within measurements of one file (equipment)."),
+                            ("Reproducibility (AV):", "AV = σ(file means)",
+                             "Variation between files/operators/trials."),
+                            ("GRR Total:", "GRR = R̄ / d₂   (Range Method)",
+                             "Combined measurement system variation."),
+                            ("Part Variation (PV):", "PV = σ(part means)",
+                             "True variation between parts/dies."),
+                            ("Total Variation (TV):", "TV = √(PV² + GRR²)",
+                             "Total observed variation."),
+                        ]
+                        for title, formula, desc in _formulas_grr:
+                            _lp = ltf.add_paragraph()
+                            _lp.text = ""
+                            _lp = ltf.add_paragraph()
+                            _lp.text = title
+                            _lp.font.size = Pt(10)
+                            _lp.font.bold = True
+                            _lp.font.color.rgb = RGBColor(211, 47, 47)
+                            _lp = ltf.add_paragraph()
+                            _lp.text = f"  {desc}"
+                            _lp.font.size = Pt(8)
+                            _lp.font.color.rgb = RGBColor(100, 100, 100)
+                            _lp = ltf.add_paragraph()
+                            _lp.text = f"  {formula}"
+                            _lp.font.size = Pt(9)
+                            _lp.font.name = "Consolas"
+                            _lp.font.color.rgb = RGBColor(123, 31, 162)
+
+                        # RIGHT column: Assessment Metrics + Criteria
+                        right_box = slide_calc.shapes.add_textbox(Inches(6.7), Inches(0.8), Inches(6.2), Inches(6.5))
+                        rtf = right_box.text_frame
+                        rtf.word_wrap = True
+
+                        _rp = rtf.paragraphs[0]
+                        _rp.text = "ASSESSMENT METRICS"
+                        _rp.font.size = Pt(13)
+                        _rp.font.bold = True
+                        _rp.font.color.rgb = RGBColor(56, 142, 60)
+
+                        # Determine which ndc formula is active
+                        try:
+                            _ndc_tv = grr_ndc_use_tv_var.get()
+                        except:
+                            _ndc_tv = False
+                        _ndc_formula = "ndc = 1.41 × (TV / GRR)" if _ndc_tv else "ndc = 1.41 × (PV / GRR)"
+                        _ndc_note = "Using Total Variation" if _ndc_tv else "Using Part Variation"
+
+                        _formulas_right = [
+                            ("%GRR (Prozent GRR):", "%GRR = (GRR / TV) × 100   or   (GRR / Tolerance) × 100",
+                             "GRR as percentage of total variation or tolerance."),
+                            (f"ndc ({_ndc_note}):", _ndc_formula,
+                             "Number of distinct categories the system can distinguish."),
+                        ]
+                        for title, formula, desc in _formulas_right:
+                            _rp = rtf.add_paragraph()
+                            _rp.text = ""
+                            _rp = rtf.add_paragraph()
+                            _rp.text = title
+                            _rp.font.size = Pt(10)
+                            _rp.font.bold = True
+                            _rp.font.color.rgb = RGBColor(211, 47, 47)
+                            _rp = rtf.add_paragraph()
+                            _rp.text = f"  {desc}"
+                            _rp.font.size = Pt(8)
+                            _rp.font.color.rgb = RGBColor(100, 100, 100)
+                            _rp = rtf.add_paragraph()
+                            _rp.text = f"  {formula}"
+                            _rp.font.size = Pt(9)
+                            _rp.font.name = "Consolas"
+                            _rp.font.color.rgb = RGBColor(123, 31, 162)
+
+                        # Assessment Criteria
+                        _rp = rtf.add_paragraph()
+                        _rp.text = ""
+                        _rp = rtf.add_paragraph()
+                        _rp.text = "ASSESSMENT CRITERIA (AIAG MSA)"
+                        _rp.font.size = Pt(13)
+                        _rp.font.bold = True
+                        _rp.font.color.rgb = RGBColor(56, 142, 60)
+
+                        _criteria = [
+                            ("🟢 EXCELLENT:", "%GRR < 10%", "Measurement system is acceptable."),
+                            ("🟡 ACCEPTABLE:", "10% ≤ %GRR < 30%", "May be acceptable depending on application."),
+                            ("🔴 UNACCEPTABLE:", "%GRR ≥ 30%", "Measurement system must be improved."),
+                            ("ndc ≥ 5:", "Good measurement system", "Can distinguish ≥ 5 distinct categories."),
+                        ]
+                        for title, value, desc in _criteria:
+                            _rp = rtf.add_paragraph()
+                            _rp.text = ""
+                            _rp = rtf.add_paragraph()
+                            _rp.text = f"{title}  {value}"
+                            _rp.font.size = Pt(10)
+                            _rp.font.bold = True
+                            _rp = rtf.add_paragraph()
+                            _rp.text = f"  {desc}"
+                            _rp.font.size = Pt(8)
+                            _rp.font.color.rgb = RGBColor(100, 100, 100)
+
+                        # Interpretation at bottom right
+                        _rp = rtf.add_paragraph()
+                        _rp.text = ""
+                        _rp = rtf.add_paragraph()
+                        _rp.text = "INTERPRETATION"
+                        _rp.font.size = Pt(13)
+                        _rp.font.bold = True
+                        _rp.font.color.rgb = RGBColor(56, 142, 60)
+
+                        _interp = [
+                            "• High Repeatability → Equipment/method problem",
+                            "• High Reproducibility → Operator/process/time problem",
+                            "• ndc should be ≥ 5 for a good measurement system",
+                            "• Values outside LSL/USL indicate outliers",
+                        ]
+                        for line in _interp:
+                            _rp = rtf.add_paragraph()
+                            _rp.text = line
+                            _rp.font.size = Pt(9)
+
+                    # ==================== SLIDE 2+: GRR Summary Table (paginated, max 50 per slide) ====================
+                    if pptx_grr_summary_var.get():
+                        _MAX_PER_TABLE = 50
+                        _all_items = list(param_results.items())
+                        _num_table_slides = (len(_all_items) + _MAX_PER_TABLE - 1) // _MAX_PER_TABLE
+
+                        for _tbl_page in range(_num_table_slides):
+                            _page_items = _all_items[_tbl_page * _MAX_PER_TABLE : (_tbl_page + 1) * _MAX_PER_TABLE]
+
+                            # Use layout from slide tab 1 if available, else tab 0
+                            sl2_boxes = grr_multi_slide_data[1]["layout_boxes"] if 1 in grr_multi_slide_data else sl_boxes
+                            slide = prs.slides.add_slide(content_slide_layout)
+
+                            # Slide title from layout
+                            t2_b = sl2_boxes.get("title", {"x": 0.3, "y": 0.15, "width": 12.733, "height": 0.5})
+                            title_box = slide.shapes.add_textbox(Inches(t2_b["x"]), Inches(t2_b["y"]), Inches(t2_b["width"]), Inches(t2_b["height"]))
+                            title_frame = title_box.text_frame
+                            title_para = title_frame.paragraphs[0]
+                            if _num_table_slides > 1:
+                                title_para.text = f"Gage R&R Analysis Summary - {group_name} ({_tbl_page + 1}/{_num_table_slides})"
+                            else:
+                                title_para.text = f"Gage R&R Analysis Summary - {group_name}"
+                            title_para.font.size = Pt(28)
+                            title_para.font.bold = True
+
+                            # Study info only on first table page
+                            gs2_b = sl2_boxes.get("grr_summary", {"x": 0.3, "y": 0.7, "width": 6.0, "height": 3.0})
+                            if _tbl_page == 0:
+                                info_box = slide.shapes.add_textbox(Inches(gs2_b["x"]), Inches(t2_b["y"] + t2_b["height"] + 0.1), Inches(5), Inches(1.2))
+                                info_frame = info_box.text_frame
+                                info_text = f"Study Information:\n"
+                                info_text += f"  • Files (Operators/Trials): {meta['num_files']}\n"
+                                info_text += f"  • Dies (Parts): {meta['num_dies']}\n"
+                                info_text += f"  • Parameters Analyzed: {meta['num_params']}"
+                                info_para = info_frame.paragraphs[0]
+                                info_para.text = info_text
+                                info_para.font.size = Pt(12)
+                                info_para.font.name = "Consolas"
+                                _tbl_top_y = gs2_b["y"] + 1.3
+                            else:
+                                _tbl_top_y = t2_b["y"] + t2_b["height"] + 0.2
+
+                            # Create summary table figure for this page
+                            _n_rows = len(_page_items) + 1  # +1 for header
+                            _fig_h = min(5.5, max(2.0, _n_rows * 0.3))
+                            fig_summary, ax_summary = plt.subplots(figsize=(12, _fig_h))
+                            ax_summary.axis('off')
+
+                            # Prepare table data
+                            table_data = [['Parameter', 'Mean', 'Std Dev', '%GRR', 'ndc', 'Assessment']]
+                            cell_colors = [['#E3F2FD'] * 6]
+
+                            for param, res in _page_items:
+                                param_short = _format_grr_chart_label(param, group_name)
+                                if len(param_short) > 25:
+                                    param_short = param_short[:25] + '...'
+                                assessment = res['assessment']
+
+                                if assessment == 'EXCELLENT':
+                                    row_color = '#E8F5E9'
+                                elif assessment == 'ACCEPTABLE':
+                                    row_color = '#FFF8E1'
+                                else:
+                                    row_color = '#FFEBEE'
+
+                                table_data.append([
+                                    param_short,
+                                    f"{res['overall_mean']:.4g}",
+                                    f"{res['overall_std']:.4g}",
+                                    f"{res['grr_percent']:.2f}%",
+                                    f"{res['ndc']:.2f}",
+                                    assessment
+                                ])
+                                cell_colors.append([row_color] * 6)
+
+                            table = ax_summary.table(
+                                cellText=table_data,
+                                cellColours=cell_colors,
+                                loc='center',
+                                cellLoc='center'
+                            )
+                            table.auto_set_font_size(True)
+                            table.scale(1.2, 1.5)
+
+                            # Style header row
+                            for j in range(6):
+                                table[(0, j)].set_text_props(fontweight='bold')
+
+                            fig_summary.tight_layout()
+
+                            img_stream = figure_to_image_bytes(fig_summary, dpi=200)
+                            va2_b = sl2_boxes.get("variance", {"x": 6.5, "y": 0.7, "width": 6.5, "height": 3.0})
+                            tbl_x = min(gs2_b["x"], va2_b["x"])
+                            tbl_w = max(gs2_b["x"] + gs2_b["width"], va2_b["x"] + va2_b["width"]) - tbl_x
+                            tbl_h = min(_fig_h, 7.5 - _tbl_top_y - 0.1)
+                            slide.shapes.add_picture(img_stream, Inches(tbl_x), Inches(_tbl_top_y), width=Inches(tbl_w), height=Inches(tbl_h))
+                            plt.close(fig_summary)
+
+                    # Slide 2: Variance Components Chart
+                    if pptx_grr_variance_var.get() and len(param_results) > 0:
+                        # Use layout from slide tab 2 if available, else tab 0
+                        sl3_boxes = grr_multi_slide_data[2]["layout_boxes"] if 2 in grr_multi_slide_data else sl_boxes
+                        slide = prs.slides.add_slide(content_slide_layout)
+
+                        # Slide title from layout
+                        t3_b = sl3_boxes.get("title", {"x": 0.3, "y": 0.15, "width": 12.733, "height": 0.5})
+                        title_box = slide.shapes.add_textbox(Inches(t3_b["x"]), Inches(t3_b["y"]), Inches(t3_b["width"]), Inches(t3_b["height"]))
+                        title_frame = title_box.text_frame
+                        title_para = title_frame.paragraphs[0]
+                        title_para.text = f"Gage R&R - Variance Components - {group_name}"
+                        title_para.font.size = Pt(26)
+                        title_para.font.bold = True
+
+                        # Create variance chart - constrained height
+                        _var_chart_h = 3.5  # fixed chart height in inches
+                        fig_var, ax_var = plt.subplots(figsize=(10, _var_chart_h))
+
+                        params = list(param_results.keys())
+                        x_pos = np.arange(len(params))
+
+                        repeatability = [param_results[p]['repeatability_percent'] for p in params]
+                        reproducibility = [param_results[p]['reproducibility_percent'] for p in params]
+
+                        width = 0.35
+                        bars1 = ax_var.bar(x_pos - width/2, repeatability, width, label='Repeatability %', color='#3498DB', alpha=0.8)
+                        bars2 = ax_var.bar(x_pos + width/2, reproducibility, width, label='Reproducibility %', color='#E74C3C', alpha=0.8)
+
+                        ax_var.set_ylabel('% of Total Variation', fontsize=11)
+                        ax_var.set_xlabel('Parameter', fontsize=11)
+                        ax_var.set_title('Variance Components by Parameter', fontsize=14, fontweight='bold')
+                        ax_var.set_xticks(x_pos)
+
+                        # Truncate parameter names for x-axis - dynamic font/truncation based on count
+                        n_params = len(params)
+                        if n_params > 20:
+                            _trunc = 8
+                            _fsize = 4
+                        elif n_params > 12:
+                            _trunc = 12
+                            _fsize = 5
+                        elif n_params > 6:
+                            _trunc = 18
+                            _fsize = 6
+                        else:
+                            _trunc = 25
+                            _fsize = 7
+                        param_labels = [_format_grr_chart_label(p, group_name) for p in params]
+                        param_labels = [lbl[:_trunc] + '...' if len(lbl) > _trunc else lbl for lbl in param_labels]
+                        _rot = 90 if n_params > 12 else 45
+                        ax_var.set_xticklabels(param_labels, rotation=_rot, ha='right', fontsize=_fsize)
+                        ax_var.legend(loc='upper right')
+                        ax_var.grid(True, alpha=0.3, axis='y')
+
+                        # Add reference lines
+                        ax_var.axhline(y=10, color='green', linestyle='--', linewidth=1, alpha=0.7, label='10% (Excellent)')
+                        ax_var.axhline(y=30, color='orange', linestyle='--', linewidth=1, alpha=0.7, label='30% (Acceptable)')
+
+                        fig_var.tight_layout()
+
+                        img_stream = figure_to_image_bytes(fig_var, dpi=200)
+                        # Place chart in upper area - use full width, constrained height
+                        chart_x = 0.3
+                        chart_y = t3_b["y"] + t3_b["height"] + 0.1
+                        chart_w = 12.7
+                        chart_h = min(4.0, 7.5 - chart_y - 2.0)  # leave 2" for interpretation
+                        slide.shapes.add_picture(img_stream, Inches(chart_x), Inches(chart_y), width=Inches(chart_w), height=Inches(chart_h))
+                        plt.close(fig_var)
+
+                        # Context box at bottom - positioned below chart
+                        ctx_y = chart_y + chart_h + 0.1
+                        ctx_h = max(1.0, 7.5 - ctx_y - 0.1)  # fill remaining space
+                        context_box = slide.shapes.add_textbox(Inches(chart_x), Inches(ctx_y), Inches(chart_w), Inches(ctx_h))
+                        tf = context_box.text_frame
+                        tf.word_wrap = True
+
+                        # Find which component is dominant
+                        avg_repeat = np.mean(repeatability)
+                        avg_reprod = np.mean(reproducibility)
+
+                        p = tf.paragraphs[0]
+                        p.text = "Interpretation:"
+                        p.font.size = Pt(12)
+                        p.font.bold = True
+
+                        p = tf.add_paragraph()
+                        p.text = "• Repeatability (blue): Variation when same operator measures same part multiple times (equipment variation)"
+                        p.font.size = Pt(10)
+
+                        p = tf.add_paragraph()
+                        p.text = "• Reproducibility (red): Variation between different operators/trials measuring same part (operator variation)"
+                        p.font.size = Pt(10)
+
+                        p = tf.add_paragraph()
+                        if avg_repeat > avg_reprod:
+                            p.text = f"→ Analysis: Repeatability ({avg_repeat:.1f}%) > Reproducibility ({avg_reprod:.1f}%). Equipment/method variation is dominant. Consider equipment calibration or method refinement."
+                        else:
+                            p.text = f"→ Analysis: Reproducibility ({avg_reprod:.1f}%) > Repeatability ({avg_repeat:.1f}%). Operator/trial variation is dominant. Consider operator training or standardization."
+                        p.font.size = Pt(10)
+                        p.font.italic = True
+                        p.font.color.rgb = RGBColor(0, 100, 150)
+
+                    # Slide 3: %GRR and ndc Chart
+                    if pptx_grr_charts_var.get() and len(param_results) > 0:
+                        # Use layout from slide tab 3 if available, else tab 0
+                        sl4_boxes = grr_multi_slide_data[3]["layout_boxes"] if 3 in grr_multi_slide_data else sl_boxes
+                        slide = prs.slides.add_slide(content_slide_layout)
+
+                        # Slide title from layout
+                        t4_b = sl4_boxes.get("title", {"x": 0.3, "y": 0.15, "width": 12.733, "height": 0.5})
+                        title_box = slide.shapes.add_textbox(Inches(t4_b["x"]), Inches(t4_b["y"]), Inches(t4_b["width"]), Inches(t4_b["height"]))
+                        title_frame = title_box.text_frame
+                        title_para = title_frame.paragraphs[0]
+                        title_para.text = f"Gage R&R - %GRR and ndc - {group_name}"
+                        title_para.font.size = Pt(28)
+                        title_para.font.bold = True
+
+                        # Create figure with two subplots - constrained height
+                        fig_charts, (ax_grr, ax_ndc) = plt.subplots(1, 2, figsize=(12, 3.5))
+
+                        params = list(param_results.keys())
+                        grr_values = [param_results[p]['grr_percent'] for p in params]
+                        ndc_values = [param_results[p]['ndc'] for p in params]
+
+                        # %GRR bar chart with color coding
+                        colors_grr = []
+                        for grr in grr_values:
+                            if grr < 10:
+                                colors_grr.append('#4CAF50')  # Green - Excellent
+                            elif grr < 30:
+                                colors_grr.append('#FFC107')  # Yellow - Acceptable
+                            else:
+                                colors_grr.append('#F44336')  # Red - Unacceptable
+
+                        x_pos = np.arange(len(params))
+                        bars_grr = ax_grr.bar(x_pos, grr_values, color=colors_grr, alpha=0.8, edgecolor='black', linewidth=0.5)
+
+                        # Add reference lines
+                        ax_grr.axhline(y=10, color='green', linestyle='--', linewidth=1.5, label='10% (Excellent)')
+                        ax_grr.axhline(y=30, color='red', linestyle='--', linewidth=1.5, label='30% (Acceptable limit)')
+
+                        ax_grr.set_ylabel('%GRR', fontsize=11)
+                        ax_grr.set_xlabel('Parameter', fontsize=11)
+                        ax_grr.set_title('%GRR by Parameter', fontsize=12, fontweight='bold')
+                        ax_grr.set_xticks(x_pos)
+                        # Dynamic font/truncation based on parameter count
+                        n_p = len(params)
+                        if n_p > 20:
+                            _tr, _fs = 6, 3
+                        elif n_p > 12:
+                            _tr, _fs = 10, 4
+                        elif n_p > 6:
+                            _tr, _fs = 15, 5
+                        else:
+                            _tr, _fs = 22, 6
+                        param_labels = [_format_grr_chart_label(p, group_name) for p in params]
+                        param_labels = [lbl[:_tr] + '...' if len(lbl) > _tr else lbl for lbl in param_labels]
+                        _rot_grr = 90 if n_p > 12 else 45
+                        ax_grr.set_xticklabels(param_labels, rotation=_rot_grr, ha='right', fontsize=_fs)
+                        ax_grr.legend(loc='upper right', fontsize=8)
+                        ax_grr.grid(True, alpha=0.3, axis='y')
+
+                        # Add value labels on bars (skip if too many params)
+                        if n_p <= 20:
+                            for bar, val in zip(bars_grr, grr_values):
+                                ax_grr.annotate(f'{val:.1f}%', xy=(bar.get_x() + bar.get_width()/2, bar.get_height()),
+                                               xytext=(0, 3), textcoords='offset points', ha='center', va='bottom', fontsize=max(4, _fs))
+
+                        # ndc bar chart
+                        colors_ndc = ['#4CAF50' if n >= 5 else '#FFC107' if n >= 2 else '#F44336' for n in ndc_values]
+                        bars_ndc = ax_ndc.bar(x_pos, ndc_values, color=colors_ndc, alpha=0.8, edgecolor='black', linewidth=0.5)
+
+                        ax_ndc.axhline(y=5, color='green', linestyle='--', linewidth=1.5, label='ndc ≥ 5 (Good)')
+                        ax_ndc.axhline(y=2, color='orange', linestyle='--', linewidth=1.5, label='ndc ≥ 2 (Minimum)')
+
+                        ax_ndc.set_ylabel('ndc (Number of Distinct Categories)', fontsize=11)
+                        ax_ndc.set_xlabel('Parameter', fontsize=11)
+                        ax_ndc.set_title('ndc by Parameter', fontsize=12, fontweight='bold')
+                        ax_ndc.set_xticks(x_pos)
+                        ax_ndc.set_xticklabels(param_labels, rotation=_rot_grr, ha='right', fontsize=_fs)
+                        ax_ndc.legend(loc='upper right', fontsize=8)
+                        ax_ndc.grid(True, alpha=0.3, axis='y')
+
+                        # Add value labels on bars (skip if too many params)
+                        if n_p <= 20:
+                            for bar, val in zip(bars_ndc, ndc_values):
+                                ax_ndc.annotate(f'{val:.2f}', xy=(bar.get_x() + bar.get_width()/2, bar.get_height()),
+                                               xytext=(0, 3), textcoords='offset points', ha='center', va='bottom', fontsize=max(4, _fs))
+
+                        fig_charts.tight_layout()
+
+                        img_stream = figure_to_image_bytes(fig_charts, dpi=200)
+                        # Place chart in upper area - full width, constrained height
+                        c4_x = 0.3
+                        c4_y = t4_b["y"] + t4_b["height"] + 0.1
+                        c4_w = 12.7
+                        c4_h = min(3.8, 7.5 - c4_y - 2.2)  # leave 2.2" for context
+                        slide.shapes.add_picture(img_stream, Inches(c4_x), Inches(c4_y), width=Inches(c4_w), height=Inches(c4_h))
+                        plt.close(fig_charts)
+
+                        # Context box at bottom - positioned below chart
+                        cx4_y = c4_y + c4_h + 0.1
+                        cx4_h = max(1.0, 7.5 - cx4_y - 0.1)  # fill remaining space
+                        context_box = slide.shapes.add_textbox(Inches(c4_x), Inches(cx4_y), Inches(c4_w), Inches(cx4_h))
+                        tf = context_box.text_frame
+                        tf.word_wrap = True
+
+                        p = tf.paragraphs[0]
+                        p.text = "Acceptance Criteria & Interpretation:"
+                        p.font.size = Pt(12)
+                        p.font.bold = True
+
+                        p = tf.add_paragraph()
+                        p.text = "• %GRR < 10%: EXCELLENT - Measurement system is excellent for this application"
+                        p.font.size = Pt(9)
+                        p.font.color.rgb = RGBColor(76, 175, 80)
+
+                        p = tf.add_paragraph()
+                        p.text = "• %GRR 10-30%: ACCEPTABLE - May be acceptable depending on application criticality"
                         p.font.size = Pt(9)
                         p.font.color.rgb = RGBColor(255, 152, 0)
 
-                print(f"Added Gage R&R slides for {len(param_results)} parameters")
+                        p = tf.add_paragraph()
+                        p.text = "• %GRR > 30%: UNACCEPTABLE - Measurement system needs improvement"
+                        p.font.size = Pt(9)
+                        p.font.color.rgb = RGBColor(244, 67, 54)
+
+                        p = tf.add_paragraph()
+                        p.text = f"\n• ndc (Number of Distinct Categories): Indicates how many distinct categories the measurement can reliably distinguish. ndc ≥ 5 is recommended."
+                        p.font.size = Pt(9)
+
+                        # Add specific findings
+                        low_ndc_params = [p for p, r in param_results.items() if r['ndc'] < 5]
+                        if low_ndc_params:
+                            p = tf.add_paragraph()
+                            p.text = f"⚠ Warning: {len(low_ndc_params)} parameter(s) have ndc < 5: {', '.join([p[:20] for p in low_ndc_params[:3]])}"
+                            p.font.size = Pt(9)
+                            p.font.color.rgb = RGBColor(255, 152, 0)
+
+                    print(f"Added Gage R&R slides for group '{group_name}' with {len(param_results)} parameters")
 
         current_step += 1
         pptx_progress_var.set((current_step / total_steps) * 100)
@@ -25405,5 +29478,813 @@ stdf_csv_info_label.pack(pady=8, padx=10)
 
 # Initialize file source buttons (show STDF buttons by default)
 update_source_buttons()
+
+# ========================================================================================
+# ====================== TAB 8: SETTINGS SAVE/LOAD ======================================
+# ========================================================================================
+
+import json
+from datetime import datetime
+import glob as glob_module
+
+# --- Job definitions: Each tab that can be saved as a job ---
+# Labels and descriptions are fetched dynamically via get_text()
+JOB_KEYS = ["gage_rr", "report", "general", "statistics"]
+
+def _get_job_label(jkey):
+    """Get translated label for a job key."""
+    return {
+        "gage_rr": "📏 " + get_text("settings_job_gage_rr"),
+        "report": "📑 " + get_text("settings_job_report"),
+        "general": "⚙ " + get_text("settings_job_general"),
+        "statistics": "📈 " + get_text("settings_job_statistics"),
+    }.get(jkey, jkey)
+
+def _get_job_desc(jkey):
+    """Get translated description for a job key."""
+    return {
+        "gage_rr": get_text("settings_job_gage_rr_desc"),
+        "report": get_text("settings_job_report_desc"),
+        "general": get_text("settings_job_general_desc"),
+        "statistics": get_text("settings_job_statistics_desc"),
+    }.get(jkey, "")
+
+# Directory where jobs are stored
+JOBS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_jobs")
+os.makedirs(JOBS_DIR, exist_ok=True)
+
+
+def _gather_job_settings(job_keys):
+    """Collect settings only for the selected job keys into a dictionary."""
+    settings = {
+        "_meta": {
+            "saved_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "app": "Wafer Analysis Tool",
+            "version": "2.0",
+            "jobs_included": list(job_keys),
+        },
+    }
+
+    if "general" in job_keys:
+        settings["general"] = {
+            "language": language_var.get() if language_var else "English",
+            "show_grid": show_grid_var.get() if show_grid_var else False,
+        }
+
+    if "gage_rr" in job_keys:
+        settings["grr_analysis"] = {
+            "file_type": grr_file_type_var.get() if grr_file_type_var else "CSV",
+            "num_files": grr_num_files_var.get() if grr_num_files_var else "3",
+            "num_dies": grr_num_dies_var.get() if grr_num_dies_var else "5",
+            "limit_mode": grr_limit_mode_var.get() if grr_limit_mode_var else "auto_3sigma",
+            "sigma_factor": grr_sigma_factor_var.get() if grr_sigma_factor_var else "3",
+            "manual_lsl": grr_manual_lsl_var.get() if grr_manual_lsl_var else "-10",
+            "manual_usl": grr_manual_usl_var.get() if grr_manual_usl_var else "+10",
+            "calc_mode": grr_calc_mode_var.get() if grr_calc_mode_var else "total_variation",
+            "ndc_use_total_variation": grr_ndc_use_tv_var.get() if grr_ndc_use_tv_var else False,
+            "loaded_files": [f.get("path", "") for f in grr_file_data] if grr_file_data else [],
+            "selected_dies": [list(d) for d in grr_selected_dies] if grr_selected_dies else [],
+            "selected_params": list(grr_selected_params) if grr_selected_params else [],
+        }
+        settings["grr_report_groups"] = {}
+        try:
+            for gname, gdata in pptx_grr_group_data.items():
+                settings["grr_report_groups"][gname] = {
+                    "selected": gdata["selected"].get(),
+                    "params": list(gdata["params"]),
+                }
+        except Exception:
+            pass
+
+    if "report" in job_keys:
+        settings["report_includes"] = {
+            "wafermap": pptx_wafermap_select_all_var.get() if pptx_wafermap_select_all_var else False,
+            "multi_wafer": pptx_multi_select_all_var.get() if pptx_multi_select_all_var else False,
+            "grr": pptx_grr_select_all_var.get() if pptx_grr_select_all_var else False,
+            "stats_table": pptx_include_stats_var.get() if pptx_include_stats_var else False,
+        }
+        settings["report_wafermap"] = {
+            "binmap": pptx_wafermap_binmap_var.get() if pptx_wafermap_binmap_var else True,
+            "heatmap": pptx_wafermap_heatmap_var.get() if pptx_wafermap_heatmap_var else True,
+            "stats": pptx_wafermap_stats_var.get() if pptx_wafermap_stats_var else True,
+            "boxplot": pptx_wafermap_boxplot_var.get() if pptx_wafermap_boxplot_var else True,
+            "histogram": pptx_wafermap_histogram_var.get() if pptx_wafermap_histogram_var else True,
+        }
+        try:
+            if isinstance(pptx_wafermap_report_params, list):
+                settings["report_wafermap"]["selected_params"] = list(pptx_wafermap_report_params)
+        except Exception:
+            pass
+        settings["report_multi_wafer"] = {
+            "overview": pptx_multi_overview_var.get() if pptx_multi_overview_var else False,
+            "comparison": pptx_multi_comparison_var.get() if pptx_multi_comparison_var else False,
+            "yield": pptx_multi_yield_var.get() if pptx_multi_yield_var else False,
+            "individual": pptx_multi_individual_var.get() if pptx_multi_individual_var else False,
+        }
+        try:
+            settings["report_multi_wafer"]["selected_params"] = list(pptx_multi_wafer_report_params) if pptx_multi_wafer_report_params else []
+        except Exception:
+            settings["report_multi_wafer"]["selected_params"] = []
+        settings["report_diffmap"] = {
+            "heatmap": pptx_diffmap_param_heatmap_var.get() if pptx_diffmap_param_heatmap_var else True,
+            "histogram": pptx_diffmap_param_histogram_var.get() if pptx_diffmap_param_histogram_var else True,
+            "stats": pptx_diffmap_param_stats_var.get() if pptx_diffmap_param_stats_var else True,
+            "sidebyside": pptx_diffmap_param_sidebyside_var.get() if pptx_diffmap_param_sidebyside_var else True,
+        }
+        try:
+            settings["report_diffmap"]["selected_params"] = list(pptx_diffmap_selected_params) if pptx_diffmap_selected_params else []
+        except Exception:
+            settings["report_diffmap"]["selected_params"] = []
+        settings["report_grr"] = {
+            "summary": pptx_grr_summary_var.get() if pptx_grr_summary_var else True,
+            "variance": pptx_grr_variance_var.get() if pptx_grr_variance_var else True,
+            "charts": pptx_grr_charts_var.get() if pptx_grr_charts_var else True,
+            "anova": pptx_grr_anova_var.get() if pptx_grr_anova_var else True,
+            "calcparam": pptx_grr_calcparam_var.get() if pptx_grr_calcparam_var else False,
+        }
+        settings["report_template"] = {
+            "use_template": pptx_use_template_var.get() if pptx_use_template_var else False,
+            "template_path": pptx_template_path_var.get() if pptx_template_path_var else "",
+        }
+        try:
+            settings["slide_layouts"] = {
+                "wafermap": {k: dict(v) for k, v in wafermap_layout_boxes.items()},
+                "multi_wafer": {k: dict(v) for k, v in pptx_layout_boxes.items()},
+                "diffmap": {k: dict(v) for k, v in diffmap_layout_boxes.items()},
+            }
+        except Exception:
+            pass
+        try:
+            settings["grr_slide_layouts"] = {}
+            for idx, sd in grr_multi_slide_data.items():
+                settings["grr_slide_layouts"][str(idx)] = {k: dict(v) for k, v in sd["layout_boxes"].items()}
+        except Exception:
+            pass
+
+    if "statistics" in job_keys:
+        settings["statistics_measures"] = {}
+        try:
+            for key, var in stats_measures_vars.items():
+                settings["statistics_measures"][key] = var.get()
+        except Exception:
+            pass
+
+    return settings
+
+
+def _gather_all_settings():
+    """Collect all application settings (backward compatible)."""
+    return _gather_job_settings(list(JOB_KEYS))
+
+
+def _apply_settings(settings, only_jobs=None):
+    """Apply loaded settings to the application variables.
+    If only_jobs is set, only apply settings for those job keys."""
+    jobs_included = settings.get("_meta", {}).get("jobs_included", list(JOB_KEYS))
+    if only_jobs:
+        jobs_to_apply = [j for j in only_jobs if j in jobs_included]
+    else:
+        jobs_to_apply = jobs_included
+
+    if "general" in jobs_to_apply:
+        try:
+            g = settings.get("general", {})
+            if "language" in g:
+                language_var.set(g["language"])
+            if "show_grid" in g:
+                show_grid_var.set(g["show_grid"])
+        except Exception:
+            pass
+
+    if "gage_rr" in jobs_to_apply:
+        try:
+            grr = settings.get("grr_analysis", {})
+            if "file_type" in grr:
+                grr_file_type_var.set(grr["file_type"])
+            if "num_files" in grr:
+                grr_num_files_var.set(grr["num_files"])
+            if "num_dies" in grr:
+                grr_num_dies_var.set(grr["num_dies"])
+            if "limit_mode" in grr:
+                grr_limit_mode_var.set(grr["limit_mode"])
+            if "sigma_factor" in grr:
+                grr_sigma_factor_var.set(grr["sigma_factor"])
+            if "manual_lsl" in grr:
+                grr_manual_lsl_var.set(grr["manual_lsl"])
+            if "manual_usl" in grr:
+                grr_manual_usl_var.set(grr["manual_usl"])
+            if "calc_mode" in grr:
+                grr_calc_mode_var.set(grr["calc_mode"])
+            if "ndc_use_total_variation" in grr:
+                grr_ndc_use_tv_var.set(grr["ndc_use_total_variation"])
+        except Exception:
+            pass
+        try:
+            grr_groups = settings.get("grr_report_groups", {})
+            for gname, ginfo in grr_groups.items():
+                if gname in pptx_grr_group_data:
+                    pptx_grr_group_data[gname]["selected"].set(ginfo.get("selected", False))
+                    if "params" in ginfo:
+                        pptx_grr_group_data[gname]["params"] = list(ginfo["params"])
+        except Exception:
+            pass
+
+    if "report" in jobs_to_apply:
+        try:
+            ri = settings.get("report_includes", {})
+            if "wafermap" in ri:
+                pptx_wafermap_select_all_var.set(ri["wafermap"])
+            if "multi_wafer" in ri:
+                pptx_multi_select_all_var.set(ri["multi_wafer"])
+            if "grr" in ri:
+                pptx_grr_select_all_var.set(ri["grr"])
+            if "stats_table" in ri:
+                pptx_include_stats_var.set(ri["stats_table"])
+        except Exception:
+            pass
+        try:
+            rw = settings.get("report_wafermap", {})
+            if "binmap" in rw:
+                pptx_wafermap_binmap_var.set(rw["binmap"])
+            if "heatmap" in rw:
+                pptx_wafermap_heatmap_var.set(rw["heatmap"])
+            if "stats" in rw:
+                pptx_wafermap_stats_var.set(rw["stats"])
+            if "boxplot" in rw:
+                pptx_wafermap_boxplot_var.set(rw["boxplot"])
+            if "histogram" in rw:
+                pptx_wafermap_histogram_var.set(rw["histogram"])
+        except Exception:
+            pass
+        try:
+            rm = settings.get("report_multi_wafer", {})
+            if "overview" in rm:
+                pptx_multi_overview_var.set(rm["overview"])
+            if "comparison" in rm:
+                pptx_multi_comparison_var.set(rm["comparison"])
+            if "yield" in rm:
+                pptx_multi_yield_var.set(rm["yield"])
+            if "individual" in rm:
+                pptx_multi_individual_var.set(rm["individual"])
+        except Exception:
+            pass
+        try:
+            rd = settings.get("report_diffmap", {})
+            if "heatmap" in rd:
+                pptx_diffmap_param_heatmap_var.set(rd["heatmap"])
+            if "histogram" in rd:
+                pptx_diffmap_param_histogram_var.set(rd["histogram"])
+            if "stats" in rd:
+                pptx_diffmap_param_stats_var.set(rd["stats"])
+            if "sidebyside" in rd:
+                pptx_diffmap_param_sidebyside_var.set(rd["sidebyside"])
+        except Exception:
+            pass
+        try:
+            rg = settings.get("report_grr", {})
+            if "summary" in rg:
+                pptx_grr_summary_var.set(rg["summary"])
+            if "variance" in rg:
+                pptx_grr_variance_var.set(rg["variance"])
+            if "charts" in rg:
+                pptx_grr_charts_var.set(rg["charts"])
+            if "anova" in rg:
+                pptx_grr_anova_var.set(rg["anova"])
+            if "calcparam" in rg:
+                pptx_grr_calcparam_var.set(rg["calcparam"])
+        except Exception:
+            pass
+        try:
+            rt = settings.get("report_template", {})
+            if "use_template" in rt:
+                pptx_use_template_var.set(rt["use_template"])
+            if "template_path" in rt:
+                pptx_template_path_var.set(rt["template_path"])
+        except Exception:
+            pass
+        try:
+            sl = settings.get("slide_layouts", {})
+            if "wafermap" in sl:
+                for k, v in sl["wafermap"].items():
+                    if k in wafermap_layout_boxes:
+                        wafermap_layout_boxes[k].update(v)
+            if "multi_wafer" in sl:
+                for k, v in sl["multi_wafer"].items():
+                    if k in pptx_layout_boxes:
+                        pptx_layout_boxes[k].update(v)
+            if "diffmap" in sl:
+                for k, v in sl["diffmap"].items():
+                    if k in diffmap_layout_boxes:
+                        diffmap_layout_boxes[k].update(v)
+        except Exception:
+            pass
+        try:
+            gsl = settings.get("grr_slide_layouts", {})
+            for idx_str, boxes in gsl.items():
+                idx = int(idx_str)
+                if idx in grr_multi_slide_data:
+                    for k, v in boxes.items():
+                        if k in grr_multi_slide_data[idx]["layout_boxes"]:
+                            grr_multi_slide_data[idx]["layout_boxes"][k].update(v)
+        except Exception:
+            pass
+
+    if "statistics" in jobs_to_apply:
+        try:
+            sm = settings.get("statistics_measures", {})
+            for key, val in sm.items():
+                if key in stats_measures_vars:
+                    stats_measures_vars[key].set(val)
+        except Exception:
+            pass
+
+
+def _make_serializable(obj):
+    """Convert tuples/sets/numpy types to JSON-serializable Python types."""
+    if isinstance(obj, set):
+        return list(obj)
+    if isinstance(obj, tuple):
+        return list(obj)
+    if isinstance(obj, dict):
+        return {str(k): _make_serializable(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_make_serializable(i) for i in obj]
+    # Handle numpy integer/float types
+    if hasattr(obj, 'item'):
+        return obj.item()
+    if type(obj).__name__ in ('int64', 'int32', 'int16', 'int8',
+                               'uint64', 'uint32', 'uint16', 'uint8'):
+        return int(obj)
+    if type(obj).__name__ in ('float64', 'float32', 'float16'):
+        return float(obj)
+    if type(obj).__name__ == 'bool_':
+        return bool(obj)
+    if type(obj).__name__ == 'ndarray':
+        return obj.tolist()
+    return obj
+
+
+def _list_saved_jobs():
+    """List all saved job files from the jobs directory."""
+    jobs = []
+    for fpath in sorted(glob_module.glob(os.path.join(JOBS_DIR, "*.json")), key=os.path.getmtime, reverse=True):
+        try:
+            with open(fpath, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            meta = data.get("_meta", {})
+            jobs.append({
+                "path": fpath,
+                "name": os.path.splitext(os.path.basename(fpath))[0],
+                "saved_at": meta.get("saved_at", "?"),
+                "jobs_included": meta.get("jobs_included", []),
+                "data": data,
+            })
+        except Exception:
+            pass
+    return jobs
+
+
+# ======================== SETTINGS TAB UI ========================
+
+settings_main_frame = tk.Frame(tab_settings, bg='#f5f5f5')
+settings_main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+# ---- Header ----
+settings_header_frame = tk.Frame(settings_main_frame, bg='#f5f5f5')
+settings_header_frame.pack(fill=tk.X, pady=(0, 10))
+
+settings_header_label = tk.Label(settings_header_frame, text="💾 " + get_text("settings_header"),
+         font=("Helvetica", 16, "bold"), bg='#f5f5f5', fg='#1565C0')
+settings_header_label.pack(side=tk.LEFT, padx=5)
+
+settings_status_var = tk.StringVar(value="")
+settings_status_label = tk.Label(settings_header_frame, textvariable=settings_status_var,
+                                  font=("Helvetica", 10), bg='#f5f5f5', fg='gray')
+settings_status_label.pack(side=tk.RIGHT, padx=10)
+
+# ---- Main Horizontal PanedWindow: left=Save/Load, right=Preview ----
+settings_paned = tk.PanedWindow(settings_main_frame, orient=tk.HORIZONTAL, sashwidth=6, bg='#ccc')
+settings_paned.pack(fill=tk.BOTH, expand=True)
+
+# =============== LEFT PANEL: Save + Load ===============
+settings_left_frame = tk.Frame(settings_paned, bg='#f5f5f5')
+settings_paned.add(settings_left_frame, minsize=420, width=500)
+
+# --- SAVE SECTION ---
+save_section = tk.LabelFrame(settings_left_frame, text="💾 " + get_text("settings_save_job"),
+                              font=("Helvetica", 12, "bold"), bg='#f5f5f5', fg='#2E7D32')
+save_section.pack(fill=tk.X, padx=5, pady=5)
+
+# Job name
+save_name_frame = tk.Frame(save_section, bg='#f5f5f5')
+save_name_frame.pack(fill=tk.X, padx=10, pady=5)
+settings_job_name_label = tk.Label(save_name_frame, text=get_text("settings_job_name"),
+                                    font=("Helvetica", 10, "bold"), bg='#f5f5f5')
+settings_job_name_label.pack(side=tk.LEFT, padx=(0, 5))
+settings_job_name_var = tk.StringVar(value=f"Job_{datetime.now().strftime('%Y%m%d_%H%M')}")
+settings_job_name_entry = tk.Entry(save_name_frame, textvariable=settings_job_name_var, width=35, font=("Helvetica", 10))
+settings_job_name_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+
+# Job selection checkboxes
+save_jobs_frame = tk.LabelFrame(save_section, text=get_text("settings_which_tabs"),
+                                 font=("Helvetica", 9, "bold"), bg='#f5f5f5')
+save_jobs_frame.pack(fill=tk.X, padx=10, pady=5)
+
+settings_job_check_vars = {}
+settings_job_label_widgets = {}
+settings_job_desc_widgets = {}
+for jkey in JOB_KEYS:
+    var = tk.BooleanVar(value=True)
+    settings_job_check_vars[jkey] = var
+    row_f = tk.Frame(save_jobs_frame, bg='#f5f5f5')
+    row_f.pack(fill=tk.X, padx=5, pady=2)
+    tk.Checkbutton(row_f, variable=var, bg='#f5f5f5').pack(side=tk.LEFT)
+    lbl = tk.Label(row_f, text=_get_job_label(jkey), font=("Helvetica", 10, "bold"), bg='#f5f5f5')
+    lbl.pack(side=tk.LEFT, padx=(2, 8))
+    settings_job_label_widgets[jkey] = lbl
+    desc_lbl = tk.Label(row_f, text=_get_job_desc(jkey), font=("Helvetica", 8), bg='#f5f5f5', fg='#666')
+    desc_lbl.pack(side=tk.LEFT)
+    settings_job_desc_widgets[jkey] = desc_lbl
+
+
+def save_job_action():
+    """Save the selected job settings to a JSON file in the jobs directory."""
+    selected_keys = [k for k, v in settings_job_check_vars.items() if v.get()]
+    if not selected_keys:
+        settings_status_var.set("⚠ " + get_text("settings_no_tab_selected"))
+        settings_status_label.config(fg='#E65100')
+        return
+    job_name = settings_job_name_var.get().strip()
+    if not job_name:
+        settings_status_var.set("⚠ " + get_text("settings_no_name"))
+        settings_status_label.config(fg='#E65100')
+        return
+    safe_name = "".join(c if c.isalnum() or c in ('_', '-') else '_' for c in job_name)
+    file_path = os.path.join(JOBS_DIR, f"{safe_name}.json")
+    try:
+        settings = _gather_job_settings(selected_keys)
+        settings = _make_serializable(settings)
+        settings["_meta"]["job_name"] = job_name
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, indent=2, ensure_ascii=False)
+        tab_labels = ", ".join(_get_job_label(k) for k in selected_keys)
+        settings_status_var.set("✅ " + get_text("settings_job_saved").format(name=job_name, tabs=tab_labels))
+        settings_status_label.config(fg='green')
+        refresh_job_list()
+    except Exception as e:
+        settings_status_var.set("❌ " + get_text("settings_error_save").format(err=e))
+        settings_status_label.config(fg='red')
+
+
+def save_job_as_file_action():
+    """Save job to a custom location via file dialog."""
+    selected_keys = [k for k, v in settings_job_check_vars.items() if v.get()]
+    if not selected_keys:
+        settings_status_var.set("⚠ " + get_text("settings_no_tab_selected"))
+        settings_status_label.config(fg='#E65100')
+        return
+    job_name = settings_job_name_var.get().strip() or "settings"
+    file_path = filedialog.asksaveasfilename(
+        title=get_text("settings_save_dialog_title"),
+        defaultextension=".json",
+        filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+        initialfile=f"{job_name}.json"
+    )
+    if not file_path:
+        return
+    try:
+        settings = _gather_job_settings(selected_keys)
+        settings = _make_serializable(settings)
+        settings["_meta"]["job_name"] = job_name
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, indent=2, ensure_ascii=False)
+        settings_status_var.set("✅ " + get_text("settings_job_file_saved").format(file=os.path.basename(file_path)))
+        settings_status_label.config(fg='green')
+    except Exception as e:
+        settings_status_var.set("❌ " + get_text("settings_error").format(err=e))
+        settings_status_label.config(fg='red')
+
+
+# Save buttons
+save_btn_frame = tk.Frame(save_section, bg='#f5f5f5')
+save_btn_frame.pack(fill=tk.X, padx=10, pady=(5, 10))
+
+settings_save_btn = tk.Button(save_btn_frame, text="💾 " + get_text("settings_save"), font=("Helvetica", 11, "bold"),
+          bg='#4CAF50', fg='white', relief='raised', padx=15, pady=5,
+          command=save_job_action)
+settings_save_btn.pack(side=tk.LEFT, padx=5)
+
+settings_save_as_btn = tk.Button(save_btn_frame, text="📁 " + get_text("settings_save_as"), font=("Helvetica", 10),
+          bg='#66BB6A', fg='white', relief='raised', padx=10, pady=5,
+          command=save_job_as_file_action)
+settings_save_as_btn.pack(side=tk.LEFT, padx=5)
+
+# --- LOAD SECTION: Saved Jobs List ---
+load_section = tk.LabelFrame(settings_left_frame, text="📂 " + get_text("settings_saved_jobs"),
+                              font=("Helvetica", 12, "bold"), bg='#f5f5f5', fg='#1565C0')
+load_section.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+# Job list with scrollbar
+job_list_frame = tk.Frame(load_section, bg='white', relief='sunken', bd=2)
+job_list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+job_listbox = tk.Listbox(job_list_frame, font=("Consolas", 10), selectmode=tk.SINGLE,
+                          bg='white', fg='#333', selectbackground='#1976D2', selectforeground='white',
+                          activestyle='none', bd=0)
+job_list_scrollbar = ttk.Scrollbar(job_list_frame, orient="vertical", command=job_listbox.yview)
+job_listbox.config(yscrollcommand=job_list_scrollbar.set)
+job_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+job_list_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+_saved_jobs_cache = []
+
+
+def refresh_job_list():
+    """Refresh the list of saved jobs."""
+    global _saved_jobs_cache
+    job_listbox.delete(0, tk.END)
+    _saved_jobs_cache = _list_saved_jobs()
+    for j in _saved_jobs_cache:
+        tabs = ", ".join(_get_job_label(k) for k in j["jobs_included"])
+        job_listbox.insert(tk.END, f"{j['name']}  |  {j['saved_at']}  |  {tabs}")
+
+
+def load_selected_job():
+    """Load the selected job from the list and apply its settings."""
+    sel = job_listbox.curselection()
+    if not sel:
+        settings_status_var.set("⚠ " + get_text("settings_select_job_first"))
+        settings_status_label.config(fg='#E65100')
+        return
+    job = _saved_jobs_cache[sel[0]]
+    try:
+        _apply_settings(job["data"])
+        settings_status_var.set("✅ " + get_text("settings_job_loaded").format(name=job['name']))
+        settings_status_label.config(fg='green')
+        refresh_settings_preview(job["data"])
+    except Exception as e:
+        settings_status_var.set("❌ " + get_text("settings_error_load").format(err=e))
+        settings_status_label.config(fg='red')
+
+
+def load_job_from_file():
+    """Load a job from an external JSON file."""
+    file_path = filedialog.askopenfilename(
+        title=get_text("settings_load_dialog_title"),
+        filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+    )
+    if not file_path:
+        return
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        _apply_settings(data)
+        settings_status_var.set("✅ " + get_text("settings_job_loaded_file").format(file=os.path.basename(file_path)))
+        settings_status_label.config(fg='green')
+        refresh_settings_preview(data)
+    except Exception as e:
+        settings_status_var.set("❌ " + get_text("settings_error").format(err=e))
+        settings_status_label.config(fg='red')
+
+
+def delete_selected_job():
+    """Delete the selected job file."""
+    sel = job_listbox.curselection()
+    if not sel:
+        settings_status_var.set("⚠ " + get_text("settings_select_job_first"))
+        settings_status_label.config(fg='#E65100')
+        return
+    job = _saved_jobs_cache[sel[0]]
+    from tkinter import messagebox
+    if messagebox.askyesno(get_text("settings_delete_title"),
+                           get_text("settings_delete_confirm").format(name=job['name'])):
+        try:
+            os.remove(job["path"])
+            settings_status_var.set("🗑 " + get_text("settings_job_deleted").format(name=job['name']))
+            settings_status_label.config(fg='#666')
+            refresh_job_list()
+        except Exception as e:
+            settings_status_var.set("❌ " + get_text("settings_error").format(err=e))
+            settings_status_label.config(fg='red')
+
+
+def on_job_list_select(event):
+    """Show preview when selecting a job in the list."""
+    sel = job_listbox.curselection()
+    if sel and sel[0] < len(_saved_jobs_cache):
+        refresh_settings_preview(_saved_jobs_cache[sel[0]]["data"])
+
+
+job_listbox.bind("<<ListboxSelect>>", on_job_list_select)
+
+# Load/Delete buttons
+load_btn_frame = tk.Frame(load_section, bg='#f5f5f5')
+load_btn_frame.pack(fill=tk.X, padx=10, pady=(5, 10))
+
+settings_load_btn = tk.Button(load_btn_frame, text="▶ " + get_text("settings_load_apply"),
+          font=("Helvetica", 11, "bold"),
+          bg='#1976D2', fg='white', relief='raised', padx=15, pady=5,
+          command=load_selected_job)
+settings_load_btn.pack(side=tk.LEFT, padx=5)
+
+settings_load_file_btn = tk.Button(load_btn_frame, text="📁 " + get_text("settings_load_file"),
+          font=("Helvetica", 10),
+          bg='#42A5F5', fg='white', relief='raised', padx=10, pady=5,
+          command=load_job_from_file)
+settings_load_file_btn.pack(side=tk.LEFT, padx=5)
+
+settings_delete_btn = tk.Button(load_btn_frame, text="🗑 " + get_text("settings_delete"),
+          font=("Helvetica", 10),
+          bg='#E53935', fg='white', relief='raised', padx=10, pady=5,
+          command=delete_selected_job)
+settings_delete_btn.pack(side=tk.LEFT, padx=5)
+
+tk.Button(load_btn_frame, text="🔄", font=("Helvetica", 10),
+          bg='#FF9800', fg='white', relief='raised', padx=8, pady=5,
+          command=refresh_job_list).pack(side=tk.LEFT, padx=5)
+
+# =============== RIGHT PANEL: Preview ===============
+settings_right_frame = tk.Frame(settings_paned, bg='white')
+settings_paned.add(settings_right_frame, minsize=350, width=500)
+
+settings_preview_label = tk.Label(settings_right_frame, text="📋 " + get_text("settings_preview"),
+         font=("Helvetica", 12, "bold"), bg='white', fg='#1565C0')
+settings_preview_label.pack(fill=tk.X, padx=10, pady=8)
+
+# Scrollable preview area
+settings_preview_scroll = tk.Frame(settings_right_frame, bg='white', relief='sunken', bd=2)
+settings_preview_scroll.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
+
+settings_canvas = tk.Canvas(settings_preview_scroll, bg='white', highlightthickness=0)
+settings_scrollbar_y = ttk.Scrollbar(settings_preview_scroll, orient="vertical", command=settings_canvas.yview)
+settings_tree_frame = tk.Frame(settings_canvas, bg='white')
+
+settings_tree_frame.bind("<Configure>", lambda e: settings_canvas.config(scrollregion=settings_canvas.bbox("all")))
+settings_canvas.create_window((0, 0), window=settings_tree_frame, anchor="nw")
+settings_canvas.config(yscrollcommand=settings_scrollbar_y.set)
+
+settings_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+settings_scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
+
+
+def _on_settings_mousewheel(event):
+    settings_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+
+settings_canvas.bind("<MouseWheel>", _on_settings_mousewheel)
+settings_tree_frame.bind("<MouseWheel>", _on_settings_mousewheel)
+
+
+def _bind_settings_mousewheel_recursive(widget):
+    widget.bind("<MouseWheel>", _on_settings_mousewheel)
+    for child in widget.winfo_children():
+        _bind_settings_mousewheel_recursive(child)
+
+
+def _format_value(value):
+    """Format a value for display in the preview."""
+    if isinstance(value, dict):
+        val_str = ", ".join(f"{k}: {v}" for k, v in value.items())
+        return val_str[:120] + "..." if len(val_str) > 120 else val_str
+    elif isinstance(value, list):
+        if len(value) == 0:
+            return get_text("settings_none")
+        elif len(value) <= 5:
+            return ", ".join(str(v) for v in value)
+        else:
+            return get_text("settings_items").format(count=len(value)) + ", ".join(str(v) for v in value[:3]) + " ..."
+    elif isinstance(value, bool):
+        return ("✅ " + get_text("settings_yes")) if value else ("❌ " + get_text("settings_no"))
+    else:
+        return str(value)
+
+
+def _get_section_labels():
+    """Get section labels based on current language."""
+    return {
+        "_meta": "📋 " + get_text("settings_sec_meta"),
+        "general": "⚙ " + get_text("settings_sec_general"),
+        "grr_analysis": "📏 " + get_text("settings_sec_grr_analysis"),
+        "grr_report_groups": "📏 " + get_text("settings_sec_grr_groups"),
+        "report_includes": "📑 " + get_text("settings_sec_report_includes"),
+        "report_wafermap": "🗺 " + get_text("settings_sec_report_wafermap"),
+        "report_multi_wafer": "📊 " + get_text("settings_sec_report_multi"),
+        "report_diffmap": "🔄 " + get_text("settings_sec_report_diffmap"),
+        "report_grr": "📏 " + get_text("settings_sec_report_grr"),
+        "report_template": "📄 " + get_text("settings_sec_template"),
+        "statistics_measures": "📈 " + get_text("settings_sec_statistics"),
+        "slide_layouts": "📐 " + get_text("settings_sec_layouts"),
+        "grr_slide_layouts": "📐 " + get_text("settings_sec_grr_layouts"),
+    }
+
+SECTION_ORDER = ["_meta", "general", "grr_analysis", "grr_report_groups",
+                 "report_includes", "report_wafermap", "report_multi_wafer",
+                 "report_diffmap", "report_grr", "report_template",
+                 "statistics_measures", "slide_layouts", "grr_slide_layouts"]
+
+
+def refresh_settings_preview(settings=None):
+    """Refresh the settings preview panel."""
+    for widget in settings_tree_frame.winfo_children():
+        widget.destroy()
+
+    if settings is None:
+        settings = _gather_all_settings()
+
+    section_labels = _get_section_labels()
+    _sec_font = ("Helvetica", 11, "bold")
+    _key_font = ("Consolas", 9)
+    _val_font = ("Consolas", 9)
+    _sec_bg = '#E3F2FD'
+    _row_bg1 = '#FFFFFF'
+    _row_bg2 = '#F5F5F5'
+
+    for section_key in SECTION_ORDER:
+        if section_key not in settings:
+            continue
+        section_data = settings[section_key]
+        if not section_data:
+            continue
+
+        sec_label = section_labels.get(section_key, section_key)
+        sec_frame = tk.Frame(settings_tree_frame, bg=_sec_bg, relief='groove', bd=1)
+        sec_frame.pack(fill=tk.X, pady=(8, 2), padx=5)
+        tk.Label(sec_frame, text=sec_label, font=_sec_font, bg=_sec_bg, fg='#1565C0',
+                 anchor='w').pack(fill=tk.X, padx=8, pady=4)
+
+        if isinstance(section_data, dict):
+            items = list(section_data.items())
+            for i, (key, value) in enumerate(items):
+                bg = _row_bg1 if i % 2 == 0 else _row_bg2
+                row_frame = tk.Frame(settings_tree_frame, bg=bg)
+                row_frame.pack(fill=tk.X, padx=15)
+                val_str = _format_value(value)
+                tk.Label(row_frame, text=f"  {key}:", font=_key_font, bg=bg, fg='#333',
+                         anchor='w', width=30).pack(side=tk.LEFT, padx=(5, 0), pady=1)
+                tk.Label(row_frame, text=val_str, font=_val_font, bg=bg, fg='#555',
+                         anchor='w').pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5), pady=1)
+
+    settings_tree_frame.update_idletasks()
+    settings_canvas.config(scrollregion=settings_canvas.bbox("all"))
+    _bind_settings_mousewheel_recursive(settings_tree_frame)
+
+
+# Backward-compatible aliases
+def refresh_settings_display():
+    refresh_settings_preview()
+
+def save_settings_to_file():
+    save_job_as_file_action()
+
+def load_settings_from_file():
+    load_job_from_file()
+
+
+def update_settings_tab_language():
+    """Update all Settings tab texts when language changes."""
+    settings_header_label.config(text="💾 " + get_text("settings_header"))
+    save_section.config(text="💾 " + get_text("settings_save_job"))
+    settings_job_name_label.config(text=get_text("settings_job_name"))
+    save_jobs_frame.config(text=get_text("settings_which_tabs"))
+    for jkey in JOB_KEYS:
+        if jkey in settings_job_label_widgets:
+            settings_job_label_widgets[jkey].config(text=_get_job_label(jkey))
+        if jkey in settings_job_desc_widgets:
+            settings_job_desc_widgets[jkey].config(text=_get_job_desc(jkey))
+    settings_save_btn.config(text="💾 " + get_text("settings_save"))
+    settings_save_as_btn.config(text="📁 " + get_text("settings_save_as"))
+    load_section.config(text="📂 " + get_text("settings_saved_jobs"))
+    settings_load_btn.config(text="▶ " + get_text("settings_load_apply"))
+    settings_load_file_btn.config(text="📁 " + get_text("settings_load_file"))
+    settings_delete_btn.config(text="🗑 " + get_text("settings_delete"))
+    settings_preview_label.config(text="📋 " + get_text("settings_preview"))
+    settings_info_label.config(text="ℹ️ " + get_text("settings_info"))
+    refresh_job_list()
+    refresh_settings_preview()
+
+
+# ---- Auto-refresh when switching to Settings tab ----
+def _on_settings_tab_selected(event):
+    try:
+        sel = notebook.select()
+        tab_text = notebook.tab(sel, 'text').strip()
+        if 'Settings' in tab_text:
+            refresh_job_list()
+            refresh_settings_preview()
+    except Exception:
+        pass
+
+notebook.bind("<<NotebookTabChanged>>", _on_settings_tab_selected, add='+')
+
+# ---- Info bar at bottom ----
+settings_info_frame = tk.Frame(settings_main_frame, bg='#E3F2FD', relief='ridge', bd=1)
+settings_info_frame.pack(fill=tk.X, pady=(10, 0))
+settings_info_label = tk.Label(settings_info_frame,
+         text="ℹ️ " + get_text("settings_info"),
+         font=("Helvetica", 9), bg='#E3F2FD', fg='#1565C0', wraplength=900)
+settings_info_label.pack(pady=8, padx=10)
+
+# Initial load of job list
+refresh_job_list()
 
 main_win.mainloop()
