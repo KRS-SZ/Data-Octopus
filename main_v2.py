@@ -23115,10 +23115,7 @@ def _rebuild_grr_params_after_load():
 
     print(f"[GRR Rebuild] Groups: {sorted(grr_grouped_parameters.keys())}")
     for gname, gparams in grr_grouped_parameters.items():
-        print(f"  [{gname}] → {len(gparams)} params")
-        if group_name not in grr_grouped_parameters:
-            grr_grouped_parameters[group_name] = []
-        grr_grouped_parameters[group_name].append((param, param, param))
+        print(f"  [{gname}] -> {len(gparams)} params")
 
     grr_viz_group_combo['values'] = ["All Groups"] + sorted(grr_grouped_parameters.keys())
     grr_viz_group_var.set("All Groups")
@@ -23202,11 +23199,16 @@ def load_grr_files():
         try:
             if file_ext == '.stdf':
                 # Load STDF file using existing parser
-                df, params, limits, groups, wafer_id = parse_stdf_file(path)
-                file_info['type'] = 'stdf'
-                file_info['data'] = df
-                file_info['wafer_id'] = wafer_id
-                file_info['params'] = params
+                df, wafer_id, test_info, test_limits_dict, wafer_config = load_single_stdf_file_for_csv(path)
+                if df is not None and len(df) > 0:
+                    param_cols = [c for c in df.columns if c not in ('x', 'y', 'bin', 'sbin')]
+                    file_info['type'] = 'stdf'
+                    file_info['data'] = df
+                    file_info['wafer_id'] = wafer_id
+                    file_info['params'] = {col: col for col in param_cols}
+                else:
+                    print(f"[GRR Load] STDF returned no data: {os.path.basename(path)}")
+                    continue
 
             elif file_ext == '.csv':
                 # Load CSV wafermap file - header row + data with comma delimiter
