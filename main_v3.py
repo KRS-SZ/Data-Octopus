@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.1.5"
+APP_VERSION = "3.1.6"
 
 import sys
 
@@ -17910,7 +17910,7 @@ def load_csv_as_comparison():
             else:
                 # Fallback to sequential numbering
                 test_num = idx + 1
-            
+
             test_params[f"test_{test_num}"] = col
             df = df.rename(columns={col: test_num})
 
@@ -19778,7 +19778,7 @@ grr_body_paned = tk.PanedWindow(grr_main_frame, orient=tk.HORIZONTAL, sashwidth=
 grr_body_paned.pack(fill=tk.BOTH, expand=True, padx=5, pady=2)
 
 # ============================================================================
-# LEFT side: Loaded Wafer List Panel (persistent across tabs)
+# LEFT side: Wafer Selection Panel (SAME style as Wafer Tab)
 # ============================================================================
 grr_wafer_panel = tk.Frame(grr_body_paned, bg='#f0f0f0', width=250)
 grr_body_paned.add(grr_wafer_panel, minsize=200, stretch='never')
@@ -19786,45 +19786,89 @@ grr_body_paned.add(grr_wafer_panel, minsize=200, stretch='never')
 # Title for wafer list panel
 grr_wafer_list_title = tk.Label(
     grr_wafer_panel,
-    text="📋 Loaded Wafers",
+    text="📋 Wafer Selection",
     font=("Helvetica", 11, "bold"),
-    bg="#2196F3",
-    fg="white",
-    pady=6
+    bg="#1565C0",
+    fg="white"
 )
 grr_wafer_list_title.pack(fill=tk.X)
 
-# Placeholder frame for Load Files button (button added later after load_grr_files is defined)
-grr_load_btn_frame = tk.Frame(grr_wafer_panel, bg='#f0f0f0')
-grr_load_btn_frame.pack(fill=tk.X, padx=5, pady=(5, 2))
+# Mode indicator (like Wafer Tab)
+grr_wafer_mode_label = tk.Label(
+    grr_wafer_panel, text="● Multi Select (GRR)",
+    font=("Helvetica", 8), fg="#1565C0", bg='#f0f0f0'
+)
+grr_wafer_mode_label.pack(fill=tk.X, padx=5)
 
-# Buttons frame for Select All / Deselect All / Remove
-grr_wafer_list_btn_frame = tk.Frame(grr_wafer_panel, bg='#f0f0f0')
-grr_wafer_list_btn_frame.pack(fill=tk.X, padx=5, pady=4)
+# Navigation buttons frame (like Wafer Tab)
+grr_wafer_nav_frame = tk.Frame(grr_wafer_panel, bg='#f0f0f0')
+grr_wafer_nav_frame.pack(fill=tk.X, padx=5, pady=2)
 
 grr_wafer_checkbox_vars = []   # List of BooleanVar for each wafer
-grr_wafer_checkbox_widgets = []  # List of Checkbutton widgets
+grr_wafer_checkbox_widgets = []  # List of (frame, checkbox) tuples
 grr_wafer_path_map = {}  # Map index -> file path for reference
+grr_wafer_selected_var = tk.IntVar(value=0)
+
+def grr_select_prev_wafer():
+    """Select previous wafer"""
+    current = grr_wafer_selected_var.get()
+    if current > 0:
+        grr_wafer_selected_var.set(current - 1)
+        _grr_update_wafer_visuals()
+
+def grr_select_next_wafer():
+    """Select next wafer"""
+    current = grr_wafer_selected_var.get()
+    max_idx = len(grr_wafer_checkbox_vars) - 1
+    if current < max_idx:
+        grr_wafer_selected_var.set(current + 1)
+        _grr_update_wafer_visuals()
 
 def grr_select_all_wafers():
+    """Select all wafers"""
     for var in grr_wafer_checkbox_vars:
         var.set(True)
+    _grr_update_wafer_visuals()
 
 def grr_deselect_all_wafers():
+    """Deselect all wafers"""
     for var in grr_wafer_checkbox_vars:
         var.set(False)
+    _grr_update_wafer_visuals()
 
-def grr_remove_selected_wafers():
-    """Remove unchecked wafers from grr_file_data and refresh display"""
-    global grr_file_data
-    new_file_data = []
-    for i, var in enumerate(grr_wafer_checkbox_vars):
-        if var.get() and i < len(grr_file_data):
-            new_file_data.append(grr_file_data[i])
-    grr_file_data = new_file_data
-    # Rebuild parameters from remaining files
-    _rebuild_grr_params_after_load()
-    grr_status_var.set(f"{len(grr_file_data)} wafers remaining after removal")
+def _grr_update_wafer_visuals():
+    """Update visual highlighting of selected wafers (like Wafer Tab)"""
+    wafer_colors = ['#1565C0', '#2E7D32', '#E65100', '#6A1B9A', '#C62828',
+                    '#00838F', '#4E342E', '#283593', '#558B2F', '#AD1457']
+    for i, (frame, cb) in enumerate(grr_wafer_checkbox_widgets):
+        is_sel = grr_wafer_checkbox_vars[i].get() if i < len(grr_wafer_checkbox_vars) else False
+        color = wafer_colors[i % len(wafer_colors)]
+        if is_sel:
+            frame.config(bg="#E3F2FD", relief=tk.SOLID, bd=2)
+            cb.config(bg="#E3F2FD", fg=color, selectcolor="#4CAF50")
+            for child in frame.winfo_children():
+                try:
+                    child.config(bg="#E3F2FD")
+                except:
+                    pass
+                for subchild in child.winfo_children():
+                    try:
+                        subchild.config(bg="#E3F2FD")
+                    except:
+                        pass
+        else:
+            frame.config(bg="white", relief=tk.RIDGE, bd=1)
+            cb.config(bg="white", fg="#999", selectcolor="#ddd")
+            for child in frame.winfo_children():
+                try:
+                    child.config(bg="white")
+                except:
+                    pass
+                for subchild in child.winfo_children():
+                    try:
+                        subchild.config(bg="white")
+                    except:
+                        pass
 
 def grr_remove_all_wafers():
     """Clear all loaded wafers"""
@@ -19844,43 +19888,35 @@ def grr_remove_all_wafers():
     update_grr_file_displays()
     grr_status_var.set("All wafers cleared")
 
-grr_select_all_btn = tk.Button(
-    grr_wafer_list_btn_frame, text="Select All",
-    command=grr_select_all_wafers, font=("Helvetica", 8), width=9
+# Navigation buttons
+grr_prev_btn = tk.Button(
+    grr_wafer_nav_frame, text="◄ Prev",
+    command=grr_select_prev_wafer, font=("Helvetica", 8), width=6,
+    bg="#1565C0", fg="white"
 )
-grr_select_all_btn.pack(side=tk.LEFT, padx=2)
+grr_prev_btn.pack(side=tk.LEFT, padx=2)
 
-grr_deselect_all_btn = tk.Button(
-    grr_wafer_list_btn_frame, text="Deselect All",
-    command=grr_deselect_all_wafers, font=("Helvetica", 8), width=9
+grr_next_btn = tk.Button(
+    grr_wafer_nav_frame, text="Next ►",
+    command=grr_select_next_wafer, font=("Helvetica", 8), width=6,
+    bg="#1565C0", fg="white"
 )
-grr_deselect_all_btn.pack(side=tk.LEFT, padx=2)
+grr_next_btn.pack(side=tk.LEFT, padx=2)
 
-grr_remove_sel_btn = tk.Button(
-    grr_wafer_list_btn_frame, text="Remove ✖",
-    command=grr_remove_selected_wafers, font=("Helvetica", 8), width=9,
-    bg='#E74C3C', fg='white'
+grr_all_btn = tk.Button(
+    grr_wafer_nav_frame, text="All",
+    command=grr_select_all_wafers, font=("Helvetica", 8), width=4,
+    bg="#4CAF50", fg="white"
 )
-grr_remove_sel_btn.pack(side=tk.LEFT, padx=2)
-
-# Second button row
-grr_wafer_list_btn_frame2 = tk.Frame(grr_wafer_panel, bg='#f0f0f0')
-grr_wafer_list_btn_frame2.pack(fill=tk.X, padx=5, pady=(0, 4))
-
-grr_clear_all_btn = tk.Button(
-    grr_wafer_list_btn_frame2, text="🗑️ Clear All",
-    command=grr_remove_all_wafers, font=("Helvetica", 8), width=20,
-    bg='#c0392b', fg='white'
-)
-grr_clear_all_btn.pack(fill=tk.X, padx=2)
+grr_all_btn.pack(side=tk.LEFT, padx=2)
 
 # Wafer count label
-grr_wafer_count_var = tk.StringVar(value="0 Wafers loaded")
+grr_wafer_count_var = tk.StringVar(value="0 Wafers")
 grr_wafer_count_label = tk.Label(
-    grr_wafer_panel, textvariable=grr_wafer_count_var,
-    font=("Helvetica", 9, "bold"), bg='#f0f0f0', fg='#2C3E50'
+    grr_wafer_nav_frame, textvariable=grr_wafer_count_var,
+    font=("Helvetica", 9), bg='#f0f0f0', fg='#2C3E50'
 )
-grr_wafer_count_label.pack(fill=tk.X, padx=5, pady=2)
+grr_wafer_count_label.pack(side=tk.RIGHT, padx=5)
 
 # Separator
 ttk.Separator(grr_wafer_panel, orient='horizontal').pack(fill=tk.X, padx=5, pady=2)
@@ -19908,54 +19944,116 @@ grr_wafer_list_canvas.bind("<MouseWheel>", on_grr_wafer_list_mousewheel)
 grr_wafer_list_inner.bind("<MouseWheel>", on_grr_wafer_list_mousewheel)
 
 def grr_refresh_wafer_list():
-    """Refresh the wafer list panel to show all loaded wafers"""
+    """Refresh the wafer list panel to show all loaded wafers (SAME style as Wafer Tab)"""
     global grr_wafer_checkbox_vars, grr_wafer_checkbox_widgets, grr_wafer_path_map
 
-    for widget in grr_wafer_list_inner.winfo_children():
-        widget.destroy()
+    # Clear existing widgets
+    for frame, cb in grr_wafer_checkbox_widgets:
+        frame.destroy()
     grr_wafer_checkbox_vars = []
     grr_wafer_checkbox_widgets = []
     grr_wafer_path_map = {}
 
-    for i, file_info in enumerate(grr_file_data):
-        var = tk.BooleanVar(value=True)
-        grr_wafer_checkbox_vars.append(var)
-        grr_wafer_path_map[i] = file_info.get('path', '')
+    wafer_colors = ['#1565C0', '#2E7D32', '#E65100', '#6A1B9A', '#C62828',
+                    '#00838F', '#4E342E', '#283593', '#558B2F', '#AD1457']
 
+    for i, file_info in enumerate(grr_file_data):
         wafer_id = file_info.get('wafer_id', f"Wafer {i+1}")
         file_path = file_info.get('path', '')
-        folder_name = os.path.basename(os.path.dirname(file_path)) if file_path else ''
-        file_name = os.path.basename(file_path) if file_path else wafer_id
+        grr_wafer_path_map[i] = file_path
+        color = wafer_colors[i % len(wafer_colors)]
 
-        folder_hash = hash(os.path.dirname(file_path)) % 6
-        colors = ['#E3F2FD', '#E8F5E9', '#FFF3E0', '#F3E5F5', '#E0F7FA', '#FBE9E7']
-        bg_color = colors[folder_hash] if file_path else '#f0f0f0'
+        # Parse wafer ID into meaningful info (SAME as Wafer Tab)
+        import re as _re
+        wafer_name = str(wafer_id) if wafer_id else f"Wafer {i+1}"
+        parts = wafer_name.split('_')
+        product = ""
+        lot = ""
+        slot = ""
+        date_str = ""
 
-        cb_frame = tk.Frame(grr_wafer_list_inner, bg=bg_color, relief='groove', bd=1)
-        cb_frame.pack(fill=tk.X, padx=2, pady=1)
+        # Extract structured info from naming patterns
+        for p in parts:
+            if p.startswith('P0') or p.startswith('P1') or p.startswith('P2'):
+                product = p
+            elif p.startswith('UNAV') or p.startswith('LOT'):
+                lot = p
+            elif p.startswith('Slot') or _re.match(r'^Slot\d+$', p):
+                slot = p
+        # Date: last part often contains date
+        date_match = _re.search(r'(\d{8})[_\-]?(\d{6})?', wafer_name)
+        if date_match:
+            d = date_match.group(1)
+            date_str = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+            if date_match.group(2):
+                t = date_match.group(2)
+                date_str += f" {t[:2]}:{t[2:4]}"
+
+        # Build multi-line display (SAME as Wafer Tab)
+        line1 = f"Wafer {i+1}"
+        if slot:
+            line1 += f" ({slot})"
+        if product:
+            line1 += f" | {product}"
+        line2_parts = []
+        if lot:
+            line2_parts.append(f"Lot: {lot}")
+        if date_str:
+            line2_parts.append(date_str)
+        line2 = " | ".join(line2_parts) if line2_parts else wafer_name[:40]
+
+        var = tk.BooleanVar(value=True)
+        grr_wafer_checkbox_vars.append(var)
+
+        # Create frame for wafer entry (SAME style as Wafer Tab)
+        cb_frame = tk.Frame(grr_wafer_list_inner, bg="white", relief=tk.RIDGE, bd=1)
+        cb_frame.pack(fill=tk.X, padx=2, pady=2)
+
+        _idx = i
+
+        # Top row: checkbox with wafer info
+        top_row = tk.Frame(cb_frame, bg="white")
+        top_row.pack(fill=tk.X)
 
         cb = tk.Checkbutton(
-            cb_frame, variable=var,
-            text=f"#{i+1}: {file_name}",
-            font=("Helvetica", 8),
-            bg=bg_color, anchor='w',
-            wraplength=220
+            top_row,
+            text=f" {line1}",
+            variable=var,
+            command=lambda idx=_idx: _grr_on_wafer_checkbox_changed(idx),
+            font=("Helvetica", 9, "bold"),
+            anchor="w",
+            bg="white",
+            fg=color,
+            activebackground="#e0e0e0",
+            selectcolor="#4CAF50"
         )
-        cb.pack(fill=tk.X, padx=2, pady=1)
-        grr_wafer_checkbox_widgets.append(cb)
+        cb.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        if folder_name:
-            folder_lbl = tk.Label(
-                cb_frame, text=f"  📂 {folder_name}",
-                font=("Helvetica", 7), fg='#666666', bg=bg_color, anchor='w'
-            )
-            folder_lbl.pack(fill=tk.X, padx=2)
+        # Info line
+        info_label = tk.Label(
+            cb_frame,
+            text=f"  {line2}",
+            font=("Consolas", 7),
+            anchor="w",
+            bg="white",
+            fg="#666"
+        )
+        info_label.pack(fill=tk.X, padx=2)
+
+        grr_wafer_checkbox_widgets.append((cb_frame, cb))
 
         cb.bind("<MouseWheel>", on_grr_wafer_list_mousewheel)
         cb_frame.bind("<MouseWheel>", on_grr_wafer_list_mousewheel)
 
-    grr_wafer_count_var.set(f"{len(grr_file_data)} Wafer(s) loaded")
+    count_text = f"{len(grr_file_data)} Wafer" if len(grr_file_data) == 1 else f"{len(grr_file_data)} Wafers"
+    grr_wafer_count_var.set(count_text)
+    
+    _grr_update_wafer_visuals()
     grr_wafer_list_canvas.configure(scrollregion=grr_wafer_list_canvas.bbox("all"))
+
+def _grr_on_wafer_checkbox_changed(idx):
+    """Handle checkbox click in GRR wafer list"""
+    _grr_update_wafer_visuals()
 
 # ============================================================================
 # RIGHT side: Notebook with tabs
