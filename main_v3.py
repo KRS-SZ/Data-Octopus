@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.1.4"
+APP_VERSION = "3.1.5"
 
 import sys
 
@@ -17722,11 +17722,20 @@ def load_csv_as_reference():
         if 'bin' not in df.columns:
             df['bin'] = 1
 
-        # Build test parameters
+        # Build test parameters - SAME logic as Wafer Tab!
+        import re
         test_params = {}
         numeric_columns = [c for c in df.select_dtypes(include=[np.number]).columns if c not in ['x', 'y', 'bin']]
         for idx, col in enumerate(numeric_columns):
-            test_num = idx + 1
+            # Try to extract test number from column name (e.g., "DC_SHORT_LOW_VDD10_..._10020001")
+            # Look for a number at the end of the column name (SAME as Wafer Tab!)
+            match = re.search(r'_(\d{5,})$', str(col))
+            if match:
+                test_num = int(match.group(1))
+            else:
+                # Fallback to sequential numbering
+                test_num = idx + 1
+
             test_params[f"test_{test_num}"] = col
             df = df.rename(columns={col: test_num})
 
@@ -17888,11 +17897,20 @@ def load_csv_as_comparison():
         if 'bin' not in df.columns:
             df['bin'] = 1
 
-        # Build test parameters
+        # Build test parameters - SAME logic as Wafer Tab!
+        import re
         test_params = {}
         numeric_columns = [c for c in df.select_dtypes(include=[np.number]).columns if c not in ['x', 'y', 'bin']]
         for idx, col in enumerate(numeric_columns):
-            test_num = idx + 1
+            # Try to extract test number from column name (e.g., "DC_SHORT_LOW_VDD10_..._10020001")
+            # Look for a number at the end of the column name (SAME as Wafer Tab!)
+            match = re.search(r'_(\d{5,})$', str(col))
+            if match:
+                test_num = int(match.group(1))
+            else:
+                # Fallback to sequential numbering
+                test_num = idx + 1
+            
             test_params[f"test_{test_num}"] = col
             df = df.rename(columns={col: test_num})
 
