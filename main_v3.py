@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.1.2"
+APP_VERSION = "3.1.3"
 
 import sys
 
@@ -17147,28 +17147,18 @@ def update_diffmap_group_and_param_combobox():
     """Update the group and parameter comboboxes in Diffmap tab based on loaded data"""
     global diffmap_grouped_parameters, diffmap_test_params
 
-    # ALWAYS build groups from diffmap_test_params (not from Wafer Tab!)
-    # The Diffmap has its own column numbering (1, 2, 3...) that differs from Wafer Tab
+    # ALWAYS build groups from diffmap_test_params using SAME logic as Wafer Tab
+    # Use extract_group_from_column() for consistent grouping!
     diffmap_grouped_parameters.clear()
 
     if not diffmap_test_params:
         print("Diffmap: No test params available yet")
         return
 
-    # Build groups from diffmap_test_params parameter names
-    # Extract group as first two parts (e.g., "DC_LKG" from "DC_LKG_VBAT")
+    # Build groups using extract_group_from_column (SAME as Wafer Tab!)
     for test_key, test_name in diffmap_test_params.items():
-        # Extract group from parameter name
-        # Format: GROUP_SUBGROUP_PARAMNAME -> Group is "GROUP_SUBGROUP"
-        parts = str(test_name).split('_')
-        if len(parts) >= 3:
-            # Take first two parts as group name (e.g., "DC_LKG", "Anlg_DAC")
-            group_name = f"{parts[0]}_{parts[1]}"
-        elif len(parts) == 2:
-            # Take first part as group name
-            group_name = parts[0]
-        else:
-            group_name = "Other"
+        # Use the SAME grouping function as Wafer Tab
+        group_name = extract_group_from_column(test_name)
 
         if group_name not in diffmap_grouped_parameters:
             diffmap_grouped_parameters[group_name] = []
@@ -17187,7 +17177,7 @@ def update_diffmap_group_and_param_combobox():
 
         diffmap_grouped_parameters[group_name].append((test_num, test_name, test_name))
 
-    print(f"Diffmap built {len(diffmap_grouped_parameters)} groups from parameter names")
+    print(f"Diffmap built {len(diffmap_grouped_parameters)} groups using extract_group_from_column()")
 
     # Update group combobox
     group_names = ["All Groups"]
@@ -17953,21 +17943,11 @@ def update_diffmap_params():
     # The column names in diffmap_result_data are different from Wafer Tab
     diffmap_grouped_parameters.clear()
 
-    # Build groups from diffmap_test_params parameter names
-    # Extract group as first two parts (e.g., "DC_LKG" from "DC_LKG_VBAT")
+    # Build groups using extract_group_from_column (SAME as Wafer Tab!)
     print(f"Building groups from {len(diffmap_test_params)} parameter names...")
     for test_key, test_name in diffmap_test_params.items():
-        # Extract group from parameter name
-        # Format: GROUP_SUBGROUP_PARAMNAME -> Group is "GROUP_SUBGROUP"
-        parts = str(test_name).split('_')
-        if len(parts) >= 3:
-            # Take first two parts as group name (e.g., "DC_LKG", "Anlg_DAC")
-            group_name = f"{parts[0]}_{parts[1]}"
-        elif len(parts) == 2:
-            # Take first part as group name
-            group_name = parts[0]
-        else:
-            group_name = "Other"
+        # Use the SAME grouping function as Wafer Tab
+        group_name = extract_group_from_column(test_name)
 
         if group_name not in diffmap_grouped_parameters:
             diffmap_grouped_parameters[group_name] = []
@@ -17986,7 +17966,7 @@ def update_diffmap_params():
 
         diffmap_grouped_parameters[group_name].append((test_num, test_name, test_name))
 
-    print(f"Diffmap built {len(diffmap_grouped_parameters)} groups from parameter names")
+    print(f"Diffmap built {len(diffmap_grouped_parameters)} groups using extract_group_from_column()")
 
     # Update group combobox
     group_names = ["All Groups"]
