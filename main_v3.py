@@ -2,6 +2,9 @@
 # Python
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
+# ─── VERSION ───
+APP_VERSION = "3.1.0"
+
 import sys
 
 print(sys.executable)
@@ -970,7 +973,7 @@ def get_text(key):
 # Create main Tkinter window with tabs and large tab font
 print("Creating main window...")
 main_win = tk.Tk()
-main_win.title("Measurement Data Visualization")
+main_win.title(f"Measurement Data Visualization  v{APP_VERSION}")
 main_win.geometry("1200x800")
 print("Main window created successfully")
 
@@ -1004,7 +1007,7 @@ def change_language(event=None):
     current_language = "de" if selected_lang == "Deutsch" else "en"
 
     try:
-        main_win.title(get_text("window_title"))
+        main_win.title(f"{get_text('window_title')}  v{APP_VERSION}")
     except Exception:
         pass
 

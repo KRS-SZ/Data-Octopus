@@ -109,6 +109,35 @@ Data Octopus/
 | **Linter**     | ruff                                              |
 | **Tests**      | pytest (testpaths: tests/)                        |
 
+### 6.1 Versionierung (Semantic Versioning)
+
+| Regel | Beschreibung |
+|-------|-------------|
+| **Format** | `MAJOR.MINOR.PATCH` (z.B. `3.1.0`) |
+| **APP_VERSION** | Konstante in Zeile 5 von `main_v3.py` |
+| **Fenster-Titel** | Zeigt `"Measurement Data Visualization  v3.1.0"` |
+| **MAJOR** | Große Architektur-Änderungen (z.B. main.py → main_v3.py) |
+| **MINOR** | Neue Features (z.B. PLM-GAGE, Wafer Tab Redesign) |
+| **PATCH** | Bugfixes, kleine Anpassungen |
+
+### 6.2 Workflow – PFLICHT bei jeder Änderung
+
+⚠️ **VOR jeder Code-Änderung:**
+1. Aktuellen Stand **committen** als Backup
+2. Commit-Message: `vX.Y.Z: Kurzbeschreibung der Änderung`
+
+⚠️ **NACH jeder Änderung die zum Neukompilat führt:**
+1. `APP_VERSION` in `main_v3.py` Zeile 5 hochzählen
+2. Commit mit neuer Versionsnummer
+3. Learnings-Datei aktualisieren
+
+### 6.3 Versionshistorie
+
+| Version | Datum | Commit Hash | Beschreibung |
+|---------|-------|-------------|-------------|
+| `3.0.0` | 19.02.2026 | `375d992d` | PLM-GAGE Gruppe: Mean/Median/Position-based PPT Slides |
+| `3.1.0` | 20.02.2026 | `6292fdcc` | PLM-GAGE Multi-Type, Wafer Tab Redesign, Agenda Tabelle, Calc Params Slide, Statistics Sub-Tabs, Multi-Wafer CSV |
+
 ---
 
 ## 7. BEKANNTE FEATURES / LETZTER STAND
