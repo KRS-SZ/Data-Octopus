@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.1.3"
+APP_VERSION = "3.1.4"
 
 import sys
 
@@ -18698,14 +18698,10 @@ def update_diffmap_heatmap_display():
     """Update the diffmap heatmap display - SAME style as Multi-Wafer tab"""
     global diffmap_canvas, diffmap_result_data, diffmap_boxplot_canvas, diffmap_hist_canvas
 
-    print(f"\n=== DEBUG update_diffmap_heatmap_display CALLED ===")
-
     if diffmap_result_data is None or diffmap_result_data.empty:
-        print("DEBUG: diffmap_result_data is None or empty - returning early")
         return
 
     selected = diffmap_param_combobox.get()
-    print(f"DEBUG: Selected parameter from combobox: '{selected}'")
 
     if not selected:
         return
@@ -18727,9 +18723,6 @@ def update_diffmap_heatmap_display():
 
         if test_num is not None:
             # Find the correct column using helper function
-            print(f"DEBUG: Looking for test_num={test_num} in diffmap_result_data")
-            print(f"DEBUG: diffmap_test_params has {len(diffmap_test_params)} entries")
-            print(f"DEBUG: diffmap_test_params keys (first 5): {list(diffmap_test_params.keys())[:5]}")
             param_column = _find_param_column(diffmap_result_data, test_num, diffmap_test_params)
 
         # Use simplified parameter name
