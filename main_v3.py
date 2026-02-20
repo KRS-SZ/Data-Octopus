@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.1.0"
+APP_VERSION = "3.1.2"
 
 import sys
 
@@ -17108,78 +17108,86 @@ diffmap_param_combobox.bind("<<ComboboxSelected>>", lambda e: update_diffmap_dis
 diffmap_grouped_parameters = {}
 
 def on_diffmap_group_selected(event=None):
-    """Handle group selection in Diffmap tab - update parameter dropdown"""
+    """Handle group selection in Diffmap tab - update parameter dropdown (same logic as Wafer Tab)"""
     global diffmap_grouped_parameters, diffmap_test_params
 
     selected_group = diffmap_group_var.get()
 
-    # Build param options based on selected group
+    # Build param options based on selected group (SAME as Wafer Tab on_group_selected)
     param_options = ["BIN (Bin Number)"]
 
     if selected_group == "All Groups" or not diffmap_grouped_parameters:
-        # Show all parameters from diffmap_test_params
-        for test_key, test_name in sorted(diffmap_test_params.items()):
-            param_options.append(f"{test_key}: {test_name}")
+        # Show all parameters - sort by simplified parameter name (alphabetically)
+        for test_key, test_name in sorted(diffmap_test_params.items(), key=lambda x: simplify_param_name(x[1]).upper()):
+            simple_name = simplify_param_name(test_name)
+            param_options.append(f"{test_key}: {simple_name}")
     else:
         # Show only parameters from selected group
         if selected_group in diffmap_grouped_parameters:
             group_params = diffmap_grouped_parameters[selected_group]
-            sorted_params = sorted(group_params, key=lambda x: x[0])
+            # Sort by simplified parameter name (alphabetically) - SAME as Wafer Tab
+            sorted_params = sorted(group_params, key=lambda x: simplify_param_name(x[2] if len(x) > 2 else x[1]).upper())
             for param in sorted_params:
                 test_num = param[0]
                 full_name = param[2] if len(param) > 2 else param[1]
-                param_options.append(f"test_{test_num}: {full_name}")
+                simple_name = simplify_param_name(full_name)
+                param_options.append(f"test_{test_num}: {simple_name}")
 
     # Update the diffmap parameter combobox
     diffmap_param_combobox["values"] = param_options
     if param_options:
         diffmap_param_combobox.current(0)
 
+    print(f"Diffmap Group '{selected_group}' selected: {len(param_options)-1} parameters")
+
+    # Update the display after group selection
+    update_diffmap_display()
+
 def update_diffmap_group_and_param_combobox():
     """Update the group and parameter comboboxes in Diffmap tab based on loaded data"""
-    global diffmap_grouped_parameters, diffmap_test_params, grouped_parameters
+    global diffmap_grouped_parameters, diffmap_test_params
 
-    # First try to use global grouped_parameters from Wafer Tab
-    if grouped_parameters and len(grouped_parameters) > 0:
-        # Copy from Wafer Tab
-        diffmap_grouped_parameters = {k: list(v) for k, v in grouped_parameters.items()}
-        print(f"Diffmap using {len(diffmap_grouped_parameters)} groups from Wafer Tab")
-    else:
-        # Build groups from diffmap_test_params parameter names
-        # Extract group as first two parts (e.g., "DC_LKG" from "DC_LKG_VBAT")
-        diffmap_grouped_parameters.clear()
+    # ALWAYS build groups from diffmap_test_params (not from Wafer Tab!)
+    # The Diffmap has its own column numbering (1, 2, 3...) that differs from Wafer Tab
+    diffmap_grouped_parameters.clear()
 
-        for test_key, test_name in diffmap_test_params.items():
-            # Extract group from parameter name
-            # Format: GROUP_SUBGROUP_PARAMNAME -> Group is "GROUP_SUBGROUP"
-            parts = str(test_name).split('_')
-            if len(parts) >= 3:
-                # Take first two parts as group name (e.g., "DC_LKG", "Anlg_DAC")
-                group_name = f"{parts[0]}_{parts[1]}"
-            elif len(parts) == 2:
-                # Take first part as group name
-                group_name = parts[0]
-            else:
-                group_name = "Other"
+    if not diffmap_test_params:
+        print("Diffmap: No test params available yet")
+        return
 
-            if group_name not in diffmap_grouped_parameters:
-                diffmap_grouped_parameters[group_name] = []
+    # Build groups from diffmap_test_params parameter names
+    # Extract group as first two parts (e.g., "DC_LKG" from "DC_LKG_VBAT")
+    for test_key, test_name in diffmap_test_params.items():
+        # Extract group from parameter name
+        # Format: GROUP_SUBGROUP_PARAMNAME -> Group is "GROUP_SUBGROUP"
+        parts = str(test_name).split('_')
+        if len(parts) >= 3:
+            # Take first two parts as group name (e.g., "DC_LKG", "Anlg_DAC")
+            group_name = f"{parts[0]}_{parts[1]}"
+        elif len(parts) == 2:
+            # Take first part as group name
+            group_name = parts[0]
+        else:
+            group_name = "Other"
 
-            # Get test number
-            if test_key.startswith("test_"):
-                try:
-                    test_num = int(test_key.replace("test_", ""))
-                except:
-                    test_num = 0
-            else:
-                try:
-                    test_num = int(test_key)
-                except:
-                    test_num = 0
+        if group_name not in diffmap_grouped_parameters:
+            diffmap_grouped_parameters[group_name] = []
 
-            diffmap_grouped_parameters[group_name].append((test_num, test_name, test_name))
+        # Get test number from test_key (e.g., "test_1" -> 1)
+        if test_key.startswith("test_"):
+            try:
+                test_num = int(test_key.replace("test_", ""))
+            except:
+                test_num = 0
+        else:
+            try:
+                test_num = int(test_key)
+            except:
+                test_num = 0
 
-        print(f"Diffmap built {len(diffmap_grouped_parameters)} groups from parameter names")
+        diffmap_grouped_parameters[group_name].append((test_num, test_name, test_name))
+
+    print(f"Diffmap built {len(diffmap_grouped_parameters)} groups from parameter names")
 
     # Update group combobox
     group_names = ["All Groups"]
@@ -17191,12 +17199,6 @@ def update_diffmap_group_and_param_combobox():
 
     # Update param combobox with all parameters
     on_diffmap_group_selected()
-
-def update_diffmap_group_combobox():
-    """Wrapper function for compatibility"""
-    update_diffmap_group_and_param_combobox()
-
-diffmap_group_combobox.bind("<<ComboboxSelected>>", on_diffmap_group_selected)
 
 def update_diffmap_group_combobox():
     """Wrapper function for compatibility"""
@@ -17947,49 +17949,44 @@ def update_diffmap_params():
 
         diffmap_param_items.append((display_text, is_missing))
 
-    # Build groups - try Wafer Tab first, then build from parameter names
+    # Build groups - ALWAYS from diffmap_test_params (not from Wafer Tab!)
+    # The column names in diffmap_result_data are different from Wafer Tab
     diffmap_grouped_parameters.clear()
 
-    if grouped_parameters and len(grouped_parameters) > 0:
-        # Copy from global grouped_parameters (from Wafer Tab)
-        for group_name, params in grouped_parameters.items():
-            diffmap_grouped_parameters[group_name] = params.copy()
-        print(f"Diffmap using {len(diffmap_grouped_parameters)} groups from Wafer Tab")
-    else:
-        # Build groups from diffmap_test_params parameter names
-        # Extract group as first two parts (e.g., "DC_LKG" from "DC_LKG_VBAT")
-        print(f"Building groups from {len(diffmap_test_params)} parameter names...")
-        for test_key, test_name in diffmap_test_params.items():
-            # Extract group from parameter name
-            # Format: GROUP_SUBGROUP_PARAMNAME -> Group is "GROUP_SUBGROUP"
-            parts = str(test_name).split('_')
-            if len(parts) >= 3:
-                # Take first two parts as group name (e.g., "DC_LKG", "Anlg_DAC")
-                group_name = f"{parts[0]}_{parts[1]}"
-            elif len(parts) == 2:
-                # Take first part as group name
-                group_name = parts[0]
-            else:
-                group_name = "Other"
+    # Build groups from diffmap_test_params parameter names
+    # Extract group as first two parts (e.g., "DC_LKG" from "DC_LKG_VBAT")
+    print(f"Building groups from {len(diffmap_test_params)} parameter names...")
+    for test_key, test_name in diffmap_test_params.items():
+        # Extract group from parameter name
+        # Format: GROUP_SUBGROUP_PARAMNAME -> Group is "GROUP_SUBGROUP"
+        parts = str(test_name).split('_')
+        if len(parts) >= 3:
+            # Take first two parts as group name (e.g., "DC_LKG", "Anlg_DAC")
+            group_name = f"{parts[0]}_{parts[1]}"
+        elif len(parts) == 2:
+            # Take first part as group name
+            group_name = parts[0]
+        else:
+            group_name = "Other"
 
-            if group_name not in diffmap_grouped_parameters:
-                diffmap_grouped_parameters[group_name] = []
+        if group_name not in diffmap_grouped_parameters:
+            diffmap_grouped_parameters[group_name] = []
 
-            # Get test number
-            if test_key.startswith("test_"):
-                try:
-                    test_num = int(test_key.replace("test_", ""))
-                except:
-                    test_num = 0
-            else:
-                try:
-                    test_num = int(test_key)
-                except:
-                    test_num = 0
+        # Get test number from test_key (e.g., "test_1" -> 1)
+        if test_key.startswith("test_"):
+            try:
+                test_num = int(test_key.replace("test_", ""))
+            except:
+                test_num = 0
+        else:
+            try:
+                test_num = int(test_key)
+            except:
+                test_num = 0
 
-            diffmap_grouped_parameters[group_name].append((test_num, test_name, test_name))
+        diffmap_grouped_parameters[group_name].append((test_num, test_name, test_name))
 
-        print(f"Diffmap built {len(diffmap_grouped_parameters)} groups from parameter names")
+    print(f"Diffmap built {len(diffmap_grouped_parameters)} groups from parameter names")
 
     # Update group combobox
     group_names = ["All Groups"]
@@ -18000,9 +17997,9 @@ def update_diffmap_params():
     diffmap_group_combobox["values"] = group_names
     diffmap_group_combobox.current(0)
 
-    # Update parameter combobox with simplified parameter names
+    # Update parameter combobox with simplified parameter names (SAME sorting as Wafer Tab)
     param_options = ["BIN (Bin Number)"]
-    for test_key, test_name in sorted(diffmap_test_params.items()):
+    for test_key, test_name in sorted(diffmap_test_params.items(), key=lambda x: simplify_param_name(x[1]).upper()):
         # Use simplified parameter name for display
         simple_name = simplify_param_name(test_name)
         param_options.append(f"{test_key}: {simple_name}")
@@ -18277,9 +18274,15 @@ def update_correlation_plot_display():
 
     # Check if parameter exists in both datasets
     if param_column not in diffmap_reference_data.columns:
-        print(f"Parameter {param_column} not found in reference data")
-        print(f"Available columns: {list(diffmap_reference_data.columns)[:15]}")
-        return
+        # Fallback: try to find column by test number suffix
+        if test_num is not None:
+            for col in diffmap_reference_data.columns:
+                if str(col).endswith(f'_{test_num}') or str(col) == str(test_num):
+                    param_column = col
+                    break
+        if param_column not in diffmap_reference_data.columns:
+            print(f"Parameter {param_column} not found in reference data")
+            return
     if param_column not in diffmap_compare_data.columns:
         print(f"Parameter {param_column} not found in comparison data")
         return
@@ -18715,10 +18718,14 @@ def update_diffmap_heatmap_display():
     """Update the diffmap heatmap display - SAME style as Multi-Wafer tab"""
     global diffmap_canvas, diffmap_result_data, diffmap_boxplot_canvas, diffmap_hist_canvas
 
+    print(f"\n=== DEBUG update_diffmap_heatmap_display CALLED ===")
+
     if diffmap_result_data is None or diffmap_result_data.empty:
+        print("DEBUG: diffmap_result_data is None or empty - returning early")
         return
 
     selected = diffmap_param_combobox.get()
+    print(f"DEBUG: Selected parameter from combobox: '{selected}'")
 
     if not selected:
         return
@@ -18740,6 +18747,9 @@ def update_diffmap_heatmap_display():
 
         if test_num is not None:
             # Find the correct column using helper function
+            print(f"DEBUG: Looking for test_num={test_num} in diffmap_result_data")
+            print(f"DEBUG: diffmap_test_params has {len(diffmap_test_params)} entries")
+            print(f"DEBUG: diffmap_test_params keys (first 5): {list(diffmap_test_params.keys())[:5]}")
             param_column = _find_param_column(diffmap_result_data, test_num, diffmap_test_params)
 
         # Use simplified parameter name
@@ -18747,9 +18757,15 @@ def update_diffmap_heatmap_display():
         param_label = simplify_param_name(full_name)
 
     if param_column not in diffmap_result_data.columns:
-        print(f"DEBUG: Column {param_column} not in diffmap_result_data")
-        print(f"DEBUG: Available columns: {list(diffmap_result_data.columns)[:15]}")
-        return
+        # Fallback: try to find column by test number suffix
+        for col in diffmap_result_data.columns:
+            if str(col).endswith(f'_{test_num}') or str(col) == str(test_num):
+                param_column = col
+                break
+        if param_column not in diffmap_result_data.columns:
+            print(f"DEBUG: Column {param_column} not in diffmap_result_data")
+            print(f"DEBUG: Available columns: {list(diffmap_result_data.columns)[:15]}")
+            return
 
     # Get plot data
     mask = diffmap_result_data[param_column].notna()

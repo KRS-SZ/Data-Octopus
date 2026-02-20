@@ -1,0 +1,64 @@
+C:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\main.py:94: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+C:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\main.py:12434: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+  ax.legend(fontsize=8, loc="best")
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\Lib\tkinter\__init__.py", line 2074, in __call__
+    return self.func(*args)
+           ~~~~~~~~~^^^^^^^
+  File "C:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\main.py", line 23181, in load_grr_files
+    _rebuild_grr_params_after_load()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\main.py", line 22959, in _rebuild_grr_params_after_load
+    print(f"  [{gname}] \u2192 {len(gparams)} params")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 8: character maps to <undefined>
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\Lib\tkinter\__init__.py", line 2074, in __call__
+    return self.func(*args)
+           ~~~~~~~~~^^^^^^^
+  File "C:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\main.py", line 23181, in load_grr_files
+    _rebuild_grr_params_after_load()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\main.py", line 22959, in _rebuild_grr_params_after_load
+    print(f"  [{gname}] \u2192 {len(gparams)} params")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 8: character maps to <undefined>
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\Lib\tkinter\__init__.py", line 2074, in __call__
+    return self.func(*args)
+           ~~~~~~~~~^^^^^^^
+  File "C:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\main.py", line 19559, in grr_remove_selected_wafers
+    _rebuild_grr_params_after_load()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\main.py", line 22959, in _rebuild_grr_params_after_load
+    print(f"  [{gname}] \u2192 {len(gparams)} params")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 8: character maps to <undefined>
+Traceback (most recent call last):
+  File "C:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\main.py", line 30844, in <module>
+    main_win.mainloop()
+    ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\Lib\tkinter\__init__.py", line 1599, in mainloop
+    self.tk.mainloop(n)
+    ~~~~~~~~~~~~~~~~^^^
+KeyboardInterrupt

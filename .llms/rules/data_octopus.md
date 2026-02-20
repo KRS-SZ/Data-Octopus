@@ -137,6 +137,8 @@ Data Octopus/
 |---------|-------|-------------|-------------|
 | `3.0.0` | 19.02.2026 | `375d992d` | PLM-GAGE Gruppe: Mean/Median/Position-based PPT Slides |
 | `3.1.0` | 20.02.2026 | `6292fdcc` | PLM-GAGE Multi-Type, Wafer Tab Redesign, Agenda Tabelle, Calc Params Slide, Statistics Sub-Tabs, Multi-Wafer CSV |
+| `3.1.1` | 20.02.2026 | `c8fdcedc` | Versionierung im Fenster-Titel, Heatmap-Koordinaten revertiert |
+| `3.1.2` | 20.02.2026 | - | Diffmap: Wafer-Tab-Abhängigkeit entfernt, Gruppen jetzt unabhängig |
 
 ---
 
