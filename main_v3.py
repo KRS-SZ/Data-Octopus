@@ -1608,9 +1608,19 @@ def load_csv_wafermap_file():
         grouped_parameters = grouped_params
         test_limits = test_limits_dict
 
-        # Also update multiple_stdf_data for compatibility with heatmap tab
-        multiple_stdf_data = [df]
-        multiple_wafer_ids = [wafer_id]
+        # Also update multiple_stdf_data - APPEND to allow multi-wafer loading
+        if not multiple_stdf_data:
+            multiple_stdf_data = [df]
+            multiple_wafer_ids = [wafer_id]
+        else:
+            # Check if this wafer is already loaded (by ID)
+            if wafer_id not in multiple_wafer_ids:
+                multiple_stdf_data.append(df)
+                multiple_wafer_ids.append(wafer_id)
+            else:
+                # Replace existing wafer data
+                idx = multiple_wafer_ids.index(wafer_id)
+                multiple_stdf_data[idx] = df
 
         # Try to detect notch orientation from CSV columns or data
         global current_wafer_config
@@ -3750,11 +3760,11 @@ folder_status_label.pack(side=tk.LEFT, padx=5)
 # PLM folder directory
 plm_file_directory = None
 
-# ============== TAB BAR (Heatmap / Charac.-Curve) ==============
+# ============== TAB BAR (Heatmap / Charac.-Curve / Statistics) ==============
 _display_tab_bar = tk.Frame(tab6, bg="#e0e0e0")
 _display_tab_bar.pack(side=tk.TOP, fill=tk.X, padx=5, pady=(2, 0))
 
-_charac_mode_active = False
+_active_display_tab = "heatmap"  # "heatmap", "charac", "statistics"
 
 _TAB_ACTIVE = {"bg": "white", "fg": "#333", "relief": tk.FLAT, "bd": 0}
 _TAB_INACTIVE = {"bg": "#d0d0d0", "fg": "#666", "relief": tk.FLAT, "bd": 0}
@@ -3771,123 +3781,206 @@ _tab_charac = tk.Label(
 )
 _tab_charac.pack(side=tk.LEFT, padx=(1, 0))
 
+_tab_statistics = tk.Label(
+    _display_tab_bar, text="  Statistics  ", font=("Helvetica", 10, "bold"),
+    cursor="hand2", padx=12, pady=4, **_TAB_INACTIVE
+)
+_tab_statistics.pack(side=tk.LEFT, padx=(1, 0))
+
 _tab_sep = tk.Frame(_display_tab_bar, height=2, bg="#4CAF50")
 _tab_sep.pack(side=tk.BOTTOM, fill=tk.X)
 
 
+def _switch_display_tab(tab_name, event=None):
+    global _active_display_tab
+    if _active_display_tab == tab_name:
+        return
+    _active_display_tab = tab_name
+    # Hide all content frames
+    heatmap_display_frame.pack_forget()
+    charac_curve_frame.pack_forget()
+    statistics_display_frame.pack_forget()
+    # Reset all tab styles
+    _tab_heatmap.config(**_TAB_INACTIVE)
+    _tab_charac.config(**_TAB_INACTIVE)
+    _tab_statistics.config(**_TAB_INACTIVE)
+    # Show selected
+    if tab_name == "heatmap":
+        heatmap_display_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        _tab_heatmap.config(**_TAB_ACTIVE)
+    elif tab_name == "charac":
+        charac_curve_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        _tab_charac.config(**_TAB_ACTIVE)
+    elif tab_name == "statistics":
+        statistics_display_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        _tab_statistics.config(**_TAB_ACTIVE)
+    # Update wafer selection mode
+    try:
+        _update_wafer_mode_label()
+        # When switching to Heatmap, enforce single selection
+        if tab_name == "heatmap":
+            sel_idx = wafer_tab_selected_var.get()
+            for i, var in enumerate(wafer_tab_checkbox_vars):
+                var.set(i == sel_idx)
+            _update_wafer_checkbox_visuals()
+    except Exception:
+        pass
+
+
+_tab_heatmap.bind("<Button-1>", lambda e: _switch_display_tab("heatmap"))
+_tab_charac.bind("<Button-1>", lambda e: _switch_display_tab("charac"))
+_tab_statistics.bind("<Button-1>", lambda e: _switch_display_tab("statistics"))
+
+# Keep backward compat
+_charac_mode_active = False
+
 def _switch_to_heatmap(event=None):
     global _charac_mode_active
-    if not _charac_mode_active:
-        return
     _charac_mode_active = False
-    charac_curve_frame.pack_forget()
-    heatmap_display_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-    _tab_heatmap.config(**_TAB_ACTIVE)
-    _tab_charac.config(**_TAB_INACTIVE)
-
+    _switch_display_tab("heatmap")
 
 def _switch_to_charac(event=None):
     global _charac_mode_active
-    if _charac_mode_active:
-        return
     _charac_mode_active = True
-    heatmap_display_frame.pack_forget()
-    charac_curve_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-    _tab_heatmap.config(**_TAB_INACTIVE)
-    _tab_charac.config(**_TAB_ACTIVE)
-
-
-_tab_heatmap.bind("<Button-1>", _switch_to_heatmap)
-_tab_charac.bind("<Button-1>", _switch_to_charac)
+    _switch_display_tab("charac")
 
 # Frame for heatmap display - now with left stats panel
 heatmap_main_container = tk.Frame(tab6)
 heatmap_main_container.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
-# ============== LEFT SIDEBAR WITH SUBTABS (Wafer-Auswahl & Statistik) ==============
+# ============== LEFT SIDEBAR: Wafer Selection ==============
 wafer_left_panel = tk.Frame(heatmap_main_container, width=280, relief=tk.GROOVE, borderwidth=1)
 wafer_left_panel.pack(side=tk.LEFT, fill=tk.Y, padx=(5, 0), pady=5)
 wafer_left_panel.pack_propagate(False)
 
-# Title for left panel
+# Title
 wafer_left_title = tk.Label(
     wafer_left_panel,
-    text="Wafer & Analysis",
+    text="📋 Wafer Selection",
     font=("Helvetica", 11, "bold"),
-    bg="#4CAF50",
+    bg="#1565C0",
     fg="white"
 )
 wafer_left_title.pack(fill=tk.X, pady=(0, 2))
 
-# Sub-notebook for left panel with 2 tabs: Waferauswahl, Statistik
-wafer_left_notebook = ttk.Notebook(wafer_left_panel)
-wafer_left_notebook.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+# Mode indicator
+wafer_mode_label = tk.Label(
+    wafer_left_panel, text="● Single Select (Heatmap)",
+    font=("Helvetica", 8), fg="#1565C0"
+)
+wafer_mode_label.pack(fill=tk.X, padx=5)
 
-# === Sub-Tab 1: Wafer Selection ===
-wafer_left_tab_selection = ttk.Frame(wafer_left_notebook)
-wafer_left_notebook.add(wafer_left_tab_selection, text="Waferauswahl")
-
-# Buttons for Select All / Deselect All in Waferselection tab
-wafer_select_btn_frame = tk.Frame(wafer_left_tab_selection)
+# Buttons frame
+wafer_select_btn_frame = tk.Frame(wafer_left_panel)
 wafer_select_btn_frame.pack(fill=tk.X, padx=5, pady=2)
 
-# Storage for wafer selection - single selection (radio button behavior)
-wafer_tab_selected_var = tk.IntVar(value=0)  # Index of selected wafer
+wafer_tab_selected_var = tk.IntVar(value=0)
 wafer_tab_radio_widgets = []
+wafer_tab_checkbox_vars = []
+wafer_tab_checkbox_widgets = []
 
-def on_wafer_tab_radio_changed():
-    """Called when wafer selection changes via radio button"""
-    selected_idx = wafer_tab_selected_var.get()
-    print(f"DEBUG: Wafer Tab - Selected wafer index: {selected_idx}")
-    refresh_heatmap_display()
+def _get_wafer_selection_mode():
+    """Return 'single' for Heatmap, 'multi' for Statistics/Charac."""
+    return "single" if _active_display_tab == "heatmap" else "multi"
 
-# Navigation buttons for Previous/Next wafer
+def on_wafer_checkbox_changed(clicked_idx):
+    """Handle checkbox click – enforce single/multi depending on active tab."""
+    mode = _get_wafer_selection_mode()
+    if mode == "single":
+        # Single select: deselect all others, select only clicked
+        for i, var in enumerate(wafer_tab_checkbox_vars):
+            var.set(i == clicked_idx)
+        wafer_tab_selected_var.set(clicked_idx)
+        _update_wafer_checkbox_visuals()
+        refresh_heatmap_display()
+    else:
+        # Multi select: toggle freely
+        _update_wafer_checkbox_visuals()
+
+def _update_wafer_checkbox_visuals():
+    """Update visual highlighting of selected wafers."""
+    wafer_colors = ['#1565C0', '#2E7D32', '#E65100', '#6A1B9A', '#C62828',
+                    '#00838F', '#4E342E', '#283593', '#558B2F', '#AD1457']
+    for i, (frame, cb) in enumerate(wafer_tab_checkbox_widgets):
+        is_sel = wafer_tab_checkbox_vars[i].get() if i < len(wafer_tab_checkbox_vars) else False
+        color = wafer_colors[i % len(wafer_colors)]
+        if is_sel:
+            frame.config(bg="#E3F2FD", relief=tk.SOLID, bd=2)
+            cb.config(bg="#E3F2FD", fg=color, selectcolor="#4CAF50")
+            # Update all children backgrounds
+            for child in frame.winfo_children():
+                try:
+                    child.config(bg="#E3F2FD")
+                except:
+                    pass
+                for subchild in child.winfo_children():
+                    try:
+                        subchild.config(bg="#E3F2FD")
+                    except:
+                        pass
+        else:
+            frame.config(bg="white", relief=tk.RIDGE, bd=1)
+            cb.config(bg="white", fg="#999", selectcolor="#ddd")
+            for child in frame.winfo_children():
+                try:
+                    child.config(bg="white")
+                except:
+                    pass
+                for subchild in child.winfo_children():
+                    try:
+                        subchild.config(bg="white")
+                    except:
+                        pass
+
 def select_prev_wafer():
-    """Select previous wafer in list"""
     current = wafer_tab_selected_var.get()
     if current > 0:
-        wafer_tab_selected_var.set(current - 1)
-        on_wafer_tab_radio_changed()
+        on_wafer_checkbox_changed(current - 1)
 
 def select_next_wafer():
-    """Select next wafer in list"""
     current = wafer_tab_selected_var.get()
-    max_idx = len(wafer_tab_radio_widgets) - 1
+    max_idx = len(wafer_tab_checkbox_vars) - 1
     if current < max_idx:
-        wafer_tab_selected_var.set(current + 1)
-        on_wafer_tab_radio_changed()
+        on_wafer_checkbox_changed(current + 1)
+
+def select_all_wafers():
+    for var in wafer_tab_checkbox_vars:
+        var.set(True)
+    _update_wafer_checkbox_visuals()
+
+def deselect_all_wafers():
+    for var in wafer_tab_checkbox_vars:
+        var.set(False)
+    if wafer_tab_checkbox_vars:
+        wafer_tab_checkbox_vars[0].set(True)
+        wafer_tab_selected_var.set(0)
+    _update_wafer_checkbox_visuals()
 
 tk.Button(
-    wafer_select_btn_frame,
-    text="◀ Prev",
-    command=select_prev_wafer,
-    font=("Helvetica", 8),
-    bg="#2196F3",
-    fg="white"
+    wafer_select_btn_frame, text="◀ Prev", command=select_prev_wafer,
+    font=("Helvetica", 8), bg="#2196F3", fg="white"
 ).pack(side=tk.LEFT, padx=2)
 
 tk.Button(
-    wafer_select_btn_frame,
-    text="Next ▶",
-    command=select_next_wafer,
-    font=("Helvetica", 8),
-    bg="#2196F3",
-    fg="white"
+    wafer_select_btn_frame, text="Next ▶", command=select_next_wafer,
+    font=("Helvetica", 8), bg="#2196F3", fg="white"
 ).pack(side=tk.LEFT, padx=2)
 
-# Info label
+wafer_select_all_btn = tk.Button(
+    wafer_select_btn_frame, text="All", command=select_all_wafers,
+    font=("Helvetica", 7), bg="#4CAF50", fg="white"
+)
+wafer_select_all_btn.pack(side=tk.LEFT, padx=2)
+
 wafer_tab_count_label = tk.Label(
-    wafer_select_btn_frame,
-    text="0 Wafer",
-    font=("Helvetica", 8),
-    fg="gray"
+    wafer_select_btn_frame, text="0 Wafer", font=("Helvetica", 8), fg="gray"
 )
 wafer_tab_count_label.pack(side=tk.RIGHT, padx=5)
 
-# Scrollable frame for wafer checkboxes
-wafer_list_canvas = tk.Canvas(wafer_left_tab_selection, highlightthickness=0)
-wafer_list_scrollbar = ttk.Scrollbar(wafer_left_tab_selection, orient="vertical", command=wafer_list_canvas.yview)
-wafer_list_frame_inner = tk.Frame(wafer_list_canvas)
+# Scrollable frame for wafer list
+wafer_list_canvas = tk.Canvas(wafer_left_panel, highlightthickness=0, bg='#f5f5f5')
+wafer_list_scrollbar = ttk.Scrollbar(wafer_left_panel, orient="vertical", command=wafer_list_canvas.yview)
+wafer_list_frame_inner = tk.Frame(wafer_list_canvas, bg='#f5f5f5')
 
 wafer_list_frame_inner.bind(
     "<Configure>",
@@ -3900,7 +3993,6 @@ wafer_list_canvas.configure(yscrollcommand=wafer_list_scrollbar.set)
 wafer_list_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 wafer_list_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-# Mouse wheel scrolling for wafer list
 def on_wafer_tab_list_mousewheel(event):
     wafer_list_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
@@ -3908,140 +4000,146 @@ wafer_list_canvas.bind("<MouseWheel>", on_wafer_tab_list_mousewheel)
 wafer_list_frame_inner.bind("<MouseWheel>", on_wafer_tab_list_mousewheel)
 
 def update_wafer_tab_selection_list():
-    """Update the wafer selection radio buttons based on loaded data"""
-    global wafer_tab_radio_widgets, multiple_wafer_ids, current_wafer_id, wafer_tab_selected_var
+    global wafer_tab_radio_widgets, wafer_tab_checkbox_vars, wafer_tab_checkbox_widgets
+    global multiple_wafer_ids, current_wafer_id, wafer_tab_selected_var
 
-    print(f"DEBUG: update_wafer_tab_selection_list called")
-    print(f"DEBUG: multiple_wafer_ids = {multiple_wafer_ids}")
-    print(f"DEBUG: current_wafer_id = {current_wafer_id}")
-
-    # Clear existing radio buttons
-    for widget in wafer_tab_radio_widgets:
-        widget.destroy()
+    # Clear existing widgets
+    for frame, cb in wafer_tab_checkbox_widgets:
+        frame.destroy()
+    wafer_tab_checkbox_widgets.clear()
+    wafer_tab_checkbox_vars.clear()
     wafer_tab_radio_widgets.clear()
 
-    # Check what wafers are loaded
     wafer_ids = []
     if multiple_wafer_ids:
         wafer_ids = multiple_wafer_ids
     elif current_wafer_id:
         wafer_ids = [current_wafer_id]
 
-    print(f"DEBUG: Creating radio buttons for {len(wafer_ids)} wafers")
+    wafer_colors = ['#1565C0', '#2E7D32', '#E65100', '#6A1B9A', '#C62828',
+                    '#00838F', '#4E342E', '#283593', '#558B2F', '#AD1457']
 
-    # Reset selection to first wafer
-    wafer_tab_selected_var.set(0)
-
-    # Create radio buttons for each loaded wafer
     for idx, wafer_id in enumerate(wafer_ids):
-        # Show wafer name - truncate if too long
         wafer_name = str(wafer_id) if wafer_id else f"Wafer {idx+1}"
-        display_name = wafer_name[:35] + "..." if len(wafer_name) > 35 else wafer_name
+        color = wafer_colors[idx % len(wafer_colors)]
 
-        # Create frame for each radio button row
-        rb_frame = tk.Frame(wafer_list_frame_inner, bg="white")
-        rb_frame.pack(fill=tk.X, padx=2, pady=1)
+        # Parse wafer ID into meaningful info
+        import re as _re
+        parts = wafer_name.split('_')
+        product = ""
+        lot = ""
+        slot = ""
+        date_str = ""
 
-        rb = tk.Radiobutton(
-            rb_frame,
-            text=f"{idx+1}. {display_name}",
-            variable=wafer_tab_selected_var,
-            value=idx,
-            command=on_wafer_tab_radio_changed,
-            font=("Helvetica", 9),
+        # Try to extract structured info from typical naming patterns
+        # Pattern: AM_P03004_CP2_V201_PROD_UNAV02468_1_Slot1_BatchID-123456_X_0_20260209-154610
+        for p in parts:
+            if p.startswith('P0') or p.startswith('P1') or p.startswith('P2'):
+                product = p
+            elif p.startswith('UNAV') or p.startswith('LOT'):
+                lot = p
+            elif p.startswith('Slot') or _re.match(r'^Slot\d+$', p):
+                slot = p
+        # Date: last part often contains date
+        date_match = _re.search(r'(\d{8})[_\-]?(\d{6})?', wafer_name)
+        if date_match:
+            d = date_match.group(1)
+            date_str = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+            if date_match.group(2):
+                t = date_match.group(2)
+                date_str += f" {t[:2]}:{t[2:4]}"
+
+        # Build multi-line display
+        line1 = f"Wafer {idx+1}"
+        if slot:
+            line1 += f" ({slot})"
+        if product:
+            line1 += f" | {product}"
+        line2_parts = []
+        if lot:
+            line2_parts.append(f"Lot: {lot}")
+        if date_str:
+            line2_parts.append(date_str)
+        line2 = " | ".join(line2_parts) if line2_parts else wafer_name[:40]
+
+        var = tk.BooleanVar(value=(idx == wafer_tab_selected_var.get()))
+        wafer_tab_checkbox_vars.append(var)
+
+        cb_frame = tk.Frame(wafer_list_frame_inner, bg="white", relief=tk.RIDGE, bd=1)
+        cb_frame.pack(fill=tk.X, padx=2, pady=2)
+
+        _idx = idx
+
+        # Top row: checkbox with wafer number
+        top_row = tk.Frame(cb_frame, bg="white")
+        top_row.pack(fill=tk.X)
+
+        cb = tk.Checkbutton(
+            top_row,
+            text=f" {line1}",
+            variable=var,
+            command=lambda i=_idx: on_wafer_checkbox_changed(i),
+            font=("Helvetica", 9, "bold"),
             anchor="w",
             bg="white",
+            fg=color,
             activebackground="#e0e0e0",
             selectcolor="#4CAF50"
         )
-        rb.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        rb.bind("<MouseWheel>", on_wafer_tab_list_mousewheel)
-        rb_frame.bind("<MouseWheel>", on_wafer_tab_list_mousewheel)
-        wafer_tab_radio_widgets.append(rb_frame)
+        cb.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        print(f"DEBUG: Created radio button for wafer: {display_name}")
+        # Info line
+        info_label = tk.Label(
+            cb_frame,
+            text=f"  {line2}",
+            font=("Consolas", 7),
+            anchor="w",
+            bg="white",
+            fg="#666"
+        )
+        info_label.pack(fill=tk.X, padx=(22, 2))
 
-    # Update count label
+        cb.bind("<MouseWheel>", on_wafer_tab_list_mousewheel)
+        cb_frame.bind("<MouseWheel>", on_wafer_tab_list_mousewheel)
+        info_label.bind("<MouseWheel>", on_wafer_tab_list_mousewheel)
+        top_row.bind("<MouseWheel>", on_wafer_tab_list_mousewheel)
+        wafer_tab_checkbox_widgets.append((cb_frame, cb))
+        wafer_tab_radio_widgets.append(cb_frame)
+
     count_text = f"{len(wafer_ids)} Wafer" if len(wafer_ids) == 1 else f"{len(wafer_ids)} Wafers"
     wafer_tab_count_label.config(text=count_text)
 
-    # Force update of the canvas scroll region
+    _update_wafer_checkbox_visuals()
+    _update_wafer_mode_label()
+
     wafer_list_frame_inner.update_idletasks()
     wafer_list_canvas.configure(scrollregion=wafer_list_canvas.bbox("all"))
 
+def _update_wafer_mode_label():
+    """Update mode indicator based on active tab."""
+    mode = _get_wafer_selection_mode()
+    if mode == "single":
+        wafer_mode_label.config(text="● Single Select (Heatmap)", fg="#1565C0")
+        wafer_select_all_btn.pack_forget()
+    else:
+        wafer_mode_label.config(text="● Multi Select (Stats/Charac)", fg="#2E7D32")
+        wafer_select_all_btn.pack(side=tk.LEFT, padx=2)
+
 def get_selected_wafer_tab_index():
-    """Return the index of the selected wafer in Wafer Tab (single selection)"""
     return wafer_tab_selected_var.get()
 
-# === Sub-Tab 2: Statistik ===
-wafer_left_tab_stats = ttk.Frame(wafer_left_notebook)
-wafer_left_notebook.add(wafer_left_tab_stats, text="Statistik")
+def get_selected_wafer_indices():
+    """Return list of selected wafer indices (for multi-select mode)."""
+    return [i for i, var in enumerate(wafer_tab_checkbox_vars) if var.get()]
 
-# Stats panel title
-stats_title_label = tk.Label(
-    wafer_left_tab_stats,
-    text="Statistics",
-    font=("Helvetica", 10, "bold"),
-    bg="#f0f0f0"
-)
-stats_title_label.pack(side=tk.TOP, pady=3, fill=tk.X)
+def on_wafer_tab_radio_changed():
+    """Backward-compat: called when single selection changes."""
+    selected_idx = wafer_tab_selected_var.get()
+    refresh_heatmap_display()
 
-# Frame for boxplot / bin distribution (with selector)
-boxplot_frame = tk.Frame(wafer_left_tab_stats, bg="#f0f0f0")
-boxplot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=3, pady=3)
-
-# Header with selector for Boxplot vs Bin Distribution
-boxplot_header_frame = tk.Frame(boxplot_frame, bg="#f0f0f0")
-boxplot_header_frame.pack(side=tk.TOP, fill=tk.X, pady=2)
-
+# ============== STATISTICS VARIABLES (used by statistics_display_frame later) ==============
 boxplot_type_var = tk.StringVar(value="Boxplot")
-boxplot_type_combobox = ttk.Combobox(
-    boxplot_header_frame,
-    textvariable=boxplot_type_var,
-    values=["Boxplot", "Bin Distribution"],
-    state="readonly",
-    width=14,
-    font=("Helvetica", 9)
-)
-boxplot_type_combobox.pack(side=tk.LEFT, padx=2)
-boxplot_type_combobox.bind("<<ComboboxSelected>>", lambda e: update_stats_plots())
-
-# Container frame for boxplot/bin plot (below header)
-boxplot_plot_frame = tk.Frame(boxplot_frame, bg="#f0f0f0")
-boxplot_plot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
-# Frame for probability distribution
-prob_frame = tk.Frame(wafer_left_tab_stats, bg="#f0f0f0")
-prob_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=3, pady=3)
-
-# Probability plot header with option selector (always visible at top)
-prob_header_frame = tk.Frame(prob_frame, bg="#f0f0f0")
-prob_header_frame.pack(side=tk.TOP, fill=tk.X, pady=2)
-
-prob_label = tk.Label(
-    prob_header_frame,
-    text="Distribution:",
-    font=("Helvetica", 9, "bold"),
-    bg="#f0f0f0"
-)
-prob_label.pack(side=tk.LEFT, padx=2)
-
-# Dropdown to choose between CDF and PDF
 prob_type_var = tk.StringVar(value="CDF")
-prob_type_combobox = ttk.Combobox(
-    prob_header_frame,
-    textvariable=prob_type_var,
-    values=["CDF", "PDF"],
-    state="readonly",
-    width=6,
-    font=("Helvetica", 9)
-)
-prob_type_combobox.pack(side=tk.LEFT, padx=5)
-prob_type_combobox.bind("<<ComboboxSelected>>", lambda e: update_stats_plots())
-
-# Container frame for probability plot (below header)
-prob_plot_frame = tk.Frame(prob_frame, bg="#f0f0f0")
-prob_plot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
 # Die Images & PLM panel - MUST be packed BEFORE heatmap_display_frame
 # This panel shows die images and PLM files for the selected die
@@ -4211,6 +4309,93 @@ _cc_plot_frame = tk.Frame(charac_curve_frame)
 _cc_plot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
 _charac_canvas_ref = [None]
+
+# ============== STATISTICS DISPLAY FRAME (3rd tab, NOT packed at startup) ==============
+statistics_display_frame = tk.Frame(heatmap_main_container)
+
+# Sub-tab bar inside Statistics
+_stats_tab_bar = tk.Frame(statistics_display_frame, bg="#e0e0e0")
+_stats_tab_bar.pack(side=tk.TOP, fill=tk.X, padx=5, pady=(2, 0))
+
+_active_stats_subtab = "boxplot"
+
+_STAB_ACTIVE = {"bg": "white", "fg": "#333", "relief": tk.FLAT, "bd": 0}
+_STAB_INACTIVE = {"bg": "#d0d0d0", "fg": "#666", "relief": tk.FLAT, "bd": 0}
+
+_stab_boxplot = tk.Label(
+    _stats_tab_bar, text="  📊 Boxplot  ", font=("Helvetica", 10, "bold"),
+    cursor="hand2", padx=12, pady=3, **_STAB_ACTIVE
+)
+_stab_boxplot.pack(side=tk.LEFT, padx=(2, 0))
+
+_stab_distribution = tk.Label(
+    _stats_tab_bar, text="  📈 Distribution  ", font=("Helvetica", 10, "bold"),
+    cursor="hand2", padx=12, pady=3, **_STAB_INACTIVE
+)
+_stab_distribution.pack(side=tk.LEFT, padx=(1, 0))
+
+_stats_tab_sep = tk.Frame(_stats_tab_bar, height=2, bg="#1565C0")
+_stats_tab_sep.pack(side=tk.BOTTOM, fill=tk.X)
+
+# Boxplot sub-tab content
+_stats_boxplot_container = tk.Frame(statistics_display_frame)
+_stats_boxplot_container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+# Controls for boxplot
+_bp_ctrl = tk.Frame(_stats_boxplot_container)
+_bp_ctrl.pack(side=tk.TOP, fill=tk.X, padx=10, pady=5)
+tk.Label(_bp_ctrl, text="Type:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=(0, 2))
+boxplot_type_combobox = ttk.Combobox(
+    _bp_ctrl, textvariable=boxplot_type_var,
+    values=["Boxplot", "Bin Distribution"],
+    state="readonly", width=16, font=("Helvetica", 9)
+)
+boxplot_type_combobox.pack(side=tk.LEFT, padx=2)
+boxplot_type_combobox.bind("<<ComboboxSelected>>", lambda e: update_stats_plots())
+
+boxplot_frame = tk.Frame(_stats_boxplot_container, bg="#f8f8f8")
+boxplot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
+boxplot_plot_frame = tk.Frame(boxplot_frame, bg="#f8f8f8")
+boxplot_plot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+# Distribution sub-tab content (NOT packed at startup)
+_stats_dist_container = tk.Frame(statistics_display_frame)
+
+_dist_ctrl = tk.Frame(_stats_dist_container)
+_dist_ctrl.pack(side=tk.TOP, fill=tk.X, padx=10, pady=5)
+tk.Label(_dist_ctrl, text="Type:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=(0, 2))
+prob_type_combobox = ttk.Combobox(
+    _dist_ctrl, textvariable=prob_type_var,
+    values=["CDF", "PDF"],
+    state="readonly", width=8, font=("Helvetica", 9)
+)
+prob_type_combobox.pack(side=tk.LEFT, padx=2)
+prob_type_combobox.bind("<<ComboboxSelected>>", lambda e: update_stats_plots())
+
+prob_frame = tk.Frame(_stats_dist_container, bg="#f8f8f8")
+prob_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
+prob_plot_frame = tk.Frame(prob_frame, bg="#f8f8f8")
+prob_plot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+
+def _switch_stats_subtab(subtab, event=None):
+    global _active_stats_subtab
+    if _active_stats_subtab == subtab:
+        return
+    _active_stats_subtab = subtab
+    _stats_boxplot_container.pack_forget()
+    _stats_dist_container.pack_forget()
+    _stab_boxplot.config(**_STAB_INACTIVE)
+    _stab_distribution.config(**_STAB_INACTIVE)
+    if subtab == "boxplot":
+        _stats_boxplot_container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        _stab_boxplot.config(**_STAB_ACTIVE)
+    else:
+        _stats_dist_container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        _stab_distribution.config(**_STAB_ACTIVE)
+
+_stab_boxplot.bind("<Button-1>", lambda e: _switch_stats_subtab("boxplot"))
+_stab_distribution.bind("<Button-1>", lambda e: _switch_stats_subtab("distribution"))
 
 
 def _ensure_charac_canvas():
@@ -5455,8 +5640,8 @@ def update_multi_stdf_heatmap():
         # Move X-axis to top
         ax.xaxis.set_label_position('top')
         ax.xaxis.tick_top()
-        ax.set_xlabel("X", fontsize=10)
-        ax.set_ylabel("Y", fontsize=10)
+        ax.set_xlabel("X Coordinate", fontsize=10)
+        ax.set_ylabel("Y Coordinate", fontsize=10)
 
         # Title with wafer name and parameter
         ax.set_title(f"{short_wafer_id}\n{short_param}", fontsize=11, fontweight='bold')
@@ -5658,6 +5843,8 @@ def update_multi_stdf_heatmap():
 
     heatmap_canvas = FigureCanvasTkAgg(fig, master=heatmap_display_frame)
     heatmap_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, pady=10)
+
+    # Add navigation toolbar
 
     # Connect mouse events for rectangle zoom, pan, scroll, and click
     heatmap_canvas.mpl_connect("button_press_event", on_heatmap_press)
@@ -6259,6 +6446,12 @@ def refresh_heatmap_display():
 
     # Update statistics plots (boxplot and probability distribution)
     update_stats_plots()
+
+    # Update wafer selection list in Wafer Tab sidebar
+    try:
+        update_wafer_tab_selection_list()
+    except Exception:
+        pass
 
     # Update limits display
     update_limits_display()
@@ -21074,153 +21267,207 @@ def plm_multi_canvas_release(event, canvas_idx):
 plm_pixel_grr_results = {}
 
 def run_plm_pixel_grr():
-    """Run pixel-level GRR on ALL selected dies from grr_selected_dies.
-    Iterates over all wafermap-selected positions and analyzes each one."""
+    """Run pixel-level GRR on ALL selected dies and ALL available PLM types."""
     global plm_pixel_grr_results
 
-    # Build list of areas to analyze
-    if plm_define_area_var.get() and plm_selected_areas:
+    if plm_selected_areas:
         areas = [{'x': a['x'], 'y': a['y'], 'w': a['w'], 'h': a['h']} for a in plm_selected_areas]
+        print(f"[PLM Pixel GRR] Using {len(areas)} selected regions")
     else:
-        areas = None  # Will use center 25x25 fallback per die
+        areas = None
         print(f"[PLM Pixel GRR] Will use CENTER fallback (25×25) for each PLM")
 
-    plm_type = plm_pixel_state.get('plm_type')
-    if not plm_type:
-        plm_result_info_label.config(text="⚠️ Kein PLM-Typ ausgewählt", bg='#FFF3E0', fg='#E65100')
-        plm_pixel_notebook.select(2)
-        return
-
-    # Get ALL selected dies from wafermap
     if not grr_selected_dies:
         plm_result_info_label.config(text="⚠️ Keine Dies in Wafermap ausgewählt!", bg='#FFF3E0', fg='#E65100')
         plm_pixel_notebook.select(2)
         return
 
-    dies_to_analyze = list(grr_selected_dies)
-    print(f"[PLM Pixel GRR] Analyzing {len(dies_to_analyze)} dies: {dies_to_analyze}")
-
     plm_ext = ('.txt', '.csv', '.dat', '.plm')
     d2_table = {2: 1.128, 3: 1.693, 4: 2.059, 5: 2.326, 6: 2.534, 7: 2.704, 8: 2.847}
 
-    # Store results for ALL dies
+    # Discover ALL available PLM types across all files and dies
+    all_plm_types = set()
+    for file_info in grr_file_data:
+        pd_dir = file_info.get('plm_dir')
+        if not pd_dir or not os.path.isdir(pd_dir):
+            continue
+        for fname in os.listdir(pd_dir):
+            if fname.lower().endswith(plm_ext):
+                ftype = _extract_plm_type(fname)
+                if ftype:
+                    all_plm_types.add(ftype)
+
+    if not all_plm_types:
+        plm_result_info_label.config(text="⚠️ Keine PLM-Dateien gefunden!", bg='#FFF3E0', fg='#E65100')
+        plm_pixel_notebook.select(2)
+        return
+
+    print(f"[PLM Pixel GRR] Found {len(all_plm_types)} PLM types: {sorted(all_plm_types)}")
+
+    dies_to_analyze = list(grr_selected_dies)
+    print(f"[PLM Pixel GRR] Analyzing {len(dies_to_analyze)} dies x {len(all_plm_types)} PLM types")
+
     all_die_results = {}
 
-    # Iterate over ALL selected dies
-    for die_coord in dies_to_analyze:
-        print(f"[PLM Pixel GRR] Processing Die ({die_coord[0]},{die_coord[1]})...")
+    for plm_type in sorted(all_plm_types):
+        print(f"\n[PLM Pixel GRR] === PLM type: {plm_type} ===")
 
-        file_pixel_values = []
-        file_labels = []
+        for die_coord in dies_to_analyze:
+            file_region_data = []
 
-        for file_idx, file_info in enumerate(grr_file_data):
-            pd_dir = file_info.get('plm_dir')
-            if not pd_dir or not os.path.isdir(pd_dir):
-                continue
+            for file_idx, file_info in enumerate(grr_file_data):
+                pd_dir = file_info.get('plm_dir')
+                if not pd_dir or not os.path.isdir(pd_dir):
+                    continue
 
-            plm_files = [f for f in os.listdir(pd_dir) if f.lower().endswith(plm_ext)]
-            matrix = None
-            for fname in plm_files:
-                coords = _extract_plm_die_coords(fname)
-                ftype = _extract_plm_type(fname)
-                if coords == die_coord and ftype and ftype.lower() == plm_type.lower():
-                    matrix = load_plm_as_matrix(os.path.join(pd_dir, fname))
-                    break
+                plm_files = [f for f in os.listdir(pd_dir) if f.lower().endswith(plm_ext)]
+                matrix = None
+                for fname in plm_files:
+                    coords = _extract_plm_die_coords(fname)
+                    ftype = _extract_plm_type(fname)
+                    if coords == die_coord and ftype and ftype.lower() == plm_type.lower():
+                        matrix = load_plm_as_matrix(os.path.join(pd_dir, fname))
+                        break
 
-            if matrix is None:
-                continue
+                if matrix is None:
+                    continue
 
-            rows, cols = matrix.shape
+                rows, cols = matrix.shape
 
-            # Use areas or center fallback
-            if areas:
-                all_vals = []
-                for area in areas:
-                    ax0, ay0, aw, ah = area['x'], area['y'], area['w'], area['h']
-                    y_end = min(ay0 + ah, rows)
-                    x_end = min(ax0 + aw, cols)
-                    region = matrix[ay0:y_end, ax0:x_end]
+                if areas:
+                    region_vals = []
+                    for area in areas:
+                        ax0, ay0, aw, ah = area['x'], area['y'], area['w'], area['h']
+                        # Scale region to matrix size if needed (PLM types have different resolutions)
+                        if ax0 >= cols or ay0 >= rows:
+                            # Region outside matrix - scale proportionally
+                            scale_x = cols / max(max(a['x'] + a['w'] for a in areas), 1)
+                            scale_y = rows / max(max(a['y'] + a['h'] for a in areas), 1)
+                            ax0 = int(ax0 * scale_x)
+                            ay0 = int(ay0 * scale_y)
+                            aw = max(1, int(aw * scale_x))
+                            ah = max(1, int(ah * scale_y))
+                        y_end = min(ay0 + ah, rows)
+                        x_end = min(ax0 + aw, cols)
+                        if y_end <= ay0 or x_end <= ax0:
+                            continue
+                        region = matrix[ay0:y_end, ax0:x_end]
+                        vals = region.flatten()
+                        if np.issubdtype(matrix.dtype, np.floating):
+                            vals = vals[~np.isnan(vals)]
+                        if len(vals) > 0:
+                            region_vals.append(vals)
+                else:
+                    fw, fh = min(25, cols), min(25, rows)
+                    fx, fy = max(0, (cols - fw) // 2), max(0, (rows - fh) // 2)
+                    region = matrix[fy:fy+fh, fx:fx+fw]
                     vals = region.flatten()
                     if np.issubdtype(matrix.dtype, np.floating):
                         vals = vals[~np.isnan(vals)]
-                    all_vals.append(vals)
-                combined = np.concatenate(all_vals) if all_vals else np.array([])
-            else:
-                # Center 25x25 fallback
-                fw, fh = min(25, cols), min(25, rows)
-                fx, fy = max(0, (cols - fw) // 2), max(0, (rows - fh) // 2)
-                region = matrix[fy:fy+fh, fx:fx+fw]
-                combined = region.flatten()
-                if np.issubdtype(matrix.dtype, np.floating):
-                    combined = combined[~np.isnan(combined)]
+                    region_vals = [vals]
 
-            if len(combined) > 0:
-                file_pixel_values.append(combined)
                 fname_short = os.path.basename(file_info.get('path', f'File {file_idx}'))[:25]
-                file_labels.append(fname_short)
+                file_region_data.append({'regions': region_vals, 'label': fname_short})
 
-        if len(file_pixel_values) < 2:
-            print(f"[PLM Pixel GRR] Die ({die_coord[0]},{die_coord[1]}): Skip - nur {len(file_pixel_values)} Files")
-            continue
+            if len(file_region_data) < 2:
+                continue
 
-        min_len = min(len(v) for v in file_pixel_values)
-        aligned = np.array([v[:min_len] for v in file_pixel_values], dtype=float)
-        valid_mask = ~np.any(np.isnan(aligned), axis=0)
-        valid_data = aligned[:, valid_mask]
+            num_regions = len(file_region_data[0]['regions'])
+            num_files = len(file_region_data)
+            file_labels = [f['label'] for f in file_region_data]
 
-        if valid_data.shape[1] == 0:
-            print(f"[PLM Pixel GRR] Die ({die_coord[0]},{die_coord[1]}): Skip - keine gültigen Pixel")
-            continue
+            region_results = []
+            for ri in range(num_regions):
+                region_file_vals = []
+                for fd in file_region_data:
+                    if ri < len(fd['regions']) and len(fd['regions'][ri]) > 0:
+                        region_file_vals.append(fd['regions'][ri])
+                if len(region_file_vals) < 2:
+                    continue
+                min_len = min(len(v) for v in region_file_vals)
+                aligned = np.array([v[:min_len] for v in region_file_vals], dtype=float)
+                valid_mask = ~np.any(np.isnan(aligned), axis=0)
+                valid_data = aligned[:, valid_mask]
+                if valid_data.shape[1] == 0:
+                    continue
+                n_runs = valid_data.shape[0]
+                n_pixels = valid_data.shape[1]
+                ranges_per_px = np.nanmax(valid_data, axis=0) - np.nanmin(valid_data, axis=0)
+                R_bar = np.nanmean(ranges_per_px)
+                d2 = d2_table.get(n_runs, 1.128 + 0.5 * (n_runs - 2))
+                grr_total = R_bar / d2
+                px_means = np.nanmean(valid_data, axis=0)
+                part_var = np.nanstd(px_means, ddof=1) if n_pixels > 1 else 0
+                total_var = np.sqrt(part_var**2 + grr_total**2)
+                if total_var == 0 or np.isnan(total_var):
+                    total_var = np.nanstd(valid_data, ddof=1) if np.nanstd(valid_data, ddof=1) > 0 else 1e-10
+                run_means = np.nanmean(valid_data, axis=1)
+                reproducibility_val = np.nanstd(run_means, ddof=1) if n_runs > 1 else 0
+                repeatability_val = np.sqrt(max(0, grr_total**2 - reproducibility_val**2))
+                grr_pct = (grr_total / total_var * 100) if total_var > 0 else 0
+                rpt_pct = (repeatability_val / total_var * 100) if total_var > 0 else 0
+                rpd_pct = (reproducibility_val / total_var * 100) if total_var > 0 else 0
+                ndc_val = 1.41 * (part_var / grr_total) if grr_total > 0 else 0
 
-        num_runs = valid_data.shape[0]
-        num_pixels = valid_data.shape[1]
+                if areas and ri < len(areas):
+                    a = areas[ri]
+                    pos_str = f"({a['x']},{a['y']})->({a['x']+a['w']},{a['y']+a['h']})"
+                    size_str = f"{a['w']}x{a['h']}"
+                    px_count = a['w'] * a['h']
+                else:
+                    pos_str = "center"
+                    size_str = "25x25"
+                    px_count = n_pixels
 
-        ranges_per_px = np.nanmax(valid_data, axis=0) - np.nanmin(valid_data, axis=0)
-        R_bar = np.nanmean(ranges_per_px)
-        d2 = d2_table.get(num_runs, 1.128 + 0.5 * (num_runs - 2))
-        grr_total = R_bar / d2
-        px_means = np.nanmean(valid_data, axis=0)
-        part_var = np.nanstd(px_means, ddof=1) if num_pixels > 1 else 0
-        total_var = np.sqrt(part_var**2 + grr_total**2)
-        if total_var == 0 or np.isnan(total_var):
-            total_var = np.nanstd(valid_data, ddof=1) if np.nanstd(valid_data, ddof=1) > 0 else 1e-10
-        run_means = np.nanmean(valid_data, axis=1)
-        reproducibility = np.nanstd(run_means, ddof=1) if num_runs > 1 else 0
-        repeatability = np.sqrt(max(0, grr_total**2 - reproducibility**2))
-        grr_pct = (grr_total / total_var * 100) if total_var > 0 else 0
-        rpt_pct = (repeatability / total_var * 100) if total_var > 0 else 0
-        rpd_pct = (reproducibility / total_var * 100) if total_var > 0 else 0
-        ndc = 1.41 * (part_var / grr_total) if grr_total > 0 else 0
+                assess = "EXCELLENT" if grr_pct < 10 else ("ACCEPTABLE" if grr_pct < 30 else "UNACCEPTABLE")
 
-        # Store result for this die
-        all_die_results[die_coord] = {
-            'die_coord': die_coord,
-            'plm_type': plm_type,
-            'grr_pct': grr_pct,
-            'ndc': ndc,
-            'repeatability_pct': rpt_pct,
-            'reproducibility_pct': rpd_pct,
-            'num_pixels': num_pixels,
-            'num_runs': num_runs,
-            'file_labels': file_labels.copy(),
-        }
+                region_results.append({
+                    'region_idx': ri, 'region_label': f"R{ri+1}",
+                    'position': pos_str, 'size': size_str, 'pixels': px_count,
+                    'grr_pct': grr_pct, 'ndc': ndc_val,
+                    'repeatability_pct': rpt_pct, 'reproducibility_pct': rpd_pct,
+                    'assessment': assess,
+                })
 
-        # Store in global for PPT
-        result_key = (die_coord[0], die_coord[1], plm_type)
-        plm_pixel_grr_results[result_key] = all_die_results[die_coord]
-        print(f"[PLM Pixel GRR] Die ({die_coord[0]},{die_coord[1]}): %GRR={grr_pct:.1f}%")
+            if not region_results:
+                continue
 
-    # After loop: Show summary
+            avg_grr = np.mean([r['grr_pct'] for r in region_results])
+            avg_ndc = np.mean([r['ndc'] for r in region_results])
+            avg_rpt = np.mean([r['repeatability_pct'] for r in region_results])
+            avg_rpd = np.mean([r['reproducibility_pct'] for r in region_results])
+
+            die_result = {
+                'die_coord': die_coord, 'plm_type': plm_type,
+                'grr_pct': avg_grr, 'ndc': avg_ndc,
+                'repeatability_pct': avg_rpt, 'reproducibility_pct': avg_rpd,
+                'num_pixels': sum(r['pixels'] for r in region_results),
+                'num_runs': num_files, 'file_labels': file_labels.copy(),
+                'region_results': region_results, 'num_regions': len(region_results),
+            }
+
+            all_die_results[(die_coord, plm_type)] = die_result
+            result_key = (die_coord[0], die_coord[1], plm_type)
+            plm_pixel_grr_results[result_key] = die_result
+
+            best_r = min(region_results, key=lambda r: r['grr_pct'])
+            worst_r = max(region_results, key=lambda r: r['grr_pct'])
+            print(f"[PLM Pixel GRR] Die ({die_coord[0]},{die_coord[1]}) [{plm_type}]: "
+                  f"{len(region_results)} regions, avg %GRR={avg_grr:.1f}%, "
+                  f"best={best_r['region_label']}({best_r['grr_pct']:.1f}%), "
+                  f"worst={worst_r['region_label']}({worst_r['grr_pct']:.1f}%)")
+
     if not all_die_results:
         plm_result_info_label.config(text="⚠️ Keine gültigen PLM-Daten gefunden!", bg='#FFF3E0', fg='#E65100')
         plm_pixel_notebook.select(2)
         return
 
-    # Summary stats
+    # Summary
     all_grr = [r['grr_pct'] for r in all_die_results.values()]
     best_grr = min(all_grr)
     worst_grr = max(all_grr)
     avg_grr = np.mean(all_grr)
+    types_analyzed = sorted(all_plm_types)
 
     if avg_grr < 10:
         assessment, ac = "✅ EXCELLENT", "#4CAF50"
@@ -21230,24 +21477,23 @@ def run_plm_pixel_grr():
         assessment, ac = "❌ UNACCEPTABLE", "#F44336"
 
     plm_result_info_label.config(
-        text=(f"{len(all_die_results)} Dies | {plm_type} | "
+        text=(f"{len(all_die_results)} Die×Type combos | {len(types_analyzed)} PLM types | "
               f"Best={best_grr:.1f}% | Worst={worst_grr:.1f}% | Avg={avg_grr:.1f}% {assessment}"),
         bg='#E8F5E9', fg=ac)
 
-    # Build summary text
     txt = "=" * 90 + "\n"
-    txt += f"         🔬 MULTI-DIE PLM PIXEL GRR ANALYSIS ({len(all_die_results)} Dies)\n"
+    txt += f"  🔬 MULTI-DIE MULTI-TYPE PLM PIXEL GRR ({len(dies_to_analyze)} Dies × {len(types_analyzed)} Types)\n"
     txt += "=" * 90 + "\n\n"
-    txt += f"  PLM Type:      {plm_type}\n"
-    txt += f"  Dies:          {len(all_die_results)}\n"
+    txt += f"  PLM Types:     {', '.join(types_analyzed)}\n"
+    txt += f"  Dies:          {len(dies_to_analyze)}\n"
     txt += f"  Best %GRR:     {best_grr:.2f}%\n"
     txt += f"  Worst %GRR:    {worst_grr:.2f}%\n"
     txt += f"  Average:       {avg_grr:.2f}%\n\n"
-    txt += "-" * 90 + "\n"
-    txt += "PER-DIE RESULTS:\n"
-    txt += "-" * 90 + "\n"
-    for dc, res in all_die_results.items():
-        txt += f"  Die ({dc[0]},{dc[1]}): %GRR={res['grr_pct']:.1f}%, ndc={res['ndc']:.1f}, {res['num_pixels']} px, {res['num_runs']} files\n"
+    for pt in types_analyzed:
+        txt += f"─── {pt} ───\n"
+        for (dc, ptype), res in all_die_results.items():
+            if ptype == pt:
+                txt += f"  Die ({dc[0]},{dc[1]}): avg %GRR={res['grr_pct']:.1f}%, {res['num_regions']} regions\n"
     txt += "=" * 90 + "\n"
 
     plm_result_text.config(state='normal')
@@ -21255,10 +21501,9 @@ def run_plm_pixel_grr():
     plm_result_text.insert('1.0', txt)
     plm_result_text.config(state='disabled')
 
-    # Update Plots header
     num_regions = len(plm_selected_areas) if plm_selected_areas else 1
     plm_result_plots_header.config(
-        text=f"Die ({die_coord[0]},{die_coord[1]}) | {plm_type} | {num_regions} Regions | Best %GRR={best_grr:.1f}% | Worst %GRR={worst_grr:.1f}%"
+        text=f"{len(dies_to_analyze)} Dies | {len(types_analyzed)} PLM Types | {num_regions} Regions | Avg %GRR={avg_grr:.1f}%"
     )
 
     # Draw summary plot (3 charts side by side like in reference screenshot)
@@ -21361,6 +21606,13 @@ def run_plm_pixel_grr():
 
     plm_pixel_notebook.select(2)
     print(f"[PLM Pixel GRR] Done. {len(all_die_results)} dies analyzed. Total stored: {len(plm_pixel_grr_results)}")
+
+    # Refresh GRR group data so PLM-GAGE group appears in Report Tab
+    try:
+        populate_grr_group_data()
+        print("[PLM Pixel GRR] Refreshed GRR report groups (PLM-GAGE now available)")
+    except NameError:
+        pass
 
 plm_area_go_btn.config(command=run_plm_pixel_grr)
 
@@ -21847,191 +22099,190 @@ def generate_plm_gage_slides(prs, content_layout, raw_param, plm_type):
         slides_created += 1
 
     elif mode == 'position':
-        # ========== Position-based Mode: One slide per region/position ==========
-        # Sort results by die coordinates
+        # ========== Position-based Mode: One slide per DIE with ALL regions ==========
         sorted_results = sorted(filtered_results.items(), key=lambda x: (x[0][0], x[0][1]))
 
-        # Find best and worst for highlighting
-        best_die = min(sorted_results, key=lambda x: x[1]['grr_pct'])
-        worst_die = max(sorted_results, key=lambda x: x[1]['grr_pct'])
+        # Find global best/worst region across all dies
+        global_best_die = None
+        global_best_region = None
+        global_best_grr = float('inf')
+        global_worst_die = None
+        global_worst_region = None
+        global_worst_grr = 0
 
+        for die_key, result in sorted_results:
+            for rr in result.get('region_results', []):
+                if rr['grr_pct'] < global_best_grr:
+                    global_best_grr = rr['grr_pct']
+                    global_best_die = die_key
+                    global_best_region = rr['region_label']
+                if rr['grr_pct'] > global_worst_grr:
+                    global_worst_grr = rr['grr_pct']
+                    global_worst_die = die_key
+                    global_worst_region = rr['region_label']
+
+        # ─── Per-Die Slides ───
         for idx, (die_key, result) in enumerate(sorted_results):
             die_x, die_y = die_key[0], die_key[1]
+            regions = result.get('region_results', [])
+            if not regions:
+                continue
+
             slide = prs.slides.add_slide(content_layout)
 
-            # Determine if this is best/worst
-            is_best = (die_key == best_die[0])
-            is_worst = (die_key == worst_die[0])
-
-            # Title with position info
-            title_box = slide.shapes.add_textbox(Inches(0.2), Inches(0.1), Inches(10), Inches(0.5))
+            # ── Title ──
+            title_box = slide.shapes.add_textbox(Inches(0.3), Inches(0.05), Inches(12.7), Inches(0.5))
             title_para = title_box.text_frame.paragraphs[0]
-            title_text = f"PLM Pixel Analysis: {plm_type} - Position ({die_x},{die_y})"
-            if is_best:
-                title_text += " ✅ BEST"
-            elif is_worst:
-                title_text += " ❌ WORST"
-            title_para.text = title_text
-            title_para.font.size = Pt(20)
+            title_para.text = f"PLM Pixel Analysis - {plm_type} - Die ({die_x},{die_y})"
+            title_para.font.size = Pt(22)
             title_para.font.bold = True
+            title_para.font.color.rgb = RGBColor(0, 0, 0)
 
-            grr_pct = result['grr_pct']
-            ndc = result['ndc']
-            repeat_pct = result.get('repeatability_pct', grr_pct * 0.65)
-            reprod_pct = result.get('reproducibility_pct', grr_pct * 0.35)
-            num_pixels = result.get('num_pixels', 0)
-            num_runs = result.get('num_runs', 0)
+            # ── Table: Region | Position | Size | %GRR | ndc | Repeat.% | Reprod.% | Result ──
+            num_rows = len(regions) + 1  # +1 header
+            num_cols = 8
+            tbl_left = Inches(0.2)
+            tbl_top = Inches(0.55)
+            tbl_width = Inches(8.8)
+            tbl_height = Inches(min(0.28 * num_rows, 3.2))
 
-            # Assessment
-            if grr_pct < 10:
-                assessment = "EXCELLENT"
-                assess_color = RGBColor(0, 128, 0)
-            elif grr_pct < 30:
-                assessment = "ACCEPTABLE"
-                assess_color = RGBColor(255, 152, 0)
-            else:
-                assessment = "UNACCEPTABLE"
-                assess_color = RGBColor(255, 0, 0)
+            table_shape = slide.shapes.add_table(num_rows, num_cols, tbl_left, tbl_top, tbl_width, tbl_height)
+            table = table_shape.table
 
-            # ─── TABLE: Region details ───
-            table_rows = 2
-            table_cols = 8
-            table = slide.shapes.add_table(table_rows, table_cols,
-                                          Inches(0.2), Inches(0.6),
-                                          Inches(12.9), Inches(0.7)).table
-
-            # Set column widths
-            col_widths = [1.2, 1.0, 1.0, 1.3, 1.2, 1.4, 1.5, 1.3]  # in inches
-            for ci, w in enumerate(col_widths):
+            col_widths_in = [0.65, 1.8, 0.7, 0.85, 0.7, 0.95, 0.95, 1.2]
+            for ci, w in enumerate(col_widths_in):
                 table.columns[ci].width = Inches(w)
 
-            # Header row
+            # Header
+            header_bg = RGBColor(56, 142, 60)  # green #388E3C
             headers = ['Region', 'Position', 'Size', '%GRR', 'ndc', 'Repeat.%', 'Reprod.%', 'Result']
             for ci, h in enumerate(headers):
                 cell = table.cell(0, ci)
-                cell.text = h
-                cell.text_frame.paragraphs[0].font.size = Pt(9)
-                cell.text_frame.paragraphs[0].font.bold = True
+                cell.text = ''
+                p = cell.text_frame.paragraphs[0]
+                p.text = h
+                p.font.size = Pt(8)
+                p.font.bold = True
+                p.font.color.rgb = RGBColor(255, 255, 255)
+                p.alignment = PP_ALIGN.CENTER
+                cell.vertical_anchor = MSO_ANCHOR.MIDDLE
                 cell.fill.solid()
-                cell.fill.fore_color.rgb = RGBColor(200, 200, 200)
+                cell.fill.fore_color.rgb = header_bg
 
-            # Data row
-            region_label = f"R{idx+1}"
-            position_str = f"({die_x},{die_y})"
-            size_str = f"{num_pixels} px"
+            # Data rows
+            row_bg1 = RGBColor(255, 255, 255)
+            row_bg2 = RGBColor(232, 245, 233)  # light green
+            for ri, rr in enumerate(regions):
+                row_idx = ri + 1
+                bg = row_bg1 if ri % 2 == 0 else row_bg2
 
-            row_data = [region_label, position_str, size_str,
-                       f"{grr_pct:.2f}%", f"{ndc:.1f}",
-                       f"{repeat_pct:.2f}%", f"{reprod_pct:.2f}%", assessment]
+                if rr['grr_pct'] < 10:
+                    assess_color = RGBColor(56, 142, 60)
+                elif rr['grr_pct'] < 30:
+                    assess_color = RGBColor(255, 152, 0)
+                else:
+                    assess_color = RGBColor(244, 67, 54)
 
-            for ci, val in enumerate(row_data):
-                cell = table.cell(1, ci)
-                cell.text = str(val)
-                cell.text_frame.paragraphs[0].font.size = Pt(9)
-                # Color the result cell
-                if ci == 7:
-                    cell.text_frame.paragraphs[0].font.color.rgb = assess_color
-                    cell.text_frame.paragraphs[0].font.bold = True
-                # Color the region cell
-                if ci == 0:
-                    cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(
-                        int(region_colors[idx % len(region_colors)][1:3], 16),
-                        int(region_colors[idx % len(region_colors)][3:5], 16),
-                        int(region_colors[idx % len(region_colors)][5:7], 16)
-                    )
-                    cell.text_frame.paragraphs[0].font.bold = True
+                row_data = [
+                    rr['region_label'],
+                    rr['position'],
+                    rr['size'],
+                    f"{rr['grr_pct']:.1f}%",
+                    f"{rr['ndc']:.1f}",
+                    f"{rr['repeatability_pct']:.1f}%",
+                    f"{rr['reproducibility_pct']:.1f}%",
+                    rr['assessment'],
+                ]
 
-            # ─── INFO BOX: Additional details ───
-            info_box = slide.shapes.add_textbox(Inches(0.2), Inches(1.4), Inches(4), Inches(1.8))
+                for ci, val in enumerate(row_data):
+                    cell = table.cell(row_idx, ci)
+                    cell.text = ''
+                    p = cell.text_frame.paragraphs[0]
+                    p.text = val
+                    p.font.size = Pt(7)
+                    p.alignment = PP_ALIGN.CENTER
+                    cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                    cell.fill.solid()
+                    cell.fill.fore_color.rgb = bg
+
+                    if ci == 0:  # Region label colored
+                        rc_hex = region_colors[ri % len(region_colors)]
+                        p.font.color.rgb = RGBColor(int(rc_hex[1:3], 16), int(rc_hex[3:5], 16), int(rc_hex[5:7], 16))
+                        p.font.bold = True
+                    elif ci == 7:  # Result colored
+                        p.font.color.rgb = assess_color
+                        p.font.bold = True
+
+            # ── Info Box (right side) ──
+            info_left = Inches(9.2)
+            info_top = Inches(0.55)
+            info_box = slide.shapes.add_textbox(info_left, info_top, Inches(3.8), Inches(3.2))
             info_frame = info_box.text_frame
             info_frame.word_wrap = True
 
-            p = info_frame.paragraphs[0]
-            p.text = f"📊 PLM Type: {plm_type}"
-            p.font.size = Pt(11)
-            p.font.bold = True
+            best_r = min(regions, key=lambda r: r['grr_pct'])
+            worst_r = max(regions, key=lambda r: r['grr_pct'])
 
-            p = info_frame.add_paragraph()
-            p.text = f"📍 Die Position: ({die_x}, {die_y})"
-            p.font.size = Pt(10)
+            info_lines = [
+                (f"Die ({die_x}, {die_y})", RGBColor(0, 0, 0), True, Pt(12)),
+                (f"PLM Type: {plm_type}", RGBColor(80, 80, 80), False, Pt(10)),
+                (f"Regions: {len(regions)}", RGBColor(80, 80, 80), False, Pt(10)),
+                (f"Files/Trials: {result.get('num_runs', 0)}", RGBColor(80, 80, 80), False, Pt(10)),
+                (f"Pixels/Region: {regions[0]['pixels'] if regions else 0}", RGBColor(80, 80, 80), False, Pt(10)),
+                ("", None, False, Pt(8)),
+                (f"Best:  {best_r['region_label']} - %GRR={best_r['grr_pct']:.1f}%", RGBColor(56, 142, 60), True, Pt(10)),
+                (f"Worst: {worst_r['region_label']} - %GRR={worst_r['grr_pct']:.1f}%", RGBColor(244, 67, 54), True, Pt(10)),
+            ]
 
-            p = info_frame.add_paragraph()
-            p.text = f"📏 Pixels analyzed: {num_pixels}"
-            p.font.size = Pt(10)
+            for i, (text, color, bold, size) in enumerate(info_lines):
+                p = info_frame.paragraphs[0] if i == 0 else info_frame.add_paragraph()
+                p.text = text
+                p.font.size = size
+                p.font.bold = bold
+                if color:
+                    p.font.color.rgb = color
 
-            p = info_frame.add_paragraph()
-            p.text = f"🔄 Runs: {num_runs}"
-            p.font.size = Pt(10)
-
-            if is_best:
-                p = info_frame.add_paragraph()
-                p.text = "✅ BEST position (lowest %GRR)"
-                p.font.size = Pt(10)
-                p.font.bold = True
-                p.font.color.rgb = RGBColor(0, 128, 0)
-            elif is_worst:
-                p = info_frame.add_paragraph()
-                p.text = "❌ WORST position (highest %GRR)"
-                p.font.size = Pt(10)
-                p.font.bold = True
-                p.font.color.rgb = RGBColor(255, 0, 0)
-
-            # ─── 3 CHARTS ───
+            # ── 3 Charts: %GRR, ndc, Repeat+Reprod per Region ──
             try:
+                r_labels = [rr['region_label'] for rr in regions]
+                r_grr = [rr['grr_pct'] for rr in regions]
+                r_ndc = [rr['ndc'] for rr in regions]
+                r_repeat = [rr['repeatability_pct'] for rr in regions]
+                r_reprod = [rr['reproducibility_pct'] for rr in regions]
+                bar_cols = [region_colors[i % len(region_colors)] for i in range(len(regions))]
+
                 fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 3))
                 fig.patch.set_facecolor('white')
 
-                # All positions for context, highlight current
-                all_labels = [f"({k[0]},{k[1]})" for k in [x[0] for x in sorted_results]]
-                all_grr_vals = [x[1]['grr_pct'] for x in sorted_results]
-                all_ndc_vals = [x[1]['ndc'] for x in sorted_results]
-                all_repeat_vals = [x[1].get('repeatability_pct', x[1]['grr_pct'] * 0.65) for x in sorted_results]
-                all_reprod_vals = [x[1].get('reproducibility_pct', x[1]['grr_pct'] * 0.35) for x in sorted_results]
-
-                # Colors - highlight current position
-                bar_colors_chart = []
-                for i in range(len(sorted_results)):
-                    if i == idx:
-                        bar_colors_chart.append(region_colors[idx % len(region_colors)])
-                    else:
-                        bar_colors_chart.append('#CCCCCC')  # Gray for others
-
-                # Chart 1: %GRR per Region (highlight current)
-                bars1 = ax1.bar(range(len(all_grr_vals)), all_grr_vals, color=bar_colors_chart, edgecolor='white', linewidth=0.5)
+                # Chart 1: %GRR per Region
+                ax1.bar(range(len(r_grr)), r_grr, color=bar_cols, edgecolor='white', linewidth=0.5)
                 ax1.axhline(y=10, color='green', linestyle='--', linewidth=1.5, label='10%')
                 ax1.axhline(y=30, color='red', linestyle='--', linewidth=1.5, label='30%')
                 ax1.set_title('%GRR per Region', fontsize=10, fontweight='bold')
                 ax1.set_ylabel('%GRR', fontsize=9)
-                ax1.set_xticks(range(len(all_labels)))
-                ax1.set_xticklabels(all_labels, rotation=45, fontsize=6)
+                ax1.set_xticks(range(len(r_labels)))
+                ax1.set_xticklabels(r_labels, fontsize=8)
                 ax1.legend(loc='upper right', fontsize=7)
                 ax1.grid(True, alpha=0.3, axis='y')
 
                 # Chart 2: ndc per Region
-                bars2 = ax2.bar(range(len(all_ndc_vals)), all_ndc_vals, color=bar_colors_chart, edgecolor='white', linewidth=0.5)
+                ax2.bar(range(len(r_ndc)), r_ndc, color=bar_cols, edgecolor='white', linewidth=0.5)
                 ax2.axhline(y=5, color='green', linestyle='--', linewidth=1.5, label='ndc=5')
                 ax2.set_title('ndc per Region', fontsize=10, fontweight='bold')
                 ax2.set_ylabel('ndc', fontsize=9)
-                ax2.set_xticks(range(len(all_labels)))
-                ax2.set_xticklabels(all_labels, rotation=45, fontsize=6)
+                ax2.set_xticks(range(len(r_labels)))
+                ax2.set_xticklabels(r_labels, fontsize=8)
                 ax2.legend(loc='upper right', fontsize=7)
                 ax2.grid(True, alpha=0.3, axis='y')
 
-                # Chart 3: Repeatability + Reproducibility (Stacked)
-                x_pos = np.arange(len(all_labels))
-                bars3a = ax3.bar(x_pos, all_repeat_vals, color='#2196F3', edgecolor='white', linewidth=0.5, label='Repeatability')
-                bars3b = ax3.bar(x_pos, all_reprod_vals, bottom=all_repeat_vals, color='#FF9800', edgecolor='white', linewidth=0.5, label='Reproducibility')
-
-                # Highlight current bar
-                bars3a[idx].set_edgecolor('black')
-                bars3a[idx].set_linewidth(2)
-                bars3b[idx].set_edgecolor('black')
-                bars3b[idx].set_linewidth(2)
-
+                # Chart 3: Repeat + Reprod stacked
+                x_pos = np.arange(len(r_labels))
+                ax3.bar(x_pos, r_repeat, color='#2196F3', edgecolor='white', linewidth=0.5, label='Repeatability')
+                ax3.bar(x_pos, r_reprod, bottom=r_repeat, color='#FF9800', edgecolor='white', linewidth=0.5, label='Reproducibility')
                 ax3.set_title('Repeat. + Reprod. (%)', fontsize=10, fontweight='bold')
                 ax3.set_ylabel('%', fontsize=9)
                 ax3.set_xticks(x_pos)
-                ax3.set_xticklabels(all_labels, rotation=45, fontsize=6)
+                ax3.set_xticklabels(r_labels, fontsize=8)
                 ax3.legend(loc='upper right', fontsize=7)
                 ax3.grid(True, alpha=0.3, axis='y')
 
@@ -22042,10 +22293,206 @@ def generate_plm_gage_slides(prs, content_layout, raw_param, plm_type):
                 plt.close(fig)
                 img_stream.seek(0)
 
-                slide.shapes.add_picture(img_stream, Inches(0.2), Inches(3.5), width=Inches(12.9), height=Inches(3.7))
+                chart_top_inches = 0.55 + min(0.28 * (len(regions) + 1), 3.2) + 0.15
+                slide.shapes.add_picture(img_stream, Inches(0.2), Inches(min(chart_top_inches, 4.0)),
+                                        width=Inches(12.9), height=Inches(3.3))
 
             except Exception as e:
-                print(f"[PLM-GAGE] Chart error for position ({die_x},{die_y}): {e}")
+                print(f"[PLM-GAGE] Chart error for Die ({die_x},{die_y}): {e}")
+                import traceback
+                traceback.print_exc()
+
+            slides_created += 1
+
+        # ─── SUMMARY SLIDE: Overview all Dies × Regions ───
+        if len(sorted_results) > 0:
+            slide = prs.slides.add_slide(content_layout)
+
+            # Title
+            title_box = slide.shapes.add_textbox(Inches(0.2), Inches(0.05), Inches(12.9), Inches(0.5))
+            title_para = title_box.text_frame.paragraphs[0]
+            title_para.text = f"PLM Pixel Analysis - {plm_type} Overview - {plm_type}"
+            title_para.font.size = Pt(22)
+            title_para.font.bold = True
+            title_para.font.color.rgb = RGBColor(0, 0, 0)
+
+            # Determine max regions across all dies
+            max_regions = max(len(r.get('region_results', [])) for _, r in sorted_results)
+
+            # Summary table: Die | R1 %GRR | R2 %GRR | ... | Avg %GRR
+            s_cols = 1 + max_regions + 1  # Die + R1..Rn + Avg
+            s_rows = len(sorted_results) + 1  # header + dies
+            s_tbl_top = Inches(0.55)
+            s_tbl_height = Inches(min(0.24 * s_rows, 3.2))
+
+            table_shape = slide.shapes.add_table(s_rows, s_cols, Inches(0.2), s_tbl_top, Inches(8.8), s_tbl_height)
+            s_table = table_shape.table
+
+            # Header
+            s_header_bg = RGBColor(56, 142, 60)
+            s_headers = ['Die'] + [f"R{i+1} %GRR" for i in range(max_regions)] + ['Avg %GRR']
+            for ci, h in enumerate(s_headers):
+                cell = s_table.cell(0, ci)
+                cell.text = ''
+                p = cell.text_frame.paragraphs[0]
+                p.text = h
+                p.font.size = Pt(7)
+                p.font.bold = True
+                p.font.color.rgb = RGBColor(255, 255, 255)
+                p.alignment = PP_ALIGN.CENTER
+                cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = s_header_bg
+
+            # Data rows
+            for ri, (die_key, result) in enumerate(sorted_results):
+                row_idx = ri + 1
+                bg = RGBColor(255, 255, 255) if ri % 2 == 0 else RGBColor(232, 245, 233)
+                regions = result.get('region_results', [])
+
+                # Die column
+                cell = s_table.cell(row_idx, 0)
+                cell.text = ''
+                p = cell.text_frame.paragraphs[0]
+                p.text = f"({die_key[0]},{die_key[1]})"
+                p.font.size = Pt(7)
+                p.alignment = PP_ALIGN.CENTER
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = bg
+
+                grr_values = []
+                for ci_r in range(max_regions):
+                    cell = s_table.cell(row_idx, 1 + ci_r)
+                    cell.text = ''
+                    p = cell.text_frame.paragraphs[0]
+                    cell.fill.solid()
+                    cell.fill.fore_color.rgb = bg
+                    if ci_r < len(regions):
+                        grr_val = regions[ci_r]['grr_pct']
+                        grr_values.append(grr_val)
+                        p.text = f"{grr_val:.1f}%"
+                        p.font.size = Pt(7)
+                        if grr_val < 10:
+                            p.font.color.rgb = RGBColor(56, 142, 60)
+                        elif grr_val < 30:
+                            p.font.color.rgb = RGBColor(255, 152, 0)
+                        else:
+                            p.font.color.rgb = RGBColor(244, 67, 54)
+                    else:
+                        p.text = "-"
+                        p.font.size = Pt(7)
+                    p.alignment = PP_ALIGN.CENTER
+
+                # Avg column
+                cell = s_table.cell(row_idx, s_cols - 1)
+                cell.text = ''
+                p = cell.text_frame.paragraphs[0]
+                avg_val = np.mean(grr_values) if grr_values else 0
+                p.text = f"{avg_val:.1f}%"
+                p.font.size = Pt(7)
+                p.font.bold = True
+                p.alignment = PP_ALIGN.CENTER
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = bg
+
+            # ── Info Box (right side) ──
+            info_box = slide.shapes.add_textbox(Inches(9.2), Inches(0.55), Inches(3.8), Inches(2.5))
+            info_frame = info_box.text_frame
+            info_frame.word_wrap = True
+
+            s_info_lines = [
+                (f"{plm_type} Die Comparison", RGBColor(0, 0, 0), True, Pt(12)),
+                (f"PLM Type: {plm_type}", RGBColor(80, 80, 80), False, Pt(10)),
+                (f"Total Dies: {len(sorted_results)}", RGBColor(80, 80, 80), False, Pt(10)),
+                (f"Regions per Die: {max_regions}", RGBColor(80, 80, 80), False, Pt(10)),
+                (f"Files/Trials: {sorted_results[0][1].get('num_runs', 0)}", RGBColor(80, 80, 80), False, Pt(10)),
+                ("", None, False, Pt(6)),
+            ]
+            if global_best_die and global_best_region:
+                s_info_lines.append((f"Best:  Die({global_best_die[0]},{global_best_die[1]}) {global_best_region} - {global_best_grr:.1f}%",
+                                    RGBColor(56, 142, 60), True, Pt(10)))
+            if global_worst_die and global_worst_region:
+                s_info_lines.append((f"Worst: Die({global_worst_die[0]},{global_worst_die[1]}) {global_worst_region} - {global_worst_grr:.1f}%",
+                                    RGBColor(244, 67, 54), True, Pt(10)))
+
+            for i, (text, color, bold, size) in enumerate(s_info_lines):
+                p = info_frame.paragraphs[0] if i == 0 else info_frame.add_paragraph()
+                p.text = text
+                p.font.size = size
+                p.font.bold = bold
+                if color:
+                    p.font.color.rgb = color
+
+            # ── Two Charts: Grouped Bar + Heatmap ──
+            try:
+                die_labels = [f"({k[0]},{k[1]})" for k, _ in sorted_results]
+                all_region_grr = []  # list of lists: [die][region] = grr_pct
+                for _, result in sorted_results:
+                    rrs = result.get('region_results', [])
+                    all_region_grr.append([rr['grr_pct'] for rr in rrs])
+
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 3.5))
+                fig.patch.set_facecolor('white')
+
+                # Chart 1: Grouped bar chart - %GRR per Die x Region
+                x_pos = np.arange(len(die_labels))
+                bar_w = 0.8 / max_regions if max_regions > 0 else 0.8
+                for ri in range(max_regions):
+                    vals = [drr[ri] if ri < len(drr) else 0 for drr in all_region_grr]
+                    offset = (ri - max_regions / 2 + 0.5) * bar_w
+                    ax1.bar(x_pos + offset, vals, width=bar_w,
+                           color=region_colors[ri % len(region_colors)],
+                           edgecolor='white', linewidth=0.3, label=f'R{ri+1}')
+
+                ax1.axhline(y=10, color='green', linestyle='--', linewidth=1.5, label='10%')
+                ax1.axhline(y=30, color='red', linestyle='--', linewidth=1.5, label='30%')
+                ax1.set_title(f'%GRR per Die x Region', fontsize=10, fontweight='bold')
+                ax1.set_ylabel('%GRR', fontsize=9)
+                ax1.set_xticks(x_pos)
+                ax1.set_xticklabels(die_labels, rotation=45, fontsize=6)
+                ax1.legend(loc='upper right', fontsize=6, ncol=2)
+                ax1.grid(True, alpha=0.3, axis='y')
+
+                # Chart 2: Heatmap - Die x Region
+                heatmap_data = np.zeros((len(sorted_results), max_regions))
+                for di, drr in enumerate(all_region_grr):
+                    for ri, val in enumerate(drr):
+                        heatmap_data[di, ri] = val
+
+                im = ax2.imshow(heatmap_data, cmap='RdYlGn_r', aspect='auto', vmin=0, vmax=max(40, np.max(heatmap_data)))
+                ax2.set_yticks(range(len(die_labels)))
+                ax2.set_yticklabels(die_labels, fontsize=6)
+                ax2.set_xticks(range(max_regions))
+                ax2.set_xticklabels([f'R{i+1}' for i in range(max_regions)], fontsize=8)
+                ax2.set_title(f'%GRR Heatmap (Die x Region)', fontsize=10, fontweight='bold')
+
+                # Annotate with values
+                for di in range(len(sorted_results)):
+                    for ri in range(max_regions):
+                        if ri < len(all_region_grr[di]):
+                            val = all_region_grr[di][ri]
+                            text_color = 'white' if val > 25 else 'black'
+                            ax2.text(ri, di, f'{val:.1f}%', ha='center', va='center',
+                                    fontsize=5, color=text_color, fontweight='bold')
+
+                plt.colorbar(im, ax=ax2, label='%GRR', shrink=0.8)
+
+                fig.suptitle(f'{plm_type} PLM Pixel GRR - {plm_type}', fontsize=11, fontweight='bold')
+                fig.tight_layout()
+
+                img_stream = BytesIO()
+                fig.savefig(img_stream, format='png', dpi=150, bbox_inches='tight', facecolor='white')
+                plt.close(fig)
+                img_stream.seek(0)
+
+                s_chart_top_inches = 0.55 + min(0.24 * s_rows, 3.2) + 0.15
+                slide.shapes.add_picture(img_stream, Inches(0.2), Inches(min(s_chart_top_inches, 4.0)),
+                                        width=Inches(12.9), height=Inches(3.5))
+
+            except Exception as e:
+                print(f"[PLM-GAGE] Summary chart error: {e}")
+                import traceback
+                traceback.print_exc()
 
             slides_created += 1
 
@@ -28304,22 +28751,37 @@ grr_group_canvas.bind("<MouseWheel>", _on_grr_group_mousewheel)
 grr_group_inner_frame.bind("<MouseWheel>", _on_grr_group_mousewheel)
 
 def get_grr_group_slide_count(group_name):
-    """Get the number of slides that will be generated for this group.
-    Counts: 1 Overview + Summary pages (if enabled, paginated at 50) + Variance (if enabled) + Charts (if enabled)."""
+    """Get the number of slides that will be generated for this group."""
     if group_name in pptx_grr_group_data:
-        num_params = len(pptx_grr_group_data[group_name]["params"])
+        gdata = pptx_grr_group_data[group_name]
+        num_params = len(gdata.get("params", []))
     elif grr_grouped_parameters and group_name in grr_grouped_parameters:
         num_params = len(grr_grouped_parameters[group_name])
     else:
         num_params = 0
     if num_params == 0:
         return 0
+
+    # Special handling for PLM-GAGE group
+    if group_name == "📊 PLM-GAGE":
+        slide_count = 0
+        params = pptx_grr_group_data.get(group_name, {}).get("params", [])
+        d2r = pptx_grr_group_data.get(group_name, {}).get("display_to_raw", {})
+        num_dies = len(set((k[0], k[1]) for k in plm_pixel_grr_results.keys())) if plm_pixel_grr_results else 0
+        for dp in params:
+            raw = d2r.get(dp, dp)
+            if raw.endswith('_position'):
+                slide_count += num_dies + 1  # 1 per die + 1 summary
+            else:
+                slide_count += 1  # Mean or Median = 1 slide each
+        return max(1, slide_count)
+
     slide_count = 1  # Overview slide is always created
     try:
         if pptx_grr_calcparam_var.get():
             slide_count += 1
         if pptx_grr_summary_var.get():
-            slide_count += (num_params + 49) // 50  # 50 params per table slide
+            slide_count += (num_params + 49) // 50
         if pptx_grr_variance_var.get():
             slide_count += 1
         if pptx_grr_charts_var.get():
@@ -28603,52 +29065,7 @@ def populate_grr_group_data():
             "display_to_raw": display_to_raw,
         }
 
-    # ─── Add "Image Analysis PLM" special group for PLM Pixel GRR results ───
-    if plm_pixel_grr_results:
-        img_group_name = "🔬 Image Analysis PLM"
-        img_display = []
-        img_display_to_raw = {}
-
-        # Get all unique PLM types from results
-        plm_types_in_results = set()
-        for key in plm_pixel_grr_results.keys():
-            if len(key) >= 3:  # (die_x, die_y, plm_type)
-                plm_types_in_results.add(key[2])
-
-        # Add options for each PLM type
-        for plm_type in sorted(plm_types_in_results):
-            # Per-pixel metrics
-            metrics = [
-                (f"📊 {plm_type} - Pixel Mean", f"IMG_PLM_{plm_type}_mean"),
-                (f"📊 {plm_type} - Pixel StdDev", f"IMG_PLM_{plm_type}_std"),
-                (f"📊 {plm_type} - Pixel Min", f"IMG_PLM_{plm_type}_min"),
-                (f"📊 {plm_type} - Pixel Max", f"IMG_PLM_{plm_type}_max"),
-                (f"📊 {plm_type} - GRR %", f"IMG_PLM_{plm_type}_grr"),
-                (f"📊 {plm_type} - ndc", f"IMG_PLM_{plm_type}_ndc"),
-                (f"📈 {plm_type} - Per-Die Heatmap", f"IMG_PLM_{plm_type}_heatmap"),
-                (f"📋 {plm_type} - Region Summary Table", f"IMG_PLM_{plm_type}_regions"),
-            ]
-            for display, raw in metrics:
-                img_display.append(display)
-                img_display_to_raw[display] = raw
-
-        if img_display:
-            if img_group_name in existing_selections:
-                sel_var = tk.BooleanVar(value=existing_selections[img_group_name]["selected"])
-                kept_params = [p for p in existing_selections[img_group_name]["params"] if p in img_display]
-                if not kept_params:
-                    kept_params = list(img_display)
-            else:
-                sel_var = tk.BooleanVar(value=False)
-                kept_params = list(img_display)
-
-            pptx_grr_group_data[img_group_name] = {
-                "selected": sel_var,
-                "params": kept_params,
-                "all_params": img_display,
-                "display_to_raw": img_display_to_raw,
-            }
-            print(f"[GRR Report] Added Image Analysis PLM group with {len(img_display)} options")
+    # ─── (Image Analysis PLM group removed – all PLM analysis is now in PLM-GAGE) ───
 
     # ─── Add "PLM-GAGE" special group for PLM Pixel GRR with Mean/Median/Position-based ───
     if plm_pixel_grr_results:
@@ -29164,91 +29581,316 @@ def create_powerpoint_presentation():
         pptx_progress_var.set((current_step / total_steps) * 100)
         main_win.update()
 
-        # ============ Agenda Slide with Page Numbers ============
-        # Build agenda items based on selected content
-        agenda_items = []
-        current_page = 3  # Start after Title (1) and Agenda (2)
-
-        if include_wafermap:
-            agenda_items.append(("🗺️ Wafermap Analysis", current_page))
-            current_page += 2  # Wafermap + Bin Chart
-
-        if include_multi_wafer:
-            agenda_items.append(("📊 Multi-Wafer Analysis", current_page))
-            current_page += 2
-
-        if include_diffmap:
-            agenda_items.append(("📈 Difference Map", current_page))
-            current_page += 2
+        # ============ Agenda Slide with Table Layout ============
+        # Build agenda rows: (#, Group, Parameters, start_page, slides_count)
+        agenda_rows = []
+        current_page = 3  # Start after Title (1) + Agenda (2)
+        calc_param_counted = False  # Calc param slide counted only once
 
         if include_grr:
-            # Count selected GRR groups and estimate pages
-            grr_pages = 0
-            for gname, gdata in pptx_grr_group_data.items():
-                if gdata.get("selected") and gdata["selected"].get():
-                    grr_pages += max(1, len(gdata.get("params", [])) // 4)
-            agenda_items.append(("📐 Gage R&R Analysis", current_page))
-            current_page += max(1, grr_pages)
+            for gname in sorted(pptx_grr_group_data.keys()):
+                gdata = pptx_grr_group_data[gname]
+                if not (gdata.get("selected") and gdata["selected"].get()):
+                    continue
+                num_params = len(gdata.get("params", []))
+                if num_params == 0:
+                    continue
+                # Clean group name (remove emoji prefix)
+                clean_name = gname.lstrip("📊📐🔬🖼️ ").strip()
+                slides = get_grr_group_slide_count(gname)
+                # Calc param slide only once globally
+                if not calc_param_counted:
+                    try:
+                        if pptx_grr_calcparam_var.get():
+                            calc_param_counted = True
+                    except:
+                        pass
+                else:
+                    # Subtract 1 if this group counted calc param but it was already counted
+                    try:
+                        if pptx_grr_calcparam_var.get():
+                            slides = max(1, slides - 1)
+                    except:
+                        pass
+                start_page = current_page
+                end_page = current_page + slides - 1
+                agenda_rows.append((clean_name, num_params, start_page, end_page, slides))
+                current_page += slides
 
-        # Check for Image Analysis PLM
-        if plm_pixel_grr_results:
-            plm_types = set()
-            for k in plm_pixel_grr_results.keys():
-                if len(k) >= 3:
-                    plm_types.add(k[2])
-            if plm_types:
-                agenda_items.append(("🔬 Image Analysis PLM", current_page))
-                # Estimate: 1 per-die + 2 summary per type
-                current_page += len(plm_pixel_grr_results) + len(plm_types) * 2
+        # Add non-GRR sections if selected
+        if include_wafermap:
+            agenda_rows.insert(0, ("Wafermap Analysis", 1, 3, 4, 2))
+            # Shift all GRR pages by 2
+            if include_grr:
+                for i in range(1 if include_wafermap else 0, len(agenda_rows)):
+                    pass  # Pages already calculated above
 
-        # Check for PLM-GAGE group
-        if plm_pixel_grr_results:
-            plm_gage_selected = False
-            try:
-                if "📊 PLM-GAGE" in pptx_grr_group_data:
-                    gdata = pptx_grr_group_data["📊 PLM-GAGE"]
-                    if gdata.get("selected") and gdata["selected"].get():
-                        plm_gage_selected = True
-            except:
-                pass
-            if plm_gage_selected:
-                agenda_items.append(("📊 PLM-GAGE Analysis", current_page))
-                # Estimate pages: Position based = 1 per position, Mean/Median = 1 each
-                num_positions = len(plm_pixel_grr_results)
-                params_count = len(pptx_grr_group_data.get("📊 PLM-GAGE", {}).get("params", []))
-                # Position based adds 1 slide per position per PLM type
-                current_page += max(1, params_count + num_positions)
+        # Recalculate pages correctly: Title(1) + Agenda(2) + Calc Params(3) + content
+        agenda_rows = []
+        current_page = 4  # After Title(1) + Agenda(2) + Calc Params(3)
+
+        # Fixed slides first
+        agenda_rows.append(("📋 Agenda", "-", 2, 2, 1))
+        agenda_rows.append(("📖 Calculation Parameters", "-", 3, 3, 1))
+
+        # Pre-GRR sections
+        if include_wafermap:
+            agenda_rows.append(("🗺️ Wafermap Analysis", "-", current_page, current_page + 1, 2))
+            current_page += 2
+        if include_multi_wafer:
+            agenda_rows.append(("📊 Multi-Wafer Analysis", "-", current_page, current_page + 1, 2))
+            current_page += 2
+        if include_diffmap:
+            agenda_rows.append(("📈 Difference Map", "-", current_page, current_page + 1, 2))
+            current_page += 2
+
+        # GRR groups – normal groups first, then PLM-GAGE detailed
+        if include_grr:
+            for gname in sorted(pptx_grr_group_data.keys()):
+                gdata = pptx_grr_group_data[gname]
+                if not (gdata.get("selected") and gdata["selected"].get()):
+                    continue
+                num_params = len(gdata.get("params", []))
+                if num_params == 0:
+                    continue
+
+                # PLM-GAGE: break down per PLM-Type × Mode
+                if gname == "📊 PLM-GAGE":
+                    d2r = gdata.get("display_to_raw", {})
+                    num_dies = len(set((k[0], k[1]) for k in plm_pixel_grr_results.keys())) if plm_pixel_grr_results else 0
+
+                    # Group selected params by PLM type
+                    type_modes = {}
+                    for dp in gdata.get("params", []):
+                        raw = d2r.get(dp, dp)
+                        if raw.startswith('PLM_GAGE_'):
+                            parts = raw.replace('PLM_GAGE_', '').rsplit('_', 1)
+                            if len(parts) == 2:
+                                ptype, mode = parts
+                                type_modes.setdefault(ptype, []).append(mode)
+
+                    for ptype in sorted(type_modes.keys()):
+                        modes = type_modes[ptype]
+                        # Mean + Median first
+                        for mode in ['mean', 'median']:
+                            if mode in modes:
+                                label = f"📊 {ptype} - Pixel {mode.capitalize()}"
+                                agenda_rows.append((label, "-", current_page, current_page, 1))
+                                current_page += 1
+                        # Position based
+                        if 'position' in modes:
+                            slides = num_dies + 1  # 1 per die + 1 summary
+                            label = f"📍 {ptype} - Pixel Position based"
+                            end_page = current_page + slides - 1
+                            agenda_rows.append((label, f"{num_dies} dies", current_page, end_page, slides))
+                            current_page += slides
+                    continue
+
+                clean_name = gname.lstrip("📊📐🔬🖼️ ").strip()
+                slides = get_grr_group_slide_count(gname)
+                start_page = current_page
+                end_page = current_page + slides - 1
+                agenda_rows.append((clean_name, num_params, start_page, end_page, slides))
+                current_page += slides
 
         # Only add agenda slide if we have content
-        if agenda_items:
+        if agenda_rows:
             agenda_slide = prs.slides.add_slide(content_slide_layout)
 
-            # Title
-            title_box = agenda_slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12.333), Inches(0.8))
+            # Title: "Gage R&R Report - Agenda" (left-aligned, bold, black)
+            title_box = agenda_slide.shapes.add_textbox(Inches(0.5), Inches(0.15), Inches(12.333), Inches(0.7))
             title_para = title_box.text_frame.paragraphs[0]
-            title_para.text = "📋 Agenda"
-            title_para.font.size = Pt(36)
+            title_para.text = "Gage R&R Report - Agenda"
+            title_para.font.size = Pt(28)
             title_para.font.bold = True
-            title_para.alignment = PP_ALIGN.CENTER
+            title_para.font.color.rgb = RGBColor(0, 0, 0)
+            title_para.alignment = PP_ALIGN.LEFT
 
-            # Agenda items
-            content_box = agenda_slide.shapes.add_textbox(Inches(1), Inches(1.5), Inches(11.333), Inches(5.5))
-            content_frame = content_box.text_frame
-            content_frame.word_wrap = True
+            # Table dimensions
+            num_rows = len(agenda_rows) + 1  # +1 for header
+            num_cols = 5  # #, Group, Parameters, Pages, Slides
+            tbl_left = Inches(0.7)
+            tbl_top = Inches(1.0)
+            tbl_width = Inches(11.933)
+            tbl_height = Inches(0.35 * num_rows)
 
-            for i, (item_text, page_num) in enumerate(agenda_items):
-                if i == 0:
-                    p = content_frame.paragraphs[0]
+            # Limit table height to fit on slide
+            max_tbl_height = Inches(5.8)
+            if tbl_height > max_tbl_height:
+                tbl_height = max_tbl_height
+
+            table_shape = agenda_slide.shapes.add_table(num_rows, num_cols, tbl_left, tbl_top, tbl_width, tbl_height)
+            table = table_shape.table
+
+            # Column widths: #(0.7) Group(4.5) Parameters(2.0) Pages(2.5) Slides(2.233)
+            col_widths = [Inches(0.7), Inches(4.5), Inches(2.0), Inches(2.5), Inches(2.233)]
+            for ci, w in enumerate(col_widths):
+                table.columns[ci].width = w
+
+            # Header styling
+            header_bg = RGBColor(21, 101, 192)  # #1565C0 blue
+            header_texts = ["#", "Group", "Parameters", "Pages", "Slides"]
+            for ci, txt in enumerate(header_texts):
+                cell = table.cell(0, ci)
+                cell.text = ""
+                p = cell.text_frame.paragraphs[0]
+                p.text = txt
+                p.font.size = Pt(12)
+                p.font.bold = True
+                p.font.color.rgb = RGBColor(255, 255, 255)
+                p.alignment = PP_ALIGN.CENTER
+                cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = header_bg
+
+            # Data rows with alternating colors
+            row_bg_white = RGBColor(255, 255, 255)
+            row_bg_blue = RGBColor(219, 234, 254)  # light blue #DBEAFE
+            total_params = 0
+            total_slides = 0
+
+            for ri, (grp_name, n_params, pg_start, pg_end, n_slides) in enumerate(agenda_rows):
+                row_idx = ri + 1
+                bg = row_bg_white if ri % 2 == 0 else row_bg_blue
+                params_display = str(n_params)
+                if pg_start == pg_end:
+                    pages_display = f"Page {pg_start}"
                 else:
-                    p = content_frame.add_paragraph()
+                    pages_display = f"Page {pg_start}-{pg_end}"
 
-                p.text = f"  {item_text}"
-                p.font.size = Pt(24)
-                p.level = 0
+                row_data = [str(ri + 1), grp_name, params_display, pages_display, str(n_slides)]
+                # Alignment: # center, Group left, rest center
+                alignments = [PP_ALIGN.CENTER, PP_ALIGN.LEFT, PP_ALIGN.CENTER, PP_ALIGN.CENTER, PP_ALIGN.CENTER]
 
-                # Add page number (right-aligned would need separate textbox, using dots)
-                p.text += "  " + "·" * (40 - len(item_text)) + f"  Page {page_num}"
-                p.font.color.rgb = RGBColor(50, 50, 50)
+                for ci, (val, align) in enumerate(zip(row_data, alignments)):
+                    cell = table.cell(row_idx, ci)
+                    cell.text = ""
+                    p = cell.text_frame.paragraphs[0]
+                    p.text = val
+                    p.font.size = Pt(10)
+                    p.font.color.rgb = RGBColor(50, 50, 50)
+                    p.alignment = align
+                    cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+                    cell.fill.solid()
+                    cell.fill.fore_color.rgb = bg
+
+                if isinstance(n_params, int):
+                    total_params += n_params
+                total_slides += n_slides
+
+            # Summary footer text below table
+            footer_y = tbl_top + tbl_height + Inches(0.2)
+            footer_box = agenda_slide.shapes.add_textbox(Inches(0.7), footer_y, Inches(11.933), Inches(0.4))
+            footer_para = footer_box.text_frame.paragraphs[0]
+            footer_para.text = f"Total: {len(agenda_rows)} Groups | {total_params} Parameters | {total_slides} Slides"
+            footer_para.font.size = Pt(12)
+            footer_para.font.bold = True
+            footer_para.font.color.rgb = RGBColor(21, 101, 192)  # blue
+            footer_para.alignment = PP_ALIGN.LEFT
+
+        # ============ Calculation Parameters Slide ============
+        calc_param_slide = prs.slides.add_slide(content_slide_layout)
+
+        # Title
+        cp_title = calc_param_slide.shapes.add_textbox(Inches(0.3), Inches(0.05), Inches(12.7), Inches(0.55))
+        cp_p = cp_title.text_frame.paragraphs[0]
+        cp_p.text = "Gage R&R - Calculation Parameters"
+        cp_p.font.size = Pt(26)
+        cp_p.font.bold = True
+        cp_p.font.color.rgb = RGBColor(0, 0, 0)
+
+        # LEFT COLUMN: Basic Statistical Values + GRR Components
+        left_box = calc_param_slide.shapes.add_textbox(Inches(0.3), Inches(0.65), Inches(6.2), Inches(6.8))
+        left_frame = left_box.text_frame
+        left_frame.word_wrap = True
+
+        left_sections = [
+            ("BASIC STATISTICAL VALUES", RGBColor(128, 0, 0), True, Pt(13)),
+            ("", None, False, Pt(6)),
+            ("Mean (Mittelwert):", RGBColor(128, 0, 0), True, Pt(10)),
+            ("  Average of all measurements across all files and dies.", RGBColor(80, 80, 80), False, Pt(8)),
+            ("  Mean = Σ(xi) / n", RGBColor(0, 100, 0), False, Pt(9)),
+            ("", None, False, Pt(4)),
+            ("Std Dev (Standardabweichung):", RGBColor(128, 0, 0), True, Pt(10)),
+            ("  Measure of dispersion around the mean.", RGBColor(80, 80, 80), False, Pt(8)),
+            ("  σ = √[Σ(xi - Mean)² / n]", RGBColor(0, 100, 0), False, Pt(9)),
+            ("", None, False, Pt(4)),
+            ("Range (Spannweite):", RGBColor(128, 0, 0), True, Pt(10)),
+            ("  Difference between maximum and minimum.", RGBColor(80, 80, 80), False, Pt(8)),
+            ("  Range = Max - Min", RGBColor(0, 100, 0), False, Pt(9)),
+            ("", None, False, Pt(4)),
+            ("LSL / USL (Spec Limits):", RGBColor(128, 0, 0), True, Pt(10)),
+            ("  Statistical limits (k = sigma factor).", RGBColor(80, 80, 80), False, Pt(8)),
+            ("  LSL = Mean - kσ  |  USL = Mean + kσ", RGBColor(0, 100, 0), False, Pt(9)),
+            ("", None, False, Pt(8)),
+            ("GAGE R&R COMPONENTS", RGBColor(128, 0, 0), True, Pt(13)),
+            ("", None, False, Pt(6)),
+            ("Repeatability (EV):", RGBColor(128, 0, 0), True, Pt(10)),
+            ("  Variation within measurements of one file (equipment).", RGBColor(80, 80, 80), False, Pt(8)),
+            ("  EV = Mean(σ within each file)", RGBColor(0, 100, 0), False, Pt(9)),
+            ("", None, False, Pt(4)),
+            ("Reproducibility (AV):", RGBColor(128, 0, 0), True, Pt(10)),
+            ("  Variation between files/operators/trials.", RGBColor(80, 80, 80), False, Pt(8)),
+            ("  AV = σ(file means)", RGBColor(0, 100, 0), False, Pt(9)),
+            ("", None, False, Pt(4)),
+            ("GRR Total:", RGBColor(128, 0, 0), True, Pt(10)),
+            ("  Combined measurement system variation.", RGBColor(80, 80, 80), False, Pt(8)),
+            ("  GRR = R̄ / d₂  (Range Method)", RGBColor(0, 100, 0), False, Pt(9)),
+        ]
+
+        for i, (text, color, bold, size) in enumerate(left_sections):
+            p = left_frame.paragraphs[0] if i == 0 else left_frame.add_paragraph()
+            p.text = text
+            p.font.size = size
+            p.font.bold = bold
+            if color:
+                p.font.color.rgb = color
+
+        # RIGHT COLUMN: Assessment Metrics + Criteria + Interpretation
+        right_box = calc_param_slide.shapes.add_textbox(Inches(6.7), Inches(0.65), Inches(6.2), Inches(6.8))
+        right_frame = right_box.text_frame
+        right_frame.word_wrap = True
+
+        right_sections = [
+            ("ASSESSMENT METRICS", RGBColor(128, 0, 0), True, Pt(13)),
+            ("", None, False, Pt(6)),
+            ("%GRR (Prozent GRR):", RGBColor(128, 0, 0), True, Pt(10)),
+            ("  GRR as percentage of total variation or tolerance.", RGBColor(80, 80, 80), False, Pt(8)),
+            ("  %GRR = (GRR / TV) × 100  or  (GRR / Tolerance) × 100", RGBColor(0, 100, 0), False, Pt(9)),
+            ("", None, False, Pt(4)),
+            ("ndc (Using Total Variation):", RGBColor(128, 0, 0), True, Pt(10)),
+            ("  Number of distinct categories the system can distinguish.", RGBColor(80, 80, 80), False, Pt(8)),
+            ("  ndc = 1.41 × (TV / GRR)", RGBColor(0, 100, 0), False, Pt(9)),
+            ("", None, False, Pt(8)),
+            ("ASSESSMENT CRITERIA (AIAG MSA)", RGBColor(128, 0, 0), True, Pt(13)),
+            ("", None, False, Pt(6)),
+            ("🟢 EXCELLENT:  %GRR < 10%", RGBColor(56, 142, 60), True, Pt(11)),
+            ("  Measurement system is acceptable.", RGBColor(80, 80, 80), False, Pt(8)),
+            ("", None, False, Pt(4)),
+            ("🟡 ACCEPTABLE:  10% ≤ %GRR < 30%", RGBColor(255, 152, 0), True, Pt(11)),
+            ("  May be acceptable depending on application.", RGBColor(80, 80, 80), False, Pt(8)),
+            ("", None, False, Pt(4)),
+            ("🔴 UNACCEPTABLE:  %GRR ≥ 30%", RGBColor(244, 67, 54), True, Pt(11)),
+            ("  Measurement system must be improved.", RGBColor(80, 80, 80), False, Pt(8)),
+            ("", None, False, Pt(6)),
+            ("ndc ≥ 5:  Good measurement system", RGBColor(0, 0, 0), True, Pt(10)),
+            ("  Can distinguish ≥ 5 distinct categories.", RGBColor(80, 80, 80), False, Pt(8)),
+            ("", None, False, Pt(8)),
+            ("INTERPRETATION", RGBColor(128, 0, 0), True, Pt(13)),
+            ("", None, False, Pt(6)),
+            ("• High Repeatability → Equipment/method problem", RGBColor(50, 50, 50), False, Pt(9)),
+            ("• High Reproducibility → Operator/process/time problem", RGBColor(50, 50, 50), False, Pt(9)),
+            ("• ndc should be ≥ 5 for a good measurement system", RGBColor(50, 50, 50), False, Pt(9)),
+            ("• Values outside LSL/USL indicate outliers", RGBColor(50, 50, 50), False, Pt(9)),
+        ]
+
+        for i, (text, color, bold, size) in enumerate(right_sections):
+            p = right_frame.paragraphs[0] if i == 0 else right_frame.add_paragraph()
+            p.text = text
+            p.font.size = size
+            p.font.bold = bold
+            if color:
+                p.font.color.rgb = color
 
         # ============ Wafermap Slide with Bin Distribution ============
         # Determine which data to use - prefer multiple_stdf_data, then current_stdf_data

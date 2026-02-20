@@ -244,6 +244,17 @@ Data Octopus/
 | Auto Sequencer  | `c:\Users\szenklarz\Desktop\VS_Folder\Auto Sequencer\`   | Separates Projekt (Test-Sequenzierung) |
 | Data Octopus    | `c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\`     | **Dieses Projekt** (STDF-Analyse)   |
 
+### 10.1 Datenquellen
+
+| Quelle | Pfad / URL | Beschreibung |
+|--------|-----------|--------------|
+| **Manifold (Odin)** | `odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/tuskar/uled/incoming/tool_data/{TESTER}` | Produktions-Testdaten pro Anlage (z.B. `9ATE3`) |
+| **Lokal** | `Data Octopus\AM Data\` | Lokale Kopien der Testdaten für Offline-Arbeit |
+
+⚠️ Manifold ist ein **Meta-interner Webserver** – nur aus dem Firmen-Netzwerk erreichbar (nicht von zu Hause/VPN).
+Jede Anlage (Tester) hat einen eigenen Pfad (z.B. `9ATE3`). Dort liegen STDF, CSV, PLM-Dateien etc.
+PLM-Types auf Manifold: **Bridged, Bridged-Pixels, Stitched, UniformitySyn** und ggf. weitere je nach Testprogramm.
+
 ---
 
 ## 11. WICHTIGE DATEIPFADE
