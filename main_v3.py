@@ -1075,9 +1075,9 @@ notebook.add(tab_stdf_csv, text="🔄 STDF to CSV")
 tab_presentation = ttk.Frame(notebook)
 notebook.add(tab_presentation, text="📑 Report")
 
-# Tab 8: Settings Save/Load
+# Tab 8: Auto. Jobs Save/Load
 tab_settings = ttk.Frame(notebook)
-notebook.add(tab_settings, text="💾 Settings")
+notebook.add(tab_settings, text="🔄 Auto. Jobs")
 
 # Global variables for plot canvases
 canvas1 = None
@@ -19910,6 +19910,13 @@ grr_all_btn = tk.Button(
 )
 grr_all_btn.pack(side=tk.LEFT, padx=2)
 
+grr_unload_btn = tk.Button(
+    grr_wafer_nav_frame, text="🗑️",
+    command=grr_remove_all_wafers, font=("Helvetica", 8), width=3,
+    bg="#E74C3C", fg="white"
+)
+grr_unload_btn.pack(side=tk.LEFT, padx=2)
+
 # Wafer count label
 grr_wafer_count_var = tk.StringVar(value="0 Wafers")
 grr_wafer_count_label = tk.Label(
@@ -19917,6 +19924,10 @@ grr_wafer_count_label = tk.Label(
     font=("Helvetica", 9), bg='#f0f0f0', fg='#2C3E50'
 )
 grr_wafer_count_label.pack(side=tk.RIGHT, padx=5)
+
+# Load buttons frame (needed for buttons defined later)
+grr_load_btn_frame = tk.Frame(grr_wafer_panel, bg='#f0f0f0')
+grr_load_btn_frame.pack(fill=tk.X, padx=5, pady=2)
 
 # Separator
 ttk.Separator(grr_wafer_panel, orient='horizontal').pack(fill=tk.X, padx=5, pady=2)
@@ -20047,7 +20058,7 @@ def grr_refresh_wafer_list():
 
     count_text = f"{len(grr_file_data)} Wafer" if len(grr_file_data) == 1 else f"{len(grr_file_data)} Wafers"
     grr_wafer_count_var.set(count_text)
-    
+
     _grr_update_wafer_visuals()
     grr_wafer_list_canvas.configure(scrollregion=grr_wafer_list_canvas.bbox("all"))
 
@@ -32620,6 +32631,14 @@ def _gather_job_settings(job_keys):
             "loaded_files": [f.get("path", "") for f in grr_file_data] if grr_file_data else [],
             "selected_dies": [list(d) for d in grr_selected_dies] if grr_selected_dies else [],
             "selected_params": list(grr_selected_params) if grr_selected_params else [],
+            # NEU: Viz Group und Viz Param für Automatisierung
+            "viz_group": grr_viz_group_var.get() if grr_viz_group_var else "All Groups",
+            "viz_param": grr_viz_param_var.get() if grr_viz_param_var else "None",
+            # NEU: PLM Positionen (Regionen für PLM Pixel Analyse)
+            "plm_selected_areas": [
+                {"x": area["x"], "y": area["y"], "w": area["w"], "h": area["h"]}
+                for area in plm_selected_areas
+            ] if plm_selected_areas else [],
         }
         settings["grr_report_groups"] = {}
         try:
@@ -32752,6 +32771,23 @@ def _apply_settings(settings, only_jobs=None):
                 grr_calc_mode_var.set(grr["calc_mode"])
             if "ndc_use_total_variation" in grr:
                 grr_ndc_use_tv_var.set(grr["ndc_use_total_variation"])
+            # NEU: Viz Group und Viz Param laden
+            if "viz_group" in grr:
+                grr_viz_group_var.set(grr["viz_group"])
+            if "viz_param" in grr:
+                grr_viz_param_var.set(grr["viz_param"])
+            # NEU: PLM Positionen laden
+            if "plm_selected_areas" in grr and grr["plm_selected_areas"]:
+                global plm_selected_areas
+                plm_selected_areas = []
+                for area in grr["plm_selected_areas"]:
+                    plm_selected_areas.append({
+                        "x": area["x"],
+                        "y": area["y"],
+                        "w": area["w"],
+                        "h": area["h"],
+                        "rect_ids": []  # Wird beim Zeichnen neu erstellt
+                    })
         except Exception:
             pass
         try:
@@ -33097,6 +33133,8 @@ def load_selected_job():
         settings_status_var.set("✅ " + get_text("settings_job_loaded").format(name=job['name']))
         settings_status_label.config(fg='green')
         refresh_settings_preview(job["data"])
+        # Notify job loaded for Run Job section
+        _on_job_loaded(job["data"], job['name'])
     except Exception as e:
         settings_status_var.set("❌ " + get_text("settings_error_load").format(err=e))
         settings_status_label.config(fg='red')
@@ -33114,9 +33152,12 @@ def load_job_from_file():
         with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         _apply_settings(data)
+        job_name = data.get("_meta", {}).get("job_name", os.path.basename(file_path))
         settings_status_var.set("✅ " + get_text("settings_job_loaded_file").format(file=os.path.basename(file_path)))
         settings_status_label.config(fg='green')
         refresh_settings_preview(data)
+        # Notify job loaded for Run Job section
+        _on_job_loaded(data, job_name)
     except Exception as e:
         settings_status_var.set("❌ " + get_text("settings_error").format(err=e))
         settings_status_label.config(fg='red')
@@ -33177,6 +33218,142 @@ settings_delete_btn.pack(side=tk.LEFT, padx=5)
 tk.Button(load_btn_frame, text="🔄", font=("Helvetica", 10),
           bg='#FF9800', fg='white', relief='raised', padx=8, pady=5,
           command=refresh_job_list).pack(side=tk.LEFT, padx=5)
+
+# --- APPLY & RUN JOB SECTION ---
+run_section = tk.LabelFrame(settings_left_frame, text="🚀 Apply & Run Job",
+                             font=("Helvetica", 12, "bold"), bg='#f5f5f5', fg='#E65100')
+run_section.pack(fill=tk.X, padx=5, pady=5)
+
+# Info Label
+run_info_label = tk.Label(run_section,
+    text="1. Load Job → 2. Select Wafers → 3. Do Job",
+    font=("Helvetica", 9), bg='#f5f5f5', fg='#666')
+run_info_label.pack(fill=tk.X, padx=10, pady=2)
+
+# Wafer Selection Frame
+wafer_select_frame = tk.Frame(run_section, bg='#f5f5f5')
+wafer_select_frame.pack(fill=tk.X, padx=10, pady=5)
+
+tk.Label(wafer_select_frame, text="Apply on Wafer(s):",
+         font=("Helvetica", 9, "bold"), bg='#f5f5f5').pack(anchor='w')
+
+# Wafer Listbox mit Mehrfachauswahl
+job_wafer_listbox = tk.Listbox(wafer_select_frame, selectmode=tk.MULTIPLE, height=4,
+                                font=("Consolas", 9), exportselection=False)
+job_wafer_listbox.pack(fill=tk.X, pady=2)
+
+def refresh_job_wafer_list():
+    """Refresh the wafer list for job execution"""
+    job_wafer_listbox.delete(0, tk.END)
+    # Aus GRR geladene Wafer
+    for i, file_info in enumerate(grr_file_data):
+        wafer_id = file_info.get('wafer_id', f"Wafer {i+1}")
+        short_id = str(wafer_id)[:40] + "..." if len(str(wafer_id)) > 40 else str(wafer_id)
+        job_wafer_listbox.insert(tk.END, f"{i+1}. {short_id}")
+
+# Buttons Frame
+run_btn_frame = tk.Frame(run_section, bg='#f5f5f5')
+run_btn_frame.pack(fill=tk.X, padx=10, pady=5)
+
+def load_wafers_for_job():
+    """Load wafers directly in Auto Jobs tab"""
+    folder = filedialog.askdirectory(title="Select Wafer Folder")
+    if folder:
+        # Use existing GRR load function
+        load_grr_wafer_folder()
+        refresh_job_wafer_list()
+        settings_status_var.set(f"✅ Wafers loaded")
+        settings_status_label.config(fg='green')
+
+tk.Button(run_btn_frame, text="📂 Load Wafers", font=("Helvetica", 9, "bold"),
+          bg='#2E7D32', fg='white', command=load_wafers_for_job).pack(side=tk.LEFT, padx=2)
+
+tk.Button(run_btn_frame, text="🔄 Refresh", font=("Helvetica", 9),
+          bg='#607D8B', fg='white', command=refresh_job_wafer_list).pack(side=tk.LEFT, padx=2)
+
+tk.Button(run_btn_frame, text="☑ Select All", font=("Helvetica", 9),
+          bg='#4CAF50', fg='white',
+          command=lambda: job_wafer_listbox.select_set(0, tk.END)).pack(side=tk.LEFT, padx=2)
+
+# Loaded Job Info
+job_loaded_var = tk.StringVar(value="No job loaded")
+job_loaded_label = tk.Label(run_section, textvariable=job_loaded_var,
+                            font=("Helvetica", 9, "italic"), bg='#f5f5f5', fg='#1976D2')
+job_loaded_label.pack(fill=tk.X, padx=10, pady=2)
+
+# Store loaded job settings globally
+_loaded_job_settings = {}
+
+def do_job_action():
+    """Execute the loaded job on selected wafers"""
+    global _loaded_job_settings
+
+    if not _loaded_job_settings:
+        settings_status_var.set("⚠ No job loaded! Load a job first.")
+        settings_status_label.config(fg='#E65100')
+        return
+
+    selected_indices = job_wafer_listbox.curselection()
+    if not selected_indices:
+        settings_status_var.set("⚠ No wafers selected! Select wafers first.")
+        settings_status_label.config(fg='#E65100')
+        return
+
+    jobs_included = _loaded_job_settings.get("_meta", {}).get("jobs_included", [])
+
+    # Report Job ausführen
+    if "report" in jobs_included:
+        # Frage nach Speicherort
+        save_path = filedialog.asksaveasfilename(
+            title="Save Report PPT",
+            defaultextension=".pptx",
+            filetypes=[("PowerPoint files", "*.pptx"), ("All files", "*.*")],
+            initialfile=f"Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pptx"
+        )
+        if save_path:
+            settings_status_var.set(f"🚀 Running Report Job... Output: {os.path.basename(save_path)}")
+            settings_status_label.config(fg='#1976D2')
+            main_win.update_idletasks()
+            try:
+                # PPT erstellen mit geladenen Settings
+                create_pptx_report_with_settings(save_path, _loaded_job_settings)
+                settings_status_var.set(f"✅ Report created: {os.path.basename(save_path)}")
+                settings_status_label.config(fg='green')
+            except Exception as e:
+                settings_status_var.set(f"❌ Error: {e}")
+                settings_status_label.config(fg='red')
+    else:
+        settings_status_var.set("⚠ Job type not supported for auto-execution yet")
+        settings_status_label.config(fg='#E65100')
+
+def create_pptx_report_with_settings(save_path, job_settings):
+    """Create PPT report using the job settings"""
+    # Apply settings first
+    _apply_settings(job_settings)
+    main_win.update_idletasks()
+
+    # Call existing create_pptx function
+    # Set the output path
+    global pptx_output_path_var
+    pptx_output_path_var.set(save_path)
+
+    # Trigger PPT creation
+    create_pptx_report()
+
+# Do Job Button
+do_job_btn = tk.Button(run_section, text="▶ DO JOB", font=("Helvetica", 12, "bold"),
+                       bg='#E65100', fg='white', relief='raised', padx=20, pady=8,
+                       command=do_job_action)
+do_job_btn.pack(fill=tk.X, padx=10, pady=(5, 10))
+
+# Update job_loaded_var when job is loaded
+def _on_job_loaded(settings, job_name):
+    """Called when a job is loaded"""
+    global _loaded_job_settings
+    _loaded_job_settings = settings
+    jobs_included = settings.get("_meta", {}).get("jobs_included", [])
+    job_loaded_var.set(f"✅ Loaded: {job_name} ({', '.join(jobs_included)})")
+    refresh_job_wafer_list()
 
 # =============== RIGHT PANEL: Preview ===============
 settings_right_frame = tk.Frame(settings_paned, bg='white')

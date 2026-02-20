@@ -142,6 +142,8 @@ Data Octopus/
 | `3.1.3` | 20.02.2026 | `b0f471d` | Diffmap: extract_group_from_column() wie Wafer Tab |
 | `3.1.4` | 20.02.2026 | `dc4ea8d` | Diffmap: Debug-Prints entfernt, Cleanup |
 | `3.1.5` | 20.02.2026 | `8eac90d` | Diffmap: CSV-Lade-Logik mit Testnummern-Extraktion wie Wafer Tab |
+| `3.1.6` | 20.02.2026 | `d1f83f7` | GRR Tab: Wafer Selection UI wie Wafer Tab (Header, Buttons, Listbox Format) |
+| `3.1.7` | 20.02.2026 | (uncommitted) | Auto. Jobs Tab: Tab umbenannt, Apply & Run Job UI, GRR Settings erweitert |
 
 ---
 
@@ -268,6 +270,23 @@ Data Octopus/
 - Er will **sehen was passiert** (GUI starten, Output zeigen)
 - **"Mach einfach"** = implementieren, nicht diskutieren
 - Bei Fehlern: **sofort fixen**, nicht lang erklären warum
+- **⚠️ WICHTIG: Wenn etwas unklar ist → NACHFRAGEN wie es umzusetzen ist, BEVOR Code geschrieben wird!**
+
+---
+
+## 9.1 🚨 MONTAG 24.02.2026 – ERSTER SCHRITT
+
+**FRAGE SOFORT:**
+> "Wie sollen wir den Auto. Jobs Feature fertig machen? Folgende Punkte sind offen:
+> 1. **Load Wafers Button** - soll der einen Folder-Dialog öffnen oder Files einzeln?
+> 2. **Do Job für Report** - wie genau soll die PPT erstellt werden?
+> 3. **Report Gruppen/Parameter** - welche genau sollen gespeichert werden?"
+
+**Aktueller Stand v3.1.7 (WIP):**
+- ✅ Tab umbenannt: "Settings" → "🔄 Auto. Jobs"
+- ✅ Apply & Run Job UI hinzugefügt
+- ⚠️ Load Wafers Button noch nicht getestet
+- ⚠️ Do Job Funktion noch nicht fertig
 
 ---
 

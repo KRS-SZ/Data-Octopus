@@ -1,0 +1,301 @@
+{
+  "_meta": {
+    "saved_at": "2026-02-20 16:32:12",
+    "app": "Wafer Analysis Tool",
+    "version": "2.0",
+    "jobs_included": [
+      "report"
+    ],
+    "job_name": "Job_20260220_1629"
+  },
+  "report_includes": {
+    "wafermap": true,
+    "multi_wafer": false,
+    "grr": false,
+    "stats_table": false
+  },
+  "report_wafermap": {
+    "binmap": true,
+    "heatmap": true,
+    "stats": true,
+    "boxplot": true,
+    "histogram": true
+  },
+  "report_multi_wafer": {
+    "overview": false,
+    "comparison": false,
+    "yield": false,
+    "individual": false,
+    "selected_params": []
+  },
+  "report_diffmap": {
+    "heatmap": true,
+    "histogram": true,
+    "stats": true,
+    "sidebyside": true,
+    "selected_params": []
+  },
+  "report_grr": {
+    "summary": true,
+    "variance": true,
+    "charts": true,
+    "anova": true,
+    "calcparam": false
+  },
+  "report_template": {
+    "use_template": false,
+    "template_path": ""
+  },
+  "slide_layouts": {
+    "wafermap": {
+      "title": {
+        "x": 0.3,
+        "y": 0.15,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#1976D2",
+        "fill": "#E3F2FD",
+        "enabled": true,
+        "label": "Title"
+      },
+      "wafermap": {
+        "x": 0.3,
+        "y": 0.7,
+        "width": 6.0,
+        "height": 6.0,
+        "color": "#4CAF50",
+        "fill": "#E8F5E9",
+        "enabled": true,
+        "label": "Wafermap"
+      },
+      "boxplot": {
+        "x": 6.5,
+        "y": 0.7,
+        "width": 6.5,
+        "height": 3.0,
+        "color": "#FF9800",
+        "fill": "#FFF3E0",
+        "enabled": true,
+        "label": "Boxplot"
+      },
+      "histogram": {
+        "x": 6.5,
+        "y": 3.8,
+        "width": 6.5,
+        "height": 2.9,
+        "color": "#9C27B0",
+        "fill": "#F3E5F5",
+        "enabled": true,
+        "label": "Histogram"
+      },
+      "stats": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#607D8B",
+        "fill": "#ECEFF1",
+        "enabled": false,
+        "label": "Statistics"
+      },
+      "summary": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 6.0,
+        "height": 0.5,
+        "color": "#E91E63",
+        "fill": "#FCE4EC",
+        "enabled": false,
+        "label": "Summary"
+      }
+    },
+    "multi_wafer": {
+      "title": {
+        "x": 0.3,
+        "y": 0.15,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#1976D2",
+        "fill": "#E3F2FD",
+        "enabled": true,
+        "label": "Title"
+      },
+      "wafermap": {
+        "x": 0.3,
+        "y": 0.7,
+        "width": 6.0,
+        "height": 6.0,
+        "color": "#4CAF50",
+        "fill": "#E8F5E9",
+        "enabled": true,
+        "label": "Wafermap"
+      },
+      "boxplot": {
+        "x": 6.5,
+        "y": 0.7,
+        "width": 6.5,
+        "height": 3.0,
+        "color": "#FF9800",
+        "fill": "#FFF3E0",
+        "enabled": true,
+        "label": "Boxplot"
+      },
+      "histogram": {
+        "x": 6.5,
+        "y": 3.8,
+        "width": 6.5,
+        "height": 2.9,
+        "color": "#9C27B0",
+        "fill": "#F3E5F5",
+        "enabled": true,
+        "label": "Histogram"
+      },
+      "stats": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#607D8B",
+        "fill": "#ECEFF1",
+        "enabled": false,
+        "label": "Statistics"
+      },
+      "summary": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 6.0,
+        "height": 0.5,
+        "color": "#E91E63",
+        "fill": "#FCE4EC",
+        "enabled": false,
+        "label": "Summary"
+      }
+    },
+    "diffmap": {
+      "title": {
+        "x": 0.3,
+        "y": 0.15,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#1976D2",
+        "fill": "#E3F2FD",
+        "enabled": true,
+        "label": "Title"
+      },
+      "diffmap": {
+        "x": 0.3,
+        "y": 0.7,
+        "width": 6.0,
+        "height": 6.0,
+        "color": "#FF5722",
+        "fill": "#FBE9E7",
+        "enabled": true,
+        "label": "Diffmap"
+      },
+      "histogram": {
+        "x": 6.5,
+        "y": 0.7,
+        "width": 6.5,
+        "height": 3.0,
+        "color": "#9C27B0",
+        "fill": "#F3E5F5",
+        "enabled": true,
+        "label": "Histogram"
+      },
+      "reference": {
+        "x": 6.5,
+        "y": 3.8,
+        "width": 6.5,
+        "height": 2.9,
+        "color": "#2196F3",
+        "fill": "#E3F2FD",
+        "enabled": true,
+        "label": "Reference"
+      },
+      "stats": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#607D8B",
+        "fill": "#ECEFF1",
+        "enabled": false,
+        "label": "Statistics"
+      },
+      "summary": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 6.0,
+        "height": 0.5,
+        "color": "#E91E63",
+        "fill": "#FCE4EC",
+        "enabled": false,
+        "label": "Summary"
+      }
+    }
+  },
+  "grr_slide_layouts": {
+    "0": {
+      "title": {
+        "x": 0.3,
+        "y": 0.15,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#1976D2",
+        "fill": "#E3F2FD",
+        "enabled": true,
+        "label": "Title"
+      },
+      "grr_summary": {
+        "x": 0.3,
+        "y": 0.7,
+        "width": 6.0,
+        "height": 3.0,
+        "color": "#4CAF50",
+        "fill": "#E8F5E9",
+        "enabled": true,
+        "label": "GRR Summary"
+      },
+      "variance": {
+        "x": 6.5,
+        "y": 0.7,
+        "width": 6.5,
+        "height": 3.0,
+        "color": "#FF9800",
+        "fill": "#FFF3E0",
+        "enabled": true,
+        "label": "Variance"
+      },
+      "charts": {
+        "x": 0.3,
+        "y": 3.8,
+        "width": 6.0,
+        "height": 3.0,
+        "color": "#9C27B0",
+        "fill": "#F3E5F5",
+        "enabled": true,
+        "label": "Charts"
+      },
+      "anova": {
+        "x": 6.5,
+        "y": 3.8,
+        "width": 6.5,
+        "height": 3.0,
+        "color": "#2196F3",
+        "fill": "#E3F2FD",
+        "enabled": true,
+        "label": "ANOVA"
+      },
+      "stats": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#607D8B",
+        "fill": "#ECEFF1",
+        "enabled": false,
+        "label": "Statistics"
+      }
+    }
+  }
+}
