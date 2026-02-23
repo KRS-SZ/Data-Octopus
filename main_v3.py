@@ -4282,7 +4282,7 @@ charac_curve_frame = tk.Frame(heatmap_main_container)
 _cc_ctrl = tk.Frame(charac_curve_frame)
 _cc_ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
-# Row 1: X-Axis  (Group + Parameter)
+# Row 1: X-Axis Label + Parameter Listbox
 _cc_r1 = tk.Frame(_cc_ctrl)
 _cc_r1.pack(side=tk.TOP, fill=tk.X, pady=2)
 tk.Label(_cc_r1, text="X-Axis", font=("Helvetica", 9, "bold"), fg="#4CAF50").pack(side=tk.LEFT, padx=(0, 5))
@@ -4290,12 +4290,17 @@ tk.Label(_cc_r1, text="Group:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=(
 charac_x_group_var = tk.StringVar(value="All Groups")
 charac_x_group_combobox = ttk.Combobox(_cc_r1, textvariable=charac_x_group_var, state="readonly", width=15, font=("Helvetica", 9))
 charac_x_group_combobox.pack(side=tk.LEFT, padx=2)
-tk.Label(_cc_r1, text="Param:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=(8, 2))
-charac_x_var = tk.StringVar()
-charac_x_combobox = ttk.Combobox(_cc_r1, textvariable=charac_x_var, state="readonly", width=60, font=("Helvetica", 9))
-charac_x_combobox.pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
-# Row 2: Y-Axis  (Group + Parameter)
+# X-Axis: Multi-select Listbox
+_cc_x_list_frame = tk.Frame(_cc_r1)
+_cc_x_list_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 0))
+charac_x_listbox = tk.Listbox(_cc_x_list_frame, selectmode=tk.MULTIPLE, height=3, font=("Consolas", 8), exportselection=False)
+charac_x_listbox.pack(side=tk.LEFT, fill=tk.X, expand=True)
+_cc_x_scroll = ttk.Scrollbar(_cc_x_list_frame, orient="vertical", command=charac_x_listbox.yview)
+_cc_x_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+charac_x_listbox.config(yscrollcommand=_cc_x_scroll.set)
+
+# Row 2: Y-Axis Label + Parameter Listbox
 _cc_r2 = tk.Frame(_cc_ctrl)
 _cc_r2.pack(side=tk.TOP, fill=tk.X, pady=2)
 tk.Label(_cc_r2, text="Y-Axis", font=("Helvetica", 9, "bold"), fg="#2196F3").pack(side=tk.LEFT, padx=(0, 5))
@@ -4303,10 +4308,21 @@ tk.Label(_cc_r2, text="Group:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=(
 charac_y_group_var = tk.StringVar(value="All Groups")
 charac_y_group_combobox = ttk.Combobox(_cc_r2, textvariable=charac_y_group_var, state="readonly", width=15, font=("Helvetica", 9))
 charac_y_group_combobox.pack(side=tk.LEFT, padx=2)
-tk.Label(_cc_r2, text="Param:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=(8, 2))
+
+# Y-Axis: Multi-select Listbox
+_cc_y_list_frame = tk.Frame(_cc_r2)
+_cc_y_list_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 0))
+charac_y_listbox = tk.Listbox(_cc_y_list_frame, selectmode=tk.MULTIPLE, height=3, font=("Consolas", 8), exportselection=False)
+charac_y_listbox.pack(side=tk.LEFT, fill=tk.X, expand=True)
+_cc_y_scroll = ttk.Scrollbar(_cc_y_list_frame, orient="vertical", command=charac_y_listbox.yview)
+_cc_y_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+charac_y_listbox.config(yscrollcommand=_cc_y_scroll.set)
+
+# Keep old comboboxes for backward compatibility (hidden)
+charac_x_var = tk.StringVar()
+charac_x_combobox = ttk.Combobox(_cc_ctrl, textvariable=charac_x_var, state="readonly", width=60, font=("Helvetica", 9))
 charac_y_var = tk.StringVar()
-charac_y_combobox = ttk.Combobox(_cc_r2, textvariable=charac_y_var, state="readonly", width=60, font=("Helvetica", 9))
-charac_y_combobox.pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+charac_y_combobox = ttk.Combobox(_cc_ctrl, textvariable=charac_y_var, state="readonly", width=60, font=("Helvetica", 9))
 
 # Row 3: Options + Plot/Clear
 _cc_r3 = tk.Frame(_cc_ctrl)
@@ -4320,12 +4336,25 @@ ttk.Combobox(_cc_r3, textvariable=charac_plot_type_var, values=["Scatter", "Line
 tk.Button(_cc_r3, text="Plot", command=lambda: plot_charac_curve(), font=("Helvetica", 10, "bold"), bg="#4CAF50", fg="white", padx=15).pack(side=tk.LEFT, padx=5)
 tk.Button(_cc_r3, text="Clear", command=lambda: clear_charac_curve(), font=("Helvetica", 9)).pack(side=tk.LEFT, padx=2)
 
+# Selection info label
+charac_selection_var = tk.StringVar(value="Select parameters from both lists")
+tk.Label(_cc_r3, textvariable=charac_selection_var, font=("Helvetica", 8), fg="#666").pack(side=tk.RIGHT, padx=10)
+
 charac_status_var = tk.StringVar(value="Load data, then select parameters.")
 tk.Label(charac_curve_frame, textvariable=charac_status_var, font=("Helvetica", 9), fg="gray").pack(side=tk.TOP, fill=tk.X, padx=5)
 _cc_plot_frame = tk.Frame(charac_curve_frame)
 _cc_plot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
 _charac_canvas_ref = [None]
+
+# Update selection info when listbox selection changes
+def _update_charac_selection_info(event=None):
+    x_sel = charac_x_listbox.curselection()
+    y_sel = charac_y_listbox.curselection()
+    charac_selection_var.set(f"X: {len(x_sel)} param(s)  |  Y: {len(y_sel)} param(s)")
+
+charac_x_listbox.bind("<<ListboxSelect>>", _update_charac_selection_info)
+charac_y_listbox.bind("<<ListboxSelect>>", _update_charac_selection_info)
 
 # ============== STATISTICS DISPLAY FRAME (3rd tab, NOT packed at startup) ==============
 statistics_display_frame = tk.Frame(heatmap_main_container)
@@ -4454,21 +4483,29 @@ def _build_charac_param_list(group_name):
 
 
 def _on_charac_x_group_selected(event=None):
-    """Update X param combobox when X-group changes."""
+    """Update X param listbox when X-group changes."""
     params = _build_charac_param_list(charac_x_group_var.get())
+    charac_x_listbox.delete(0, tk.END)
+    for p in params:
+        charac_x_listbox.insert(tk.END, p)
+    # Also update old combobox for backward compatibility
     charac_x_combobox["values"] = params
     if params:
         charac_x_combobox.current(0)
-    charac_status_var.set(f"X: {len(params)} params  |  Y: {len(charac_y_combobox['values'])} params")
+    _update_charac_selection_info()
 
 
 def _on_charac_y_group_selected(event=None):
-    """Update Y param combobox when Y-group changes."""
+    """Update Y param listbox when Y-group changes."""
     params = _build_charac_param_list(charac_y_group_var.get())
+    charac_y_listbox.delete(0, tk.END)
+    for p in params:
+        charac_y_listbox.insert(tk.END, p)
+    # Also update old combobox for backward compatibility
     charac_y_combobox["values"] = params
     if params:
         charac_y_combobox.current(min(1, len(params) - 1))
-    charac_status_var.set(f"X: {len(charac_x_combobox['values'])} params  |  Y: {len(params)} params")
+    _update_charac_selection_info()
 
 
 charac_x_group_combobox.bind("<<ComboboxSelected>>", _on_charac_x_group_selected)
@@ -4545,43 +4582,119 @@ def _get_cc_col(df, p):
 
 
 def plot_charac_curve():
-    xp, yp = charac_x_var.get(), charac_y_var.get()
-    if not xp or not yp or xp == "(No data loaded)":
-        charac_status_var.set("Select X and Y parameters first.")
+    """Plot characteristic curves with support for multiple X and Y parameters."""
+    # Get selected parameters from listboxes
+    x_indices = charac_x_listbox.curselection()
+    y_indices = charac_y_listbox.curselection()
+
+    x_params = [charac_x_listbox.get(i) for i in x_indices] if x_indices else []
+    y_params = [charac_y_listbox.get(i) for i in y_indices] if y_indices else []
+
+    # Fallback to old combobox if listbox empty
+    if not x_params and charac_x_var.get():
+        x_params = [charac_x_var.get()]
+    if not y_params and charac_y_var.get():
+        y_params = [charac_y_var.get()]
+
+    if not x_params or not y_params:
+        charac_status_var.set("Select at least 1 X and 1 Y parameter.")
+        return
+    if "(No data loaded)" in x_params[0]:
+        charac_status_var.set("No data loaded.")
         return
     if not multiple_stdf_data:
         charac_status_var.set("No data loaded.")
         return
+
     fig, ax, canvas = _ensure_charac_canvas()
     ax.clear()
-    colors = plt.cm.tab10.colors
+
+    # Color palette - extended for many combinations
+    base_colors = list(plt.cm.tab10.colors) + list(plt.cm.Set2.colors) + list(plt.cm.Dark2.colors)
+
     total = 0
     pt = charac_plot_type_var.get()
-    for i, df in enumerate(multiple_stdf_data):
-        xc, yc = _get_cc_col(df, xp), _get_cc_col(df, yp)
-        if xc is None or yc is None:
-            continue
-        xd, yd = df[xc].dropna(), df[yc].dropna()
-        ci = xd.index.intersection(yd.index)
+    color_idx = 0
+    legend_entries = []
+
+    # Plot each X-Y combination
+    for xp in x_params:
+        for yp in y_params:
+            if charac_per_wafer_var.get():
+                # Color per wafer - plot each wafer separately
+                for i, df in enumerate(multiple_stdf_data):
+                    xc, yc = _get_cc_col(df, xp), _get_cc_col(df, yp)
+                    if xc is None or yc is None:
+                        continue
+                    xd, yd = df[xc].dropna(), df[yc].dropna()
+                    ci = xd.index.intersection(yd.index)
+                    try:
+                        xv = xd.loc[ci].values.astype(float)
+                        yv = yd.loc[ci].values.astype(float)
+                    except (ValueError, TypeError):
+                        continue
+                    si = np.argsort(xv)
+                    xv, yv = xv[si], yv[si]
+
+                    c = base_colors[color_idx % len(base_colors)]
+                    wafer_id = multiple_wafer_ids[i] if i < len(multiple_wafer_ids) else f"W{i+1}"
+                    # Shorten param names for legend
+                    xp_short = xp.split(":")[-1].strip()[:20] if ":" in xp else xp[:20]
+                    yp_short = yp.split(":")[-1].strip()[:20] if ":" in yp else yp[:20]
+                    lb = f"{yp_short} vs {xp_short} ({wafer_id})"
+
+                    total += len(xv)
+                    if pt == "Scatter":
+                        ax.scatter(xv, yv, s=12, alpha=0.6, color=c, label=lb)
+                    elif pt == "Line":
+                        ax.plot(xv, yv, linewidth=1.2, alpha=0.8, color=c, label=lb)
+                    else:
+                        ax.scatter(xv, yv, s=10, alpha=0.5, color=c)
+                        ax.plot(xv, yv, linewidth=0.8, alpha=0.6, color=c, label=lb)
+
+                    color_idx += 1
+            else:
+                # Single color per parameter combination - combine all wafers
+                all_xv, all_yv = [], []
+                for i, df in enumerate(multiple_stdf_data):
+                    xc, yc = _get_cc_col(df, xp), _get_cc_col(df, yp)
+                    if xc is None or yc is None:
+                        continue
+                    xd, yd = df[xc].dropna(), df[yc].dropna()
+                    ci = xd.index.intersection(yd.index)
+                    try:
+                        xv = xd.loc[ci].values.astype(float)
+                        yv = yd.loc[ci].values.astype(float)
+                        all_xv.extend(xv)
+                        all_yv.extend(yv)
+                    except (ValueError, TypeError):
+                        continue
+
+                if all_xv:
+                    xv, yv = np.array(all_xv), np.array(all_yv)
+                    si = np.argsort(xv)
+                    xv, yv = xv[si], yv[si]
+
+                    c = base_colors[color_idx % len(base_colors)]
+                    xp_short = xp.split(":")[-1].strip()[:20] if ":" in xp else xp[:20]
+                    yp_short = yp.split(":")[-1].strip()[:20] if ":" in yp else yp[:20]
+                    lb = f"{yp_short} vs {xp_short}"
+
+                    total += len(xv)
+                    if pt == "Scatter":
+                        ax.scatter(xv, yv, s=12, alpha=0.6, color=c, label=lb)
+                    elif pt == "Line":
+                        ax.plot(xv, yv, linewidth=1.2, alpha=0.8, color=c, label=lb)
+                    else:
+                        ax.scatter(xv, yv, s=10, alpha=0.5, color=c)
+                        ax.plot(xv, yv, linewidth=0.8, alpha=0.6, color=c, label=lb)
+
+                    color_idx += 1
+
+    # Show limits for Y parameters (only if single Y selected)
+    if charac_show_limits_var.get() and len(y_params) == 1:
         try:
-            xv = xd.loc[ci].values.astype(float)
-            yv = yd.loc[ci].values.astype(float)
-        except (ValueError, TypeError):
-            continue
-        si = np.argsort(xv)
-        xv, yv = xv[si], yv[si]
-        c = colors[i % len(colors)] if charac_per_wafer_var.get() else colors[0]
-        lb = multiple_wafer_ids[i] if i < len(multiple_wafer_ids) else f"Wafer {i+1}"
-        total += len(xv)
-        if pt == "Scatter":
-            ax.scatter(xv, yv, s=12, alpha=0.6, color=c, label=lb)
-        elif pt == "Line":
-            ax.plot(xv, yv, linewidth=1.2, alpha=0.8, color=c, label=lb)
-        else:
-            ax.scatter(xv, yv, s=10, alpha=0.5, color=c)
-            ax.plot(xv, yv, linewidth=0.8, alpha=0.6, color=c, label=lb)
-    if charac_show_limits_var.get():
-        try:
+            yp = y_params[0]
             left = yp.split(":")[0].strip()
             if left.startswith("test_"):
                 left = left[5:]
@@ -4594,14 +4707,36 @@ def plot_charac_curve():
                     ax.axhline(y=float(lm["hi_limit"]), color="red", linestyle="--", linewidth=1, alpha=0.7, label=f"Hi: {lm['hi_limit']}")
         except (ValueError, TypeError):
             pass
-    ax.set_xlabel(xp, fontsize=9)
-    ax.set_ylabel(yp, fontsize=9)
-    ax.set_title(f"{yp}  vs  {xp}", fontsize=10, fontweight="bold")
+
+    # Axis labels
+    if len(x_params) == 1:
+        ax.set_xlabel(x_params[0], fontsize=9)
+    else:
+        ax.set_xlabel(f"{len(x_params)} X parameters", fontsize=9)
+
+    if len(y_params) == 1:
+        ax.set_ylabel(y_params[0], fontsize=9)
+    else:
+        ax.set_ylabel(f"{len(y_params)} Y parameters", fontsize=9)
+
+    # Title
+    if len(x_params) == 1 and len(y_params) == 1:
+        ax.set_title(f"{y_params[0]}  vs  {x_params[0]}", fontsize=10, fontweight="bold")
+    else:
+        ax.set_title(f"Multi-Parameter Characteristic Curves ({len(x_params)} X × {len(y_params)} Y)", fontsize=10, fontweight="bold")
+
     ax.grid(True, alpha=0.3)
-    ax.legend(fontsize=8, loc="best")
+
+    # Legend - place outside if many entries
+    if color_idx <= 10:
+        ax.legend(fontsize=7, loc="best")
+    else:
+        ax.legend(fontsize=6, loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0)
+        fig.subplots_adjust(right=0.75)
+
     fig.tight_layout()
     canvas.draw()
-    charac_status_var.set(f"{total} points from {len(multiple_stdf_data)} wafer(s)")
+    charac_status_var.set(f"{total} points | {len(x_params)} X × {len(y_params)} Y params | {len(multiple_stdf_data)} wafer(s)")
 
 
 def clear_charac_curve():
