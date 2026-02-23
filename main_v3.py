@@ -1812,6 +1812,7 @@ def load_mc300_file():
         mc300_group = f"MC300_{header_info['recipe']}"
         grouped_parameters[mc300_group] = []
 
+        param_idx = 1
         for i, param in enumerate(param_definitions):
             if i != x_idx and i != y_idx:
                 col_name = f"{param['name']}"
@@ -1820,9 +1821,11 @@ def load_mc300_file():
                 if param['condition']:
                     col_name += f"_{param['condition']}"
 
-                test_key = f"test_{i+1}"
-                test_parameters[test_key] = col_name
-                grouped_parameters[mc300_group].append((i+1, col_name, col_name))
+                # test_key muss auf den SPALTENNAMEN zeigen, nicht auf eine Nummer!
+                test_key = f"test_{param_idx}"
+                test_parameters[test_key] = col_name  # col_name ist der DataFrame-Spaltenname
+                grouped_parameters[mc300_group].append((param_idx, col_name, col_name))
+                param_idx += 1
 
         # Update UI
         update_wafer_tab_selection_list()
@@ -6416,10 +6419,20 @@ def update_multi_stdf_heatmap():
         return
     else:
         test_key = selected.split(":")[0].strip()
-        if test_key.startswith("test_"):
-            param_column = int(test_key.replace("test_", ""))
+        # Prüfe ob der test_key in test_parameters existiert und verwende den Spaltennamen
+        if test_key in test_parameters:
+            param_column = test_parameters[test_key]  # Verwende den tatsächlichen Spaltennamen
+        elif test_key.startswith("test_"):
+            # Fallback für alte Logik (STDF/CSV mit numerischen Spalten)
+            param_num = int(test_key.replace("test_", ""))
+            if param_num in df.columns:
+                param_column = param_num
+            elif test_key in test_parameters:
+                param_column = test_parameters[test_key]
+            else:
+                param_column = param_num
         else:
-            param_column = int(test_key)
+            param_column = int(test_key) if test_key.isdigit() else test_key
         param_label = selected
 
     # Single wafer display - larger figure
