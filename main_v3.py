@@ -1827,7 +1827,7 @@ def load_mc300_file():
         # Update UI
         update_wafer_tab_selection_list()
         update_group_combobox()
-        update_param_dropdown()
+        on_group_selected()
         refresh_heatmap_display()
 
         print(f"Successfully loaded MC-300 file: {len(die_data)} dies, {len(param_definitions)-2} parameters")
