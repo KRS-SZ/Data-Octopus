@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.1.6"
+APP_VERSION = "3.1.7"
 
 import sys
 
@@ -26,7 +26,7 @@ except ImportError:
     pass
 
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import filedialog, ttk, simpledialog, messagebox
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -106,6 +106,20 @@ GOOGLE_SCOPES = [
     'https://www.googleapis.com/auth/drive.file',
     'https://www.googleapis.com/auth/presentations',
 ]
+
+# ============================================================================
+# Standard-Ordner für Datei-Dialoge (laut Rules-File Abschnitt 11)
+# ============================================================================
+APP_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_JOBS_DIR = os.path.join(APP_BASE_DIR, "Jobs")
+DEFAULT_REPORT_DIR = os.path.join(APP_BASE_DIR, "Report", "Auto Report")
+DEFAULT_DATA_DIR = os.path.join(APP_BASE_DIR, "AM Data")
+
+# Erstelle Ordner falls sie nicht existieren
+for dir_path in [DEFAULT_JOBS_DIR, DEFAULT_REPORT_DIR, DEFAULT_DATA_DIR]:
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path, exist_ok=True)
+        print(f"Created directory: {dir_path}")
 
 print("Starting application...")
 
@@ -29584,8 +29598,12 @@ def figure_to_image_bytes(fig, dpi=150):
     return buf
 
 
-def create_powerpoint_presentation():
-    """Create a professional PowerPoint presentation from the selected data"""
+def create_powerpoint_presentation(output_path=None):
+    """Create a professional PowerPoint presentation from the selected data
+    
+    Args:
+        output_path: Optional path to save the PPTX. If None, shows file dialog.
+    """
     if not PPTX_AVAILABLE:
         pptx_status_label.config(text="Error: python-pptx not installed. Run: pip install python-pptx", fg="red")
         return
@@ -29611,22 +29629,24 @@ def create_powerpoint_presentation():
             pptx_status_label.config(text="Error: Google API not available. Install with: pip install google-api-python-client google-auth-oauthlib", fg="red")
             return
 
-    # Get save path for local save, or use temp file for Google upload
-    save_path = None
-    if save_method == "local":
-        save_path = filedialog.asksaveasfilename(
-            title="Save PowerPoint Presentation",
-            defaultextension=".pptx",
-            filetypes=[("PowerPoint files", "*.pptx"), ("All files", "*.*")],
-            initialfile=f"{pptx_title_var.get().replace(' ', '_')}.pptx"
-        )
-        if not save_path:
-            return
-    else:
-        # Use temp file for Google upload
-        import tempfile
-        temp_dir = tempfile.gettempdir()
-        save_path = os.path.join(temp_dir, f"{pptx_title_var.get().replace(' ', '_')}.pptx")
+    # Get save path - use provided path OR show dialog OR use temp file
+    save_path = output_path  # Use provided path if given
+    if save_path is None:
+        if save_method == "local":
+            save_path = filedialog.asksaveasfilename(
+                title="Save PowerPoint Presentation",
+                initialdir=DEFAULT_REPORT_DIR,
+                defaultextension=".pptx",
+                filetypes=[("PowerPoint files", "*.pptx"), ("All files", "*.*")],
+                initialfile=f"{pptx_title_var.get().replace(' ', '_')}.pptx"
+            )
+            if not save_path:
+                return
+        else:
+            # Use temp file for Google upload
+            import tempfile
+            temp_dir = tempfile.gettempdir()
+            save_path = os.path.join(temp_dir, f"{pptx_title_var.get().replace(' ', '_')}.pptx")
 
     pptx_status_label.config(text="Generating PowerPoint...", fg="blue")
     pptx_progress_var.set(0)
@@ -33057,6 +33077,7 @@ def save_job_as_file_action():
     job_name = settings_job_name_var.get().strip() or "settings"
     file_path = filedialog.asksaveasfilename(
         title=get_text("settings_save_dialog_title"),
+        initialdir=DEFAULT_JOBS_DIR,
         defaultextension=".json",
         filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
         initialfile=f"{job_name}.json"
@@ -33144,6 +33165,7 @@ def load_job_from_file():
     """Load a job from an external JSON file."""
     file_path = filedialog.askopenfilename(
         title=get_text("settings_load_dialog_title"),
+        initialdir=DEFAULT_JOBS_DIR,
         filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
     )
     if not file_path:
@@ -33220,66 +33242,177 @@ tk.Button(load_btn_frame, text="🔄", font=("Helvetica", 10),
           command=refresh_job_list).pack(side=tk.LEFT, padx=5)
 
 # --- APPLY & RUN JOB SECTION ---
-run_section = tk.LabelFrame(settings_left_frame, text="🚀 Apply & Run Job",
+run_section = tk.LabelFrame(settings_left_frame, text="🚀 Execute Job",
                              font=("Helvetica", 12, "bold"), bg='#f5f5f5', fg='#E65100')
 run_section.pack(fill=tk.X, padx=5, pady=5)
 
-# Info Label
-run_info_label = tk.Label(run_section,
-    text="1. Load Job → 2. Select Wafers → 3. Do Job",
-    font=("Helvetica", 9), bg='#f5f5f5', fg='#666')
-run_info_label.pack(fill=tk.X, padx=10, pady=2)
+# === STEP 1: Load Job ===
+step1_frame = tk.LabelFrame(run_section, text="① Load Job",
+                             font=("Helvetica", 10, "bold"), bg='#e3f2fd', fg='#1565C0')
+step1_frame.pack(fill=tk.X, padx=10, pady=5)
 
-# Wafer Selection Frame
-wafer_select_frame = tk.Frame(run_section, bg='#f5f5f5')
-wafer_select_frame.pack(fill=tk.X, padx=10, pady=5)
+job_loaded_var = tk.StringVar(value="No job loaded")
+job_loaded_label = tk.Label(step1_frame, textvariable=job_loaded_var,
+                            font=("Helvetica", 9), bg='#e3f2fd', fg='#666')
+job_loaded_label.pack(fill=tk.X, padx=10, pady=5)
 
-tk.Label(wafer_select_frame, text="Apply on Wafer(s):",
-         font=("Helvetica", 9, "bold"), bg='#f5f5f5').pack(anchor='w')
+step1_info = tk.Label(step1_frame, text="Select a job from the list above and click 'Load & Apply'",
+                      font=("Helvetica", 8, "italic"), bg='#e3f2fd', fg='#888')
+step1_info.pack(fill=tk.X, padx=10, pady=(0, 5))
 
-# Wafer Listbox mit Mehrfachauswahl
-job_wafer_listbox = tk.Listbox(wafer_select_frame, selectmode=tk.MULTIPLE, height=4,
+# === STEP 2: Load Wafers ===
+step2_frame = tk.LabelFrame(run_section, text="② Load Wafers",
+                             font=("Helvetica", 10, "bold"), bg='#e8f5e9', fg='#2E7D32')
+step2_frame.pack(fill=tk.X, padx=10, pady=5)
+
+# Wafer Listbox
+job_wafer_listbox = tk.Listbox(step2_frame, selectmode=tk.MULTIPLE, height=4,
                                 font=("Consolas", 9), exportselection=False)
-job_wafer_listbox.pack(fill=tk.X, pady=2)
+job_wafer_listbox.pack(fill=tk.X, padx=10, pady=5)
 
 def refresh_job_wafer_list():
     """Refresh the wafer list for job execution"""
     job_wafer_listbox.delete(0, tk.END)
-    # Aus GRR geladene Wafer
     for i, file_info in enumerate(grr_file_data):
         wafer_id = file_info.get('wafer_id', f"Wafer {i+1}")
         short_id = str(wafer_id)[:40] + "..." if len(str(wafer_id)) > 40 else str(wafer_id)
         job_wafer_listbox.insert(tk.END, f"{i+1}. {short_id}")
 
-# Buttons Frame
-run_btn_frame = tk.Frame(run_section, bg='#f5f5f5')
-run_btn_frame.pack(fill=tk.X, padx=10, pady=5)
+# Buttons Frame for Step 2
+step2_btn_frame = tk.Frame(step2_frame, bg='#e8f5e9')
+step2_btn_frame.pack(fill=tk.X, padx=10, pady=5)
 
 def load_wafers_for_job():
-    """Load wafers directly in Auto Jobs tab"""
-    folder = filedialog.askdirectory(title="Select Wafer Folder")
-    if folder:
-        # Use existing GRR load function
-        load_grr_wafer_folder()
-        refresh_job_wafer_list()
-        settings_status_var.set(f"✅ Wafers loaded")
+    """Load wafers directly in Auto Jobs tab - supports multiple folders"""
+    global grr_file_data
+    
+    num_wafers = simpledialog.askinteger(
+        "Load Wafers",
+        "How many Wafer folders do you want to load?\n(Each folder should contain CSVFiles/, PLMFiles/, etc.)",
+        initialvalue=3, minvalue=1, maxvalue=20
+    )
+    if not num_wafers:
+        return
+    
+    settings_status_var.set(f"Select {num_wafers} Wafer folder(s)...")
+    settings_status_label.config(fg='#1976D2')
+    main_win.update_idletasks()
+    
+    csv_folder_names = ['csvfiles', 'csv', 'csv_files', 'csvdata']
+    plm_folder_names = ['plmfiles', 'plm', 'plm_files', 'plmdata']
+    stdf_folder_names = ['stddatalog', 'stdf', 'stdf_files', 'stdfdata']
+    image_folder_names = ['imagecaptures', 'images', 'image_captures', 'captures']
+    
+    existing_paths = {f['path'] for f in grr_file_data}
+    loaded_count = 0
+    
+    for i in range(num_wafers):
+        wafer_folder = filedialog.askdirectory(
+            title=f"Select Wafer Folder {i+1} of {num_wafers}",
+            initialdir=DEFAULT_DATA_DIR
+        )
+        if not wafer_folder:
+            break
+        if wafer_folder in existing_paths:
+            print(f"[Auto Jobs] Skipping duplicate: {wafer_folder}")
+            continue
+        
+        settings_status_var.set(f"Loading wafer {i+1}: {os.path.basename(wafer_folder)}...")
+        main_win.update_idletasks()
+        
+        csv_folder = None
+        plm_folder = None
+        image_folder = None
+        
+        try:
+            items = os.listdir(wafer_folder)
+            items_lower = {item.lower(): item for item in items}
+            
+            for name in csv_folder_names:
+                if name in items_lower:
+                    csv_folder = os.path.join(wafer_folder, items_lower[name])
+                    break
+            
+            for name in plm_folder_names:
+                if name in items_lower:
+                    plm_folder = os.path.join(wafer_folder, items_lower[name])
+                    break
+            
+            for name in image_folder_names:
+                if name in items_lower:
+                    image_folder = os.path.join(wafer_folder, items_lower[name])
+                    break
+            
+            if csv_folder and os.path.isdir(csv_folder):
+                csv_files = [f for f in os.listdir(csv_folder) if f.lower().endswith('.csv')]
+                if csv_files:
+                    csv_path = os.path.join(csv_folder, csv_files[0])
+                    df_csv = pd.read_csv(csv_path, delimiter=',')
+                    
+                    x_col = None
+                    y_col = None
+                    for col in df_csv.columns:
+                        col_lower = col.lower().strip()
+                        if col_lower in ['x', 'x_coord', 'x_coordinate', 'xcoord', 'die_x']:
+                            x_col = col
+                        elif col_lower in ['y', 'y_coord', 'y_coordinate', 'ycoord', 'die_y']:
+                            y_col = col
+                    
+                    if x_col and y_col:
+                        df_csv[x_col] = pd.to_numeric(df_csv[x_col], errors='coerce')
+                        df_csv[y_col] = pd.to_numeric(df_csv[y_col], errors='coerce')
+                        df_csv = df_csv.rename(columns={x_col: 'x', y_col: 'y'})
+                        
+                        param_cols = []
+                        for col in df_csv.columns:
+                            if col not in ['x', 'y']:
+                                df_csv[col] = pd.to_numeric(df_csv[col], errors='coerce')
+                                if df_csv[col].notna().any():
+                                    param_cols.append(col)
+                        
+                        file_info = {
+                            'path': wafer_folder,
+                            'type': 'csv_wafermap',
+                            'data': df_csv,
+                            'wafer_id': os.path.basename(wafer_folder),
+                            'params': param_cols,
+                            'csv_path': csv_path,
+                        }
+                        
+                        if plm_folder and os.path.isdir(plm_folder):
+                            file_info['plm_dir'] = plm_folder
+                        if image_folder and os.path.isdir(image_folder):
+                            file_info['image_dir'] = image_folder
+                        
+                        grr_file_data.append(file_info)
+                        existing_paths.add(wafer_folder)
+                        loaded_count += 1
+                        print(f"[Auto Jobs] Loaded: {os.path.basename(wafer_folder)} - {len(param_cols)} params")
+        except Exception as e:
+            print(f"[Auto Jobs] Error loading {wafer_folder}: {e}")
+    
+    refresh_job_wafer_list()
+    if loaded_count > 0:
+        settings_status_var.set(f"Loaded {loaded_count} wafer(s)")
         settings_status_label.config(fg='green')
+    else:
+        settings_status_var.set("No wafers loaded")
+        settings_status_label.config(fg='#E65100')
 
-tk.Button(run_btn_frame, text="📂 Load Wafers", font=("Helvetica", 9, "bold"),
+tk.Button(step2_btn_frame, text="📂 Load Wafers", font=("Helvetica", 9, "bold"),
           bg='#2E7D32', fg='white', command=load_wafers_for_job).pack(side=tk.LEFT, padx=2)
 
-tk.Button(run_btn_frame, text="🔄 Refresh", font=("Helvetica", 9),
+tk.Button(step2_btn_frame, text="🔄 Refresh", font=("Helvetica", 9),
           bg='#607D8B', fg='white', command=refresh_job_wafer_list).pack(side=tk.LEFT, padx=2)
 
-tk.Button(run_btn_frame, text="☑ Select All", font=("Helvetica", 9),
+tk.Button(step2_btn_frame, text="☑ Select All", font=("Helvetica", 9),
           bg='#4CAF50', fg='white',
           command=lambda: job_wafer_listbox.select_set(0, tk.END)).pack(side=tk.LEFT, padx=2)
 
-# Loaded Job Info
-job_loaded_var = tk.StringVar(value="No job loaded")
-job_loaded_label = tk.Label(run_section, textvariable=job_loaded_var,
-                            font=("Helvetica", 9, "italic"), bg='#f5f5f5', fg='#1976D2')
-job_loaded_label.pack(fill=tk.X, padx=10, pady=2)
+# === STEP 3: Execute Job ===
+step3_frame = tk.LabelFrame(run_section, text="③ Execute Job",
+                             font=("Helvetica", 10, "bold"), bg='#fff3e0', fg='#E65100')
+step3_frame.pack(fill=tk.X, padx=10, pady=5)
 
 # Store loaded job settings globally
 _loaded_job_settings = {}
@@ -33289,62 +33422,89 @@ def do_job_action():
     global _loaded_job_settings
 
     if not _loaded_job_settings:
-        settings_status_var.set("⚠ No job loaded! Load a job first.")
+        settings_status_var.set("No job loaded! Load a job first.")
         settings_status_label.config(fg='#E65100')
         return
 
     selected_indices = job_wafer_listbox.curselection()
     if not selected_indices:
-        settings_status_var.set("⚠ No wafers selected! Select wafers first.")
+        settings_status_var.set("No wafers selected! Select wafers first.")
         settings_status_label.config(fg='#E65100')
         return
 
+    job_name = _loaded_job_settings.get("_meta", {}).get("job_name", "Unknown")
     jobs_included = _loaded_job_settings.get("_meta", {}).get("jobs_included", [])
+    num_wafers = len(selected_indices)
 
-    # Report Job ausführen
-    if "report" in jobs_included:
-        # Frage nach Speicherort
+    print(f"[Auto Jobs] Starting job '{job_name}' on {num_wafers} wafer(s)")
+
+    if "report" in jobs_included or "gage_rr" in jobs_included:
         save_path = filedialog.asksaveasfilename(
             title="Save Report PPT",
+            initialdir=DEFAULT_REPORT_DIR,
             defaultextension=".pptx",
             filetypes=[("PowerPoint files", "*.pptx"), ("All files", "*.*")],
-            initialfile=f"Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pptx"
+            initialfile=f"Report_{job_name}_{datetime.now().strftime('%Y%m%d_%H%M')}.pptx"
         )
         if save_path:
-            settings_status_var.set(f"🚀 Running Report Job... Output: {os.path.basename(save_path)}")
+            settings_status_var.set(f"Running Job '{job_name}'...")
             settings_status_label.config(fg='#1976D2')
             main_win.update_idletasks()
             try:
-                # PPT erstellen mit geladenen Settings
-                create_pptx_report_with_settings(save_path, _loaded_job_settings)
-                settings_status_var.set(f"✅ Report created: {os.path.basename(save_path)}")
+                create_pptx_report_with_settings(save_path, _loaded_job_settings, selected_indices)
+                settings_status_var.set(f"Report created: {os.path.basename(save_path)}")
                 settings_status_label.config(fg='green')
+                
+                if messagebox.askyesno("Job Complete", f"Report created!\n\nOpen {os.path.basename(save_path)}?"):
+                    os.startfile(save_path)
             except Exception as e:
-                settings_status_var.set(f"❌ Error: {e}")
+                import traceback
+                traceback.print_exc()
+                settings_status_var.set(f"Error: {e}")
                 settings_status_label.config(fg='red')
     else:
-        settings_status_var.set("⚠ Job type not supported for auto-execution yet")
+        settings_status_var.set("Job type not supported yet")
         settings_status_label.config(fg='#E65100')
 
-def create_pptx_report_with_settings(save_path, job_settings):
+def create_pptx_report_with_settings(save_path, job_settings, selected_wafer_indices=None):
     """Create PPT report using the job settings"""
-    # Apply settings first
+    global grr_file_data
+
+    print(f"[Auto Jobs] Creating PPT: {save_path}")
+    
+    output_dir = os.path.dirname(save_path)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+
     _apply_settings(job_settings)
     main_win.update_idletasks()
+    
+    # Auto-enable GRR if job has selected GRR groups
+    jobs_included = job_settings.get("_meta", {}).get("jobs_included", [])
+    if "gage_rr" in jobs_included:
+        grr_groups = job_settings.get("grr_report_groups", {})
+        has_selected_groups = any(info.get("selected", False) for info in grr_groups.values())
+        if has_selected_groups:
+            print(f"[Auto Jobs] Auto-enabling GRR in report")
+            pptx_grr_select_all_var.set(True)
 
-    # Call existing create_pptx function
-    # Set the output path
-    global pptx_output_path_var
-    pptx_output_path_var.set(save_path)
+    original_file_data = None
+    if selected_wafer_indices is not None and len(selected_wafer_indices) < len(grr_file_data):
+        original_file_data = grr_file_data.copy()
+        grr_file_data = [grr_file_data[i] for i in selected_wafer_indices]
 
-    # Trigger PPT creation
-    create_pptx_report()
+    try:
+        print(f"[Auto Jobs] Calling create_powerpoint_presentation()")
+        create_powerpoint_presentation(output_path=save_path)
+    finally:
+        if original_file_data is not None:
+            grr_file_data = original_file_data
 
-# Do Job Button
-do_job_btn = tk.Button(run_section, text="▶ DO JOB", font=("Helvetica", 12, "bold"),
+# Do Job Button inside Step 3
+do_job_btn = tk.Button(step3_frame, text="▶ DO JOB", font=("Helvetica", 12, "bold"),
                        bg='#E65100', fg='white', relief='raised', padx=20, pady=8,
                        command=do_job_action)
-do_job_btn.pack(fill=tk.X, padx=10, pady=(5, 10))
+do_job_btn.pack(fill=tk.X, padx=10, pady=10)
 
 # Update job_loaded_var when job is loaded
 def _on_job_loaded(settings, job_name):
@@ -33352,7 +33512,7 @@ def _on_job_loaded(settings, job_name):
     global _loaded_job_settings
     _loaded_job_settings = settings
     jobs_included = settings.get("_meta", {}).get("jobs_included", [])
-    job_loaded_var.set(f"✅ Loaded: {job_name} ({', '.join(jobs_included)})")
+    job_loaded_var.set(f"Loaded: {job_name} ({', '.join(jobs_included)})")
     refresh_job_wafer_list()
 
 # =============== RIGHT PANEL: Preview ===============
