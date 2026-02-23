@@ -144,6 +144,7 @@ Data Octopus/
 | `3.1.5` | 20.02.2026 | `8eac90d` | Diffmap: CSV-Lade-Logik mit Testnummern-Extraktion wie Wafer Tab |
 | `3.1.6` | 20.02.2026 | `d1f83f7` | GRR Tab: Wafer Selection UI wie Wafer Tab (Header, Buttons, Listbox Format) |
 | `3.1.7` | 23.02.2026 | `1fe887f` | Auto. Jobs: Multi-Folder Load, Do Job, Standard-Ordner, UI auf Englisch, Auto-Enable GRR |
+| `3.1.8` | 23.02.2026 | `d465ead` | GRR Analysis Debug-Output, Auto Jobs Fixes |
 
 ---
 
