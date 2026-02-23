@@ -1758,6 +1758,12 @@ def load_mc300_file():
 
         print(f"Parsed {len(die_data)} die measurements")
 
+        # DEBUG: Zeige erste paar Koordinaten
+        if die_data:
+            print(f"DEBUG: First 3 dies coordinates:")
+            for i, d in enumerate(die_data[:3]):
+                print(f"  Die {i}: X={d['values'][0]}, Y={d['values'][1]}, vals[2]={d['values'][2]}")
+
         # Erstelle DataFrame im gleichen Format wie CSV/STDF
         import pandas as pd
 
@@ -6490,6 +6496,7 @@ def update_multi_stdf_heatmap():
             aspect="equal",
             interpolation="nearest",
             origin="upper",
+            extent=[x_min - 0.5, x_max + 0.5, y_max + 0.5, y_min - 0.5]  # [left, right, bottom, top]
         )
 
         # Display wafer name and parameter
@@ -6501,6 +6508,10 @@ def update_multi_stdf_heatmap():
         ax.xaxis.tick_top()
         ax.set_xlabel("X Coordinate", fontsize=10)
         ax.set_ylabel("Y Coordinate", fontsize=10)
+
+        # Setze korrekte Achsen-Ticks für echte Koordinaten
+        ax.set_xticks(range(x_min, x_max + 1))
+        ax.set_yticks(range(y_min, y_max + 1))
 
         # Title with wafer name and parameter
         ax.set_title(f"{short_wafer_id}\n{short_param}", fontsize=11, fontweight='bold')
