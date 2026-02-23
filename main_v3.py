@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.0"
+APP_VERSION = "3.2.1"
 
 import sys
 
@@ -4164,6 +4164,48 @@ wafer_select_all_btn = tk.Button(
     font=("Helvetica", 7), bg="#4CAF50", fg="white"
 )
 wafer_select_all_btn.pack(side=tk.LEFT, padx=2)
+
+def remove_selected_wafer():
+    """Remove the currently selected wafer from the list"""
+    global multiple_stdf_data, multiple_wafer_ids, current_stdf_data, current_wafer_id
+    global grouped_parameters, test_parameters
+
+    current_idx = wafer_tab_selected_var.get()
+
+    if not multiple_wafer_ids or current_idx >= len(multiple_wafer_ids):
+        print("No wafer selected to remove")
+        return
+
+    removed_wafer = multiple_wafer_ids[current_idx]
+    print(f"Removing wafer: {removed_wafer}")
+
+    # Remove from lists
+    multiple_stdf_data.pop(current_idx)
+    multiple_wafer_ids.pop(current_idx)
+
+    # Update current wafer if needed
+    if multiple_wafer_ids:
+        new_idx = min(current_idx, len(multiple_wafer_ids) - 1)
+        wafer_tab_selected_var.set(new_idx)
+        current_wafer_id = multiple_wafer_ids[new_idx]
+        current_stdf_data = multiple_stdf_data[new_idx]
+    else:
+        # No wafers left
+        current_wafer_id = None
+        current_stdf_data = None
+        grouped_parameters = {}
+        test_parameters = {}
+
+    # Refresh the UI
+    update_wafer_tab_selection_list()
+    refresh_heatmap_display()
+    print(f"Wafer removed. {len(multiple_wafer_ids)} wafer(s) remaining.")
+
+wafer_remove_btn = tk.Button(
+    wafer_select_btn_frame, text="Remove", command=remove_selected_wafer,
+    font=("Helvetica", 7), bg="#f44336", fg="white"
+)
+wafer_remove_btn.pack(side=tk.LEFT, padx=2)
 
 wafer_tab_count_label = tk.Label(
     wafer_select_btn_frame, text="0 Wafer", font=("Helvetica", 8), fg="gray"
