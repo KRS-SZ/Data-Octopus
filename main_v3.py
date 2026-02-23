@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.1.7"
+APP_VERSION = "3.1.8"
 
 import sys
 
@@ -23341,6 +23341,7 @@ def run_grr_analysis():
     results_text += "\n" + "=" * 100
 
     # Update results display
+    print(f"[GRR Analysis] Writing results to UI...")
     grr_results_text.config(state='normal')
     grr_results_text.delete('1.0', tk.END)
     grr_results_text.insert('1.0', results_text)
@@ -23348,11 +23349,14 @@ def run_grr_analysis():
 
     # Update status bar
     grr_status_var.set(f"Analysis complete: {len(all_param_results)} parameters analyzed")
+    print(f"[GRR Analysis] Status: {len(all_param_results)} parameters analyzed")
 
     # Update data tables with all parameters
     file_names = [os.path.basename(f['path']) for f in grr_file_data]
+    print(f"[GRR Analysis] Updating tables with {len(all_param_results)} results...")
     update_grr_multi_param_table(all_param_results, file_names, grr_selected_dies)
     update_grr_summary_table(all_param_results)
+    print(f"[GRR Analysis] Tables updated!")
 
     # Update graph parameter combo with analyzed parameters
     grr_graph_param_combo['values'] = list(all_param_results.keys())
@@ -23369,9 +23373,11 @@ def run_grr_analysis():
         'num_dies': len(grr_selected_dies),
         'num_params': len(grr_selected_params)
     }
+    print(f"[GRR Analysis] Results stored globally")
 
     # Switch to Data Table tab to show results
     grr_results_notebook.select(1)
+    print(f"[GRR Analysis] DONE - switched to Data Table tab")
 
 
 def run_grr_analysis_for_params(param_list):
@@ -29600,7 +29606,7 @@ def figure_to_image_bytes(fig, dpi=150):
 
 def create_powerpoint_presentation(output_path=None):
     """Create a professional PowerPoint presentation from the selected data
-    
+
     Args:
         output_path: Optional path to save the PPTX. If None, shows file dialog.
     """
@@ -33285,7 +33291,7 @@ step2_btn_frame.pack(fill=tk.X, padx=10, pady=5)
 def load_wafers_for_job():
     """Load wafers directly in Auto Jobs tab - supports multiple folders"""
     global grr_file_data
-    
+
     num_wafers = simpledialog.askinteger(
         "Load Wafers",
         "How many Wafer folders do you want to load?\n(Each folder should contain CSVFiles/, PLMFiles/, etc.)",
@@ -33293,19 +33299,19 @@ def load_wafers_for_job():
     )
     if not num_wafers:
         return
-    
+
     settings_status_var.set(f"Select {num_wafers} Wafer folder(s)...")
     settings_status_label.config(fg='#1976D2')
     main_win.update_idletasks()
-    
+
     csv_folder_names = ['csvfiles', 'csv', 'csv_files', 'csvdata']
     plm_folder_names = ['plmfiles', 'plm', 'plm_files', 'plmdata']
     stdf_folder_names = ['stddatalog', 'stdf', 'stdf_files', 'stdfdata']
     image_folder_names = ['imagecaptures', 'images', 'image_captures', 'captures']
-    
+
     existing_paths = {f['path'] for f in grr_file_data}
     loaded_count = 0
-    
+
     for i in range(num_wafers):
         wafer_folder = filedialog.askdirectory(
             title=f"Select Wafer Folder {i+1} of {num_wafers}",
@@ -33316,39 +33322,39 @@ def load_wafers_for_job():
         if wafer_folder in existing_paths:
             print(f"[Auto Jobs] Skipping duplicate: {wafer_folder}")
             continue
-        
+
         settings_status_var.set(f"Loading wafer {i+1}: {os.path.basename(wafer_folder)}...")
         main_win.update_idletasks()
-        
+
         csv_folder = None
         plm_folder = None
         image_folder = None
-        
+
         try:
             items = os.listdir(wafer_folder)
             items_lower = {item.lower(): item for item in items}
-            
+
             for name in csv_folder_names:
                 if name in items_lower:
                     csv_folder = os.path.join(wafer_folder, items_lower[name])
                     break
-            
+
             for name in plm_folder_names:
                 if name in items_lower:
                     plm_folder = os.path.join(wafer_folder, items_lower[name])
                     break
-            
+
             for name in image_folder_names:
                 if name in items_lower:
                     image_folder = os.path.join(wafer_folder, items_lower[name])
                     break
-            
+
             if csv_folder and os.path.isdir(csv_folder):
                 csv_files = [f for f in os.listdir(csv_folder) if f.lower().endswith('.csv')]
                 if csv_files:
                     csv_path = os.path.join(csv_folder, csv_files[0])
                     df_csv = pd.read_csv(csv_path, delimiter=',')
-                    
+
                     x_col = None
                     y_col = None
                     for col in df_csv.columns:
@@ -33357,19 +33363,19 @@ def load_wafers_for_job():
                             x_col = col
                         elif col_lower in ['y', 'y_coord', 'y_coordinate', 'ycoord', 'die_y']:
                             y_col = col
-                    
+
                     if x_col and y_col:
                         df_csv[x_col] = pd.to_numeric(df_csv[x_col], errors='coerce')
                         df_csv[y_col] = pd.to_numeric(df_csv[y_col], errors='coerce')
                         df_csv = df_csv.rename(columns={x_col: 'x', y_col: 'y'})
-                        
+
                         param_cols = []
                         for col in df_csv.columns:
                             if col not in ['x', 'y']:
                                 df_csv[col] = pd.to_numeric(df_csv[col], errors='coerce')
                                 if df_csv[col].notna().any():
                                     param_cols.append(col)
-                        
+
                         file_info = {
                             'path': wafer_folder,
                             'type': 'csv_wafermap',
@@ -33378,19 +33384,19 @@ def load_wafers_for_job():
                             'params': param_cols,
                             'csv_path': csv_path,
                         }
-                        
+
                         if plm_folder and os.path.isdir(plm_folder):
                             file_info['plm_dir'] = plm_folder
                         if image_folder and os.path.isdir(image_folder):
                             file_info['image_dir'] = image_folder
-                        
+
                         grr_file_data.append(file_info)
                         existing_paths.add(wafer_folder)
                         loaded_count += 1
                         print(f"[Auto Jobs] Loaded: {os.path.basename(wafer_folder)} - {len(param_cols)} params")
         except Exception as e:
             print(f"[Auto Jobs] Error loading {wafer_folder}: {e}")
-    
+
     refresh_job_wafer_list()
     if loaded_count > 0:
         settings_status_var.set(f"Loaded {loaded_count} wafer(s)")
@@ -33454,7 +33460,7 @@ def do_job_action():
                 create_pptx_report_with_settings(save_path, _loaded_job_settings, selected_indices)
                 settings_status_var.set(f"Report created: {os.path.basename(save_path)}")
                 settings_status_label.config(fg='green')
-                
+
                 if messagebox.askyesno("Job Complete", f"Report created!\n\nOpen {os.path.basename(save_path)}?"):
                     os.startfile(save_path)
             except Exception as e:
@@ -33471,14 +33477,14 @@ def create_pptx_report_with_settings(save_path, job_settings, selected_wafer_ind
     global grr_file_data
 
     print(f"[Auto Jobs] Creating PPT: {save_path}")
-    
+
     output_dir = os.path.dirname(save_path)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
 
     _apply_settings(job_settings)
     main_win.update_idletasks()
-    
+
     # Auto-enable GRR if job has selected GRR groups
     jobs_included = job_settings.get("_meta", {}).get("jobs_included", [])
     if "gage_rr" in jobs_included:
@@ -33487,6 +33493,16 @@ def create_pptx_report_with_settings(save_path, job_settings, selected_wafer_ind
         if has_selected_groups:
             print(f"[Auto Jobs] Auto-enabling GRR in report")
             pptx_grr_select_all_var.set(True)
+
+            # Debug: Zeige was in pptx_grr_group_data ist
+            print(f"[Auto Jobs] pptx_grr_group_data has {len(pptx_grr_group_data)} groups")
+            for gname, gdata in pptx_grr_group_data.items():
+                if gdata.get("selected") and gdata["selected"].get():
+                    print(f"[Auto Jobs]   - {gname}: selected=True, params={len(gdata.get('params', []))}")
+
+            # Debug: GRR Prerequisites
+            print(f"[Auto Jobs] grr_file_data: {len(grr_file_data)} wafers loaded")
+            print(f"[Auto Jobs] grr_selected_dies: {len(grr_selected_dies)} dies selected")
 
     original_file_data = None
     if selected_wafer_indices is not None and len(selected_wafer_indices) < len(grr_file_data):
