@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.1"
+APP_VERSION = "3.2.2"
 
 import sys
 
@@ -1268,17 +1268,24 @@ def select_stdf_file():
 
 
 def update_source_buttons():
-    """Update button visibility based on selected file source (STDF or CSV)"""
+    """Update button visibility based on selected file source (STDF, CSV, or MC-300)"""
     source = file_source_var.get()
 
     if source == "STDF":
-        # Show STDF button, hide CSV button
+        # Show STDF button, hide others
         select_multiple_stdf_button.pack(side=tk.LEFT, padx=3)
         select_csv_button.pack_forget()
-    else:  # CSV
+        select_mc300_button.pack_forget()
+    elif source == "CSV":
         # Hide STDF button, show CSV button
         select_multiple_stdf_button.pack_forget()
         select_csv_button.pack(side=tk.LEFT, padx=3)
+        select_mc300_button.pack_forget()
+    else:  # MC-300
+        # Hide STDF/CSV buttons, show MC-300 button
+        select_multiple_stdf_button.pack_forget()
+        select_csv_button.pack_forget()
+        select_mc300_button.pack(side=tk.LEFT, padx=3)
 
 
 def simplify_param_name(param_name):
@@ -1658,6 +1665,179 @@ def convert_am_data_column_name(col_name):
     long_name = long_name.strip('_')
 
     return long_name
+
+
+def load_mc300_file():
+    """
+    Load wafermap data from MC-300 format file (ASAP MC-300 Prober).
+
+    MC-300 Format:
+    - Zeile 1-15: Header (Typ, Datum, Wafer-ID, Version, Produktionsstätte, Rezept, etc.)
+    - Zeile 11: Anzahl Dies
+    - Zeile 16: Anzahl Parameter (108 = 2 X/Y + 106 Messparameter)
+    - Zeile 17+: Parameter-Definitionen (T98=X-Pos, T99=Y-Pos, T1-T106=Messparameter)
+    - Danach: Messdaten (1 Zeile pro Die, Werte durch Leerzeichen getrennt, BIN am Ende)
+    """
+    global current_stdf_data, current_wafer_id, test_parameters, grouped_parameters, test_limits
+    global multiple_stdf_data, multiple_wafer_ids
+
+    file_path = filedialog.askopenfilename(
+        title="Select MC-300 file",
+        filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+    )
+
+    if not file_path:
+        return
+
+    print(f"Loading MC-300 file: {file_path}")
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+
+        # Parse Header (Zeile 1-15)
+        header_info = {
+            'type': lines[0].strip() if len(lines) > 0 else '',           # SCHEIBE
+            'datetime_device': lines[1].strip() if len(lines) > 1 else '', # 04.02.2026 15:39:08/ASAP_MC300
+            'wafer_id': lines[2].strip() if len(lines) > 2 else '',        # PEQUIN00000
+            'version': lines[5].strip() if len(lines) > 5 else '',         # 0.00
+            'production_site': lines[6].strip() if len(lines) > 6 else '', # OSSFR
+            'recipe': lines[7].strip() if len(lines) > 7 else '',          # LIV_stress1
+            'num_dies': int(lines[10].strip()) if len(lines) > 10 else 0,  # 56
+            'num_params': int(lines[15].strip()) if len(lines) > 15 else 0 # 108
+        }
+
+        print(f"MC-300 Header: Wafer={header_info['wafer_id']}, Dies={header_info['num_dies']}, Params={header_info['num_params']}")
+
+        # Parse Parameter-Definitionen (ab Zeile 17)
+        param_start_line = 16  # 0-indexed, Zeile 17
+        param_definitions = []
+
+        for i in range(header_info['num_params']):
+            if param_start_line + i < len(lines):
+                line = lines[param_start_line + i].strip()
+                parts = line.split()
+                if len(parts) >= 2:
+                    param_id = parts[0]  # T1, T2, etc.
+                    param_name = parts[1]  # IfArrO1, UfO1, etc.
+                    param_unit = parts[2] if len(parts) > 2 and parts[2] != '-' else ''
+                    param_condition = parts[3] if len(parts) > 3 and parts[3] != '-' else ''
+                    param_definitions.append({
+                        'id': param_id,
+                        'name': param_name,
+                        'unit': param_unit,
+                        'condition': param_condition
+                    })
+
+        print(f"Parsed {len(param_definitions)} parameter definitions")
+
+        # Parse Messdaten (nach Parameter-Definitionen)
+        data_start_line = param_start_line + header_info['num_params']
+        die_data = []
+
+        for i in range(header_info['num_dies']):
+            if data_start_line + i < len(lines):
+                line = lines[data_start_line + i].strip()
+                values = line.split()
+                if len(values) >= header_info['num_params']:
+                    # Konvertiere wissenschaftliche Notation zu Float
+                    float_values = []
+                    for v in values[:header_info['num_params']]:
+                        try:
+                            float_values.append(float(v))
+                        except ValueError:
+                            float_values.append(0.0)
+
+                    # BIN ist der letzte Wert (falls vorhanden)
+                    bin_value = int(float(values[-1])) if len(values) > header_info['num_params'] else 1
+
+                    die_data.append({
+                        'values': float_values,
+                        'bin': bin_value
+                    })
+
+        print(f"Parsed {len(die_data)} die measurements")
+
+        # Erstelle DataFrame im gleichen Format wie CSV/STDF
+        import pandas as pd
+
+        # Finde X und Y Position (T98, T99)
+        x_idx = None
+        y_idx = None
+        for i, param in enumerate(param_definitions):
+            if param['id'] == 'T98' or param['name'] == 'X-Pos':
+                x_idx = i
+            elif param['id'] == 'T99' or param['name'] == 'Y-Pos':
+                y_idx = i
+
+        if x_idx is None or y_idx is None:
+            print("ERROR: Could not find X-Pos (T98) or Y-Pos (T99) in parameters")
+            messagebox.showerror("Error", "MC-300 file missing X/Y position columns (T98/T99)")
+            return
+
+        # Baue DataFrame
+        data_dict = {
+            'die_x': [int(d['values'][x_idx]) for d in die_data],
+            'die_y': [int(d['values'][y_idx]) for d in die_data],
+            'HardBin': [d['bin'] for d in die_data],
+            'SoftBin': [d['bin'] for d in die_data],
+        }
+
+        # Füge alle Messparameter hinzu (außer X/Y)
+        for i, param in enumerate(param_definitions):
+            if i != x_idx and i != y_idx:
+                col_name = f"{param['name']}"
+                if param['unit']:
+                    col_name += f"_{param['unit']}"
+                if param['condition']:
+                    col_name += f"_{param['condition']}"
+                data_dict[col_name] = [d['values'][i] for d in die_data]
+
+        df = pd.DataFrame(data_dict)
+
+        # Setze globale Variablen
+        current_wafer_id = header_info['wafer_id']
+        current_stdf_data = df
+
+        # Füge zu Multiple Wafers hinzu
+        multiple_stdf_data.append(df)
+        multiple_wafer_ids.append(current_wafer_id)
+
+        # Baue test_parameters und grouped_parameters
+        test_parameters.clear()
+        grouped_parameters.clear()
+        test_limits.clear()
+
+        # Gruppiere Parameter nach Präfix (LIV, etc.)
+        mc300_group = f"MC300_{header_info['recipe']}"
+        grouped_parameters[mc300_group] = []
+
+        for i, param in enumerate(param_definitions):
+            if i != x_idx and i != y_idx:
+                col_name = f"{param['name']}"
+                if param['unit']:
+                    col_name += f"_{param['unit']}"
+                if param['condition']:
+                    col_name += f"_{param['condition']}"
+
+                test_key = f"test_{i+1}"
+                test_parameters[test_key] = col_name
+                grouped_parameters[mc300_group].append((i+1, col_name, col_name))
+
+        # Update UI
+        update_wafer_tab_selection_list()
+        update_group_combobox()
+        update_param_dropdown()
+        refresh_heatmap_display()
+
+        print(f"Successfully loaded MC-300 file: {len(die_data)} dies, {len(param_definitions)-2} parameters")
+        messagebox.showinfo("Success", f"Loaded MC-300 file:\n{header_info['wafer_id']}\n{len(die_data)} dies, {len(param_definitions)-2} parameters")
+
+    except Exception as e:
+        print(f"Error loading MC-300 file: {e}")
+        import traceback
+        traceback.print_exc()
+        messagebox.showerror("Error", f"Failed to load MC-300 file:\n{str(e)}")
 
 
 def load_csv_wafermap_file():
@@ -3587,9 +3767,9 @@ source_label.pack(side=tk.LEFT, padx=(0, 3))
 file_source_combobox = ttk.Combobox(
     control_row1,
     textvariable=file_source_var,
-    values=["STDF", "CSV"],
+    values=["STDF", "CSV", "MC-300"],
     state="readonly",
-    width=6,
+    width=7,
     font=("Helvetica", 9)
 )
 file_source_combobox.pack(side=tk.LEFT, padx=2)
@@ -3614,6 +3794,17 @@ select_csv_button = tk.Button(
     command=lambda: load_csv_wafermap_file(),
     font=("Helvetica", 9),
     bg="#4CAF50",
+    fg="white",
+)
+# Don't pack initially - will be managed by update_source_buttons()
+
+# MC-300 Load button (initially hidden)
+select_mc300_button = tk.Button(
+    load_buttons_frame,
+    text="Load MC-300",
+    command=lambda: load_mc300_file(),
+    font=("Helvetica", 9),
+    bg="#9C27B0",
     fg="white",
 )
 # Don't pack initially - will be managed by update_source_buttons()
