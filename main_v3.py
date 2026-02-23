@@ -1775,10 +1775,14 @@ def load_mc300_file():
             messagebox.showerror("Error", "MC-300 file missing X/Y position columns (T98/T99)")
             return
 
-        # Baue DataFrame
+        # Baue DataFrame - WICHTIG: Spaltennamen müssen zu Heatmap-Funktion passen!
+        # 'die_x'/'die_y' für Koordinaten, 'bin' für Bin-Werte
         data_dict = {
             'die_x': [int(d['values'][x_idx]) for d in die_data],
             'die_y': [int(d['values'][y_idx]) for d in die_data],
+            'x': [int(d['values'][x_idx]) for d in die_data],  # Heatmap erwartet 'x'
+            'y': [int(d['values'][y_idx]) for d in die_data],  # Heatmap erwartet 'y'
+            'bin': [d['bin'] for d in die_data],               # Heatmap erwartet 'bin'
             'HardBin': [d['bin'] for d in die_data],
             'SoftBin': [d['bin'] for d in die_data],
         }
@@ -6447,6 +6451,8 @@ def update_multi_stdf_heatmap():
         norm = None
 
     if param_column not in df.columns:
+        print(f"DEBUG: param_column '{param_column}' not in df.columns")
+        print(f"DEBUG: Available columns: {list(df.columns)[:10]}...")  # Erste 10 Spalten
         ax.set_title(f"Parameter '{param_column}' not found in wafer {wafer_id}")
         ax.text(0.5, 0.5, f"Parameter not available", ha='center', va='center', fontsize=14, transform=ax.transAxes)
     else:
