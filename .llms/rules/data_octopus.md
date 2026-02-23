@@ -320,19 +320,79 @@ name = re.sub(r'XYZ(\d+)', convert_xyz, name, flags=re.IGNORECASE)
 
 ---
 
-## 9.1 🚨 MONTAG 24.02.2026 – ERSTER SCHRITT
+## 9.1 🚨 MONTAG 24.02.2026 – REFACTORING STARTEN
 
-**FRAGE SOFORT:**
-> "Wie sollen wir den Auto. Jobs Feature fertig machen? Folgende Punkte sind offen:
-> 1. **Load Wafers Button** - soll der einen Folder-Dialog öffnen oder Files einzeln?
-> 2. **Do Job für Report** - wie genau soll die PPT erstellt werden?
-> 3. **Report Gruppen/Parameter** - welche genau sollen gespeichert werden?"
+### AKTION: Code-Modularisierung beginnen
 
-**Aktueller Stand v3.1.7 (WIP):**
-- ✅ Tab umbenannt: "Settings" → "🔄 Auto. Jobs"
-- ✅ Apply & Run Job UI hinzugefügt
-- ⚠️ Load Wafers Button noch nicht getestet
-- ⚠️ Do Job Funktion noch nicht fertig
+**ZIEL:** main_v3.py (34.340 Zeilen) schrittweise modularisieren
+
+#### Phase 1: config.py erstellen (1h)
+```python
+# src/config.py
+KNOWN_GROUP_TYPES = ['OPTIC', 'DC', 'ANLG', 'ANALOG', 'FUNC', 'FUNCTIONAL',
+                     'EFUSE', 'INIT', 'INITIALIZE', 'DIGITAL', 'POWER', 'SOT']
+
+VALUE_PATTERNS = {
+    'FV': {'regex': r'FV(\d+)P(\d+)', 'unit': 'V', 'description': 'Force Voltage'},
+    'FC': {'regex': r'FC([np]?)(\d+)P(\d+)', 'unit': 'mA', 'description': 'Force Current'},
+    'AVEE': {'regex': r'AVEE([np]?)(\d+)p(\d+)', 'unit': 'V', 'description': 'AVEE Voltage'},
+    'DACI': {'regex': r'DACI([np]?)(\d+)p(\d+)', 'unit': 'uA', 'description': 'DACI Current'},
+    'DC': {'regex': r'(?<![A-Z])DC(\d+)p(\d+)', 'unit': '%', 'description': 'Duty Cycle'},
+}
+
+CLEANUP_PATTERNS = ['FREERUN', 'INTFRAME', '_NV_', '_PEQA_', '_X_X_X']
+```
+
+#### Phase 2: parameter_utils.py extrahieren (2h)
+```
+src/stdf_analyzer/core/parameter_utils.py
+├── simplify_param_name()      # Aus main_v3.py Zeile 1284
+├── extract_group_from_column() # Aus main_v3.py Zeile 1395
+├── convert_coded_value()       # Neue Helper-Funktion
+└── _build_param_list()         # Wiederverwendbare Param-Listen
+```
+
+#### Phase 3: AppState-Klasse (3h)
+```python
+# src/stdf_analyzer/core/app_state.py
+class AppState:
+    def __init__(self):
+        self.current_stdf_data = None
+        self.grouped_parameters = {}
+        self.test_parameters = {}
+        self.multiple_stdf_data = []
+        self.multiple_wafer_ids = []
+        self.custom_tests = {}
+        # ... weitere wichtige Globals
+```
+
+#### Phase 4: Tests für parameter_utils (2h)
+```python
+# tests/test_parameter_utils.py
+def test_simplify_fv():
+    assert simplify_param_name("FV0P1") == "0.1V"
+    assert simplify_param_name("FV1P8") == "1.8V"
+
+def test_simplify_avee():
+    assert simplify_param_name("AVEEn1p8") == "-1.80V"
+
+def test_group_prefix_removal():
+    assert "OPTIC_ANSI" not in simplify_param_name("OPTIC_ANSI-ALLOFF_...")
+    assert "ALLON" in simplify_param_name("OPTIC_ANSI-ALLON_...")
+```
+
+### REIHENFOLGE MORGEN:
+
+1. **ERST:** `git commit -m "v3.2.0 Backup vor Refactoring"`
+2. **DANN:** Phase 1 (config.py) - risikoarm, kein Impact auf main_v3.py
+3. **DANN:** Phase 2 (parameter_utils.py) - Import in main_v3.py hinzufügen
+4. **DANN:** Testen ob alles noch funktioniert
+5. **OPTIONAL:** Phase 3-4 wenn Zeit
+
+### WICHTIG:
+- ⚠️ **Jede Phase einzeln committen**
+- ⚠️ **Nach jeder Phase App testen**
+- ⚠️ **Alte Funktionen in main_v3.py erst löschen wenn Import funktioniert**
 
 ---
 
