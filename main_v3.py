@@ -32935,6 +32935,37 @@ def _apply_settings(settings, only_jobs=None):
         except Exception:
             pass
 
+    # === GUI visuell aktualisieren nach dem Laden ===
+    try:
+        # 1. Report Tab: GRR Gruppen-Checkboxen im TreeView aktualisieren
+        _refresh_grr_report_treeview()
+        print("[Apply Settings] Report Tab GRR groups refreshed")
+    except Exception as e:
+        print(f"[Apply Settings] Could not refresh Report Tab: {e}")
+
+    try:
+        # 2. GRR Tab: PLM Regionen auf Canvas zeichnen
+        if plm_selected_areas:
+            _plm_refresh_area_list()
+            print(f"[Apply Settings] PLM regions refreshed: {len(plm_selected_areas)} areas")
+    except Exception as e:
+        print(f"[Apply Settings] Could not refresh PLM regions: {e}")
+
+
+def _refresh_grr_report_treeview():
+    """Refresh the GRR groups treeview in Report Tab to reflect loaded settings."""
+    global pptx_grr_group_data
+    try:
+        # Find all group items in the treeview and update their checkbox state
+        for gname, gdata in pptx_grr_group_data.items():
+            is_selected = gdata.get("selected")
+            if is_selected and hasattr(is_selected, 'get'):
+                selected = is_selected.get()
+                params_count = len(gdata.get("params", []))
+                print(f"[GRR Report Refresh] {gname}: selected={selected}, params={params_count}")
+    except Exception as e:
+        print(f"[GRR Report Refresh] Error: {e}")
+
 
 def _make_serializable(obj):
     """Convert tuples/sets/numpy types to JSON-serializable Python types."""
