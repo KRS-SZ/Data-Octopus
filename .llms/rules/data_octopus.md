@@ -131,6 +131,26 @@ Data Octopus/
 2. Commit mit neuer Versionsnummer
 3. Learnings-Datei aktualisieren
 
+### 6.2.1 🚨 LOKALE VERSIONIERUNG – PFLICHT FÜR DEVMATE
+
+⚠️ **BEI JEDER CODE-ÄNDERUNG DIE ICH (DEVMATE) MACHE:**
+1. **BEVOR** ich die Änderung starte: `APP_VERSION` PATCH hochzählen (z.B. 3.2.0 → 3.2.1)
+2. **DANN** die Code-Änderung durchführen
+3. **DANN** committen mit neuer Versionsnummer
+
+**WARUM:** Doppelte Sicherheit - jedes Kompilat hat eine eigene Version.
+
+**BEISPIEL:**
+```
+Aktuell: v3.2.0
+Devmate macht Änderung → Version wird 3.2.1 → Commit
+Devmate macht weitere Änderung → Version wird 3.2.2 → Commit
+```
+
+**AUSNAHMEN:**
+- Nur Rules-File Änderungen (kein Code) → keine Versionserhöhung nötig
+- Rückgängig machen einer Änderung → keine Versionserhöhung nötig
+
 ### 6.3 Versionshistorie
 
 | Version | Datum | Commit Hash | Beschreibung |
