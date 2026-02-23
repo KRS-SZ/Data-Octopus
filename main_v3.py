@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.2"
+APP_VERSION = "3.2.3"
 
 import sys
 
@@ -1758,44 +1758,32 @@ def load_mc300_file():
 
         print(f"Parsed {len(die_data)} die measurements")
 
-        # DEBUG: Zeige erste paar Koordinaten
-        if die_data:
-            print(f"DEBUG: First 3 dies coordinates:")
-            for i, d in enumerate(die_data[:3]):
-                print(f"  Die {i}: X={d['values'][0]}, Y={d['values'][1]}, vals[2]={d['values'][2]}")
-
         # Erstelle DataFrame im gleichen Format wie CSV/STDF
         import pandas as pd
 
-        # Finde X und Y Position (T98, T99)
-        x_idx = None
-        y_idx = None
-        for i, param in enumerate(param_definitions):
-            if param['id'] == 'T98' or param['name'] == 'X-Pos':
-                x_idx = i
-            elif param['id'] == 'T99' or param['name'] == 'Y-Pos':
-                y_idx = i
+        # X ist immer Index 0, Y ist immer Index 1 in den Datenzeilen
+        x_idx = 0  # Erstes Feld = X-Koordinate
+        y_idx = 1  # Zweites Feld = Y-Koordinate
 
-        if x_idx is None or y_idx is None:
-            print("ERROR: Could not find X-Pos (T98) or Y-Pos (T99) in parameters")
-            messagebox.showerror("Error", "MC-300 file missing X/Y position columns (T98/T99)")
-            return
+        print(f"DEBUG: Using X_idx={x_idx}, Y_idx={y_idx}")
+        print(f"DEBUG: First die: X={die_data[0]['values'][x_idx]}, Y={die_data[0]['values'][y_idx]}")
 
-        # Baue DataFrame - WICHTIG: Spaltennamen müssen zu Heatmap-Funktion passen!
-        # 'die_x'/'die_y' für Koordinaten, 'bin' für Bin-Werte
+        # Baue DataFrame - Spaltennamen müssen zu Heatmap-Funktion passen!
         data_dict = {
             'die_x': [int(d['values'][x_idx]) for d in die_data],
             'die_y': [int(d['values'][y_idx]) for d in die_data],
-            'x': [int(d['values'][x_idx]) for d in die_data],  # Heatmap erwartet 'x'
-            'y': [int(d['values'][y_idx]) for d in die_data],  # Heatmap erwartet 'y'
-            'bin': [d['bin'] for d in die_data],               # Heatmap erwartet 'bin'
+            'x': [int(d['values'][x_idx]) for d in die_data],
+            'y': [int(d['values'][y_idx]) for d in die_data],
+            'bin': [d['bin'] for d in die_data],
             'HardBin': [d['bin'] for d in die_data],
             'SoftBin': [d['bin'] for d in die_data],
         }
 
         # Füge alle Messparameter hinzu (außer X/Y)
+        # Parameter starten ab Index 2 (nach X-Pos und Y-Pos)
+        param_idx = 1
         for i, param in enumerate(param_definitions):
-            if i != x_idx and i != y_idx:
+            if i >= 2:  # Überspringe X-Pos (0) und Y-Pos (1)
                 col_name = f"{param['name']}"
                 if param['unit']:
                     col_name += f"_{param['unit']}"
@@ -1804,6 +1792,10 @@ def load_mc300_file():
                 data_dict[col_name] = [d['values'][i] for d in die_data]
 
         df = pd.DataFrame(data_dict)
+        print(f"DEBUG: DataFrame columns: {list(df.columns)[:10]}...")
+        print(f"DEBUG: DataFrame shape: {df.shape}")
+        print(f"DEBUG: X range: {df['x'].min()} to {df['x'].max()}")
+        print(f"DEBUG: Y range: {df['y'].min()} to {df['y'].max()}")
 
         # Setze globale Variablen
         current_wafer_id = header_info['wafer_id']
@@ -1814,28 +1806,29 @@ def load_mc300_file():
         multiple_wafer_ids.append(current_wafer_id)
 
         # Baue test_parameters und grouped_parameters
+        # Parameter von test_1 bis test_106 (chronologisch)
         test_parameters.clear()
         grouped_parameters.clear()
         test_limits.clear()
 
-        # Gruppiere Parameter nach Präfix (LIV, etc.)
         mc300_group = f"MC300_{header_info['recipe']}"
         grouped_parameters[mc300_group] = []
 
-        param_idx = 1
+        param_num = 1
         for i, param in enumerate(param_definitions):
-            if i != x_idx and i != y_idx:
+            if i >= 2:  # Überspringe X-Pos (0) und Y-Pos (1)
                 col_name = f"{param['name']}"
                 if param['unit']:
                     col_name += f"_{param['unit']}"
                 if param['condition']:
                     col_name += f"_{param['condition']}"
 
-                # test_key muss auf den SPALTENNAMEN zeigen, nicht auf eine Nummer!
-                test_key = f"test_{param_idx}"
-                test_parameters[test_key] = col_name  # col_name ist der DataFrame-Spaltenname
-                grouped_parameters[mc300_group].append((param_idx, col_name, col_name))
-                param_idx += 1
+                test_key = f"test_{param_num}"
+                test_parameters[test_key] = col_name
+                grouped_parameters[mc300_group].append((param_num, col_name, col_name))
+                param_num += 1
+
+        print(f"DEBUG: Created {param_num-1} test parameters (test_1 to test_{param_num-1})")
 
         # Update UI
         update_wafer_tab_selection_list()
@@ -6496,22 +6489,26 @@ def update_multi_stdf_heatmap():
             aspect="equal",
             interpolation="nearest",
             origin="upper",
-            extent=[x_min - 0.5, x_max + 0.5, y_max + 0.5, y_min - 0.5]  # [left, right, bottom, top]
+            extent=[x_min - 0.5, x_max + 0.5, y_max + 0.5, y_min - 0.5]  # [left, right, bottom, top] - Y invertiert für origin=upper
         )
 
         # Display wafer name and parameter
         short_wafer_id = str(wafer_id)[:40] + "..." if len(str(wafer_id)) > 40 else str(wafer_id)
         short_param = param_label[:40] + "..." if len(str(param_label)) > 40 else param_label
 
-        # Move X-axis to top
+        # X-axis bleibt oben (X wächst nach rechts, Y wächst nach unten)
         ax.xaxis.set_label_position('top')
         ax.xaxis.tick_top()
         ax.set_xlabel("X Coordinate", fontsize=10)
         ax.set_ylabel("Y Coordinate", fontsize=10)
 
-        # Setze korrekte Achsen-Ticks für echte Koordinaten
-        ax.set_xticks(range(x_min, x_max + 1))
-        ax.set_yticks(range(y_min, y_max + 1))
+        # Setze korrekte Achsen-Ticks für echte Koordinaten (beginnend bei 0)
+        # X: 0, 1, 2, ... nach rechts
+        # Y: 0, 1, 2, ... nach unten
+        x_tick_positions = list(range(x_min, x_max + 1))
+        y_tick_positions = list(range(y_min, y_max + 1))
+        ax.set_xticks(x_tick_positions)
+        ax.set_yticks(y_tick_positions)
 
         # Title with wafer name and parameter
         ax.set_title(f"{short_wafer_id}\n{short_param}", fontsize=11, fontweight='bold')
