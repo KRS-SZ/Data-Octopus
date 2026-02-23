@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.3"
+APP_VERSION = "3.2.4"
 
 import sys
 
@@ -5523,8 +5523,17 @@ def on_group_selected():
         for test_name in sorted(custom_tests.keys()):
             param_options.append(f"CUSTOM: {test_name}")
     elif selected_group == "All Groups" or not grouped_parameters:
-        # Show all parameters - sort by simplified parameter name
-        for test_key, test_name in sorted(test_parameters.items(), key=lambda x: simplify_param_name(x[1]).upper()):
+        # Show all parameters - sort NUMERICALLY by test number for MC-300, alphabetically otherwise
+        def sort_key(item):
+            test_key = item[0]  # z.B. "test_1", "test_23"
+            if test_key.startswith("test_"):
+                try:
+                    return (0, int(test_key.replace("test_", "")))  # Numerisch sortieren
+                except ValueError:
+                    pass
+            return (1, simplify_param_name(item[1]).upper())  # Alphabetisch als Fallback
+
+        for test_key, test_name in sorted(test_parameters.items(), key=sort_key):
             simple_name = simplify_param_name(test_name)
             param_options.append(f"{test_key}: {simple_name}")
 
@@ -5537,8 +5546,8 @@ def on_group_selected():
         # Show only parameters from selected group
         if selected_group in grouped_parameters:
             group_params = grouped_parameters[selected_group]
-            # Sort by simplified parameter name (alphabetically)
-            sorted_params = sorted(group_params, key=lambda x: simplify_param_name(x[2] if len(x) > 2 else x[1]).upper())
+            # Sort NUMERICALLY by test number (param[0])
+            sorted_params = sorted(group_params, key=lambda x: x[0])
             for param in sorted_params:
                 test_num = param[0]
                 full_name = param[2] if len(param) > 2 else param[1]
