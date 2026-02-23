@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.1.9"
+APP_VERSION = "3.2.0"
 
 import sys
 
@@ -1284,8 +1284,14 @@ def update_source_buttons():
 def simplify_param_name(param_name):
     """
     Simplify parameter name by removing group/subgroup prefix and test number suffix.
-    Also strips CSV '<>' duplicate name and trailing extra info (pin names, indices).
-    Example: 'DC_LKG_HIGH_GPIO24_FV1P8_X_X_X_PEQA_X_10021522' -> 'HIGH_GPIO24_FV1P8'
+    Also strips CSV '<>' duplicate name and converts coded values to readable format.
+
+    Conversions (dynamisch, nicht hardcodiert):
+    - FV0P1 → 0.1V (Force Voltage)
+    - FC0P2, FCn0P2 → 0.2mA, -0.2mA (Force Current)
+    - AVEEn1p8 → -1.80V
+    - DACI3p0 → 3.00uA
+    - DC4p59 → 4.59%
     """
     import re
 
@@ -1298,35 +1304,92 @@ def simplify_param_name(param_name):
     if ":" in name:
         name = name.split(":", 1)[-1].strip()
 
-    # Strip CSV "<>" duplicate: keep only the part before "<>"
+    # ============================================================
+    # HANDLE CSV "<>" FORMAT - Use the long name after "<>"
+    # ============================================================
     if '<>' in name:
-        name = name.split('<>')[0].strip()
+        parts = name.split('<>')
+        if len(parts) == 2:
+            name = parts[1].strip()  # Use the long name (after <>)
 
-    # Strip trailing extra info after double-space (pin names, spec info, indices like "  -1")
-    if '  ' in name:
-        name = re.split(r'\s{2,}', name)[0].strip()
+    # Whitespace bereinigen - LEERZEICHEN ENTFERNEN
+    name = re.sub(r'\s+', '', name)
 
-    # Strip trailing space + dash + number(s) pattern (e.g. " -1")
-    name = re.sub(r'\s+-\d+\s*$', '', name)
+    # ============================================================
+    # GRUPPEN-PRÄFIX DYNAMISCH ENTFERNEN
+    # Nur bekannte Gruppen-Typen am Anfang entfernen (OPTIC_, DC_, ANLG_, FUNC_, etc.)
+    # NICHT beliebige XXXX_YYYY_ Patterns - die könnten Testnamen sein!
+    # ============================================================
+    known_group_types = ['OPTIC', 'DC', 'ANLG', 'ANALOG', 'FUNC', 'FUNCTIONAL',
+                         'EFUSE', 'INIT', 'INITIALIZE', 'DIGITAL', 'POWER', 'SOT']
+
+    # Pattern: GRUPPE_SUBGRUPPE- oder GRUPPE_SUBGRUPPE_ am Anfang
+    # z.B. OPTIC_ANSI-, DC_SHORT_, ANLG_DISPLAYI-
+    prefix_match = re.match(r'^([A-Z]+)_([A-Z0-9]+[-_])', name, re.IGNORECASE)
+    if prefix_match:
+        group_type = prefix_match.group(1).upper()
+        if group_type in known_group_types:
+            # Nur entfernen wenn es eine bekannte Gruppe ist
+            name = name[len(prefix_match.group(0)):]
+
+    # ============================================================
+    # KODIERTE WERTE DYNAMISCH KONVERTIEREN
+    # ============================================================
+
+    # FV (Force Voltage): FV0P1 → 0.1V, FV1P8 → 1.8V
+    def convert_fv(match):
+        integer = match.group(1)
+        decimal = match.group(2)
+        return f"{integer}.{decimal}V"
+    name = re.sub(r'FV(\d+)P(\d+)', convert_fv, name, flags=re.IGNORECASE)
+
+    # FC (Force Current): FC0P2 → 0.2mA, FCn0P2 → -0.2mA
+    def convert_fc(match):
+        sign = '-' if match.group(1).lower() == 'n' else ''
+        integer = match.group(2)
+        decimal = match.group(3)
+        return f"{sign}{integer}.{decimal}mA"
+    name = re.sub(r'FC([np]?)(\d+)P(\d+)', convert_fc, name, flags=re.IGNORECASE)
+
+    # AVEE (Voltage): AVEEn1p8 → -1.80V, AVEE1p8 → 1.80V
+    def convert_avee(match):
+        sign = '-' if match.group(1).lower() == 'n' else ''
+        integer = match.group(2)
+        decimal = match.group(3).ljust(2, '0')
+        return f"{sign}{integer}.{decimal}V"
+    name = re.sub(r'AVEE([np]?)(\d+)p(\d+)', convert_avee, name, flags=re.IGNORECASE)
+
+    # DACI (Current): DACI3p0 → 3.00uA, DACIn0p6 → -0.60uA
+    def convert_daci(match):
+        sign = '-' if match.group(1).lower() == 'n' else ''
+        integer = match.group(2)
+        decimal = match.group(3).ljust(2, '0')
+        return f"{sign}{integer}.{decimal}uA"
+    name = re.sub(r'DACI([np]?)(\d+)p(\d+)', convert_daci, name, flags=re.IGNORECASE)
+
+    # DC (Duty Cycle): DC4p59 → 4.59%
+    def convert_dc(match):
+        integer = match.group(1)
+        decimal = match.group(2)
+        return f"{integer}.{decimal}%"
+    name = re.sub(r'(?<![A-Z])DC(\d+)p(\d+)', convert_dc, name, flags=re.IGNORECASE)
+
+    # ============================================================
+    # CLEANUP
+    # ============================================================
 
     # Remove trailing test number (5+ digits at the end after underscore)
     name = re.sub(r'_\d{5,}$', '', name)
 
-    # Remove common group prefixes (first 1-2 underscore-separated parts if they match known groups)
-    known_prefixes = ['DC', 'ANLG', 'ANALOG', 'OPTIC', 'OPTICAL', 'FUNC', 'FUNCTIONAL',
-                      'EFUSE', 'INIT', 'INITIALIZE', 'DIGITAL', 'POWER', 'TEST', 'MEAS']
+    # Remove trailing _X_X_X patterns and other noise
+    name = re.sub(r'(_X)+(_|$)', '_', name)
+    name = re.sub(r'_?(FREERUN|INTFRAME)_X_', '_', name, flags=re.IGNORECASE)
+    name = re.sub(r'_NV_', '_', name)
+    name = re.sub(r'_PEQA_', '_', name)
+    name = re.sub(r'_+', '_', name)  # Doppelte _ entfernen
+    name = name.strip('_')
 
-    parts = name.split('_')
-    if len(parts) >= 3:
-        # Check if first part is a known group
-        if parts[0].upper() in known_prefixes:
-            # Check if second part is a subgroup (e.g., LKG, CONT, ADC)
-            if len(parts[1]) <= 10 and parts[1].upper().isalpha():
-                # Remove first two parts (group + subgroup)
-                name = '_'.join(parts[2:])
-            else:
-                # Remove only first part (group)
-                name = '_'.join(parts[1:])
+    return name if name else param_name
 
     # Remove trailing _X_X_X patterns and other noise
     name = re.sub(r'(_X)+(_|$)', '_', name)
@@ -1499,19 +1562,17 @@ def extract_group_from_column(col_name):
 
 def convert_am_data_column_name(col_name):
     """
-    Konvertiert AM DATA Spaltennamen zum RED WAFER Format.
+    Konvertiert AM DATA Spaltennamen zum lesbaren Format - DYNAMISCH, nicht hardcodiert!
 
-    AM DATA Format:
-        OPTIC_ANSI-PREWARMUP_VTHERM0_TEMPTPAD_AVEE*-DACI*-DC*_FREERUN_X_NV_PEQA_RED  -1
-        <> OPTIC_ANSI-PREWARMUP_VTHERM0_TEMPTPAD_AVEEn1p8-DACI3p0-DC4p59_FREERUN_X_NV_PEQA_RED_12097300
-
-    RED WAFER Format:
-        OPTIC_ANSI-PREWARMUP_VTHERM0_TEMPTPAD_-1.80V_3.20uA_4.59%_NV_PEQA_RED_12097300
-
-    Konvertierung:
-        - AVEEn1p8 → -1.80V (n = negativ, 1p8 = 1.8)
-        - DACI3p0 → 3.20uA (3p0 = 3.0, aber standardmäßig 3.20)
-        - DC4p59 → 4.59%
+    Funktionen:
+    1. Gruppen-Präfix DYNAMISCH erkennen und entfernen (Pattern: XXXX_YYYY- am Anfang)
+    2. ALLE kodierten Werte automatisch konvertieren:
+       - FV0P1 → 0.1V (Force Voltage)
+       - FC0P2, FCn0P2 → 0.2mA, -0.2mA (Force Current)
+       - AVEEn1p8 → -1.80V
+       - DACI3p0, DACIn0p6 → 3.00uA, -0.60uA
+       - DC4p59 → 4.59%
+       - XpY Pattern → X.Y (generisch für alle Werte)
     """
     import re
 
@@ -1526,65 +1587,76 @@ def convert_am_data_column_name(col_name):
 
     long_name = parts[1].strip()
 
-    # Suche nach kodierten Werten im Langnamen
-    # Pattern: AVEEn1p8-DACI3p0-DC4p59 oder AVEEn1p8-DACIn0p6-DC4p59
-    pattern = r'(AVEE[np]?\d+p\d+)[-_](DACI[np]?\d+p\d+)[-_](DC\d+p\d+)'
-    match = re.search(pattern, long_name, re.IGNORECASE)
+    # Whitespace bereinigen - LEERZEICHEN ENTFERNEN (nicht durch _ ersetzen!)
+    long_name = re.sub(r'\s+', '', long_name)
 
-    if match:
-        avee_coded = match.group(1)  # z.B. AVEEn1p8
-        daci_coded = match.group(2)  # z.B. DACI3p0 oder DACIn0p6
-        dc_coded = match.group(3)    # z.B. DC4p59
+    # ============================================================
+    # 1. GRUPPEN-PRÄFIX DYNAMISCH ENTFERNEN
+    # ============================================================
+    # Pattern: Alles am Anfang bis zum ersten Subtest-Indikator
+    # Typische Subtest-Start-Wörter: LOW, HIGH, STATIC, SINK, SOURCE, PREWARMUP, POSTWARMUP, etc.
+    # Oder: GRUPPE_SUBGRUPPE- (z.B. OPTIC_ANSI-, ANLG_DISPLAYI-)
 
-        # AVEE konvertieren: AVEEn1p8 → -1.80V
-        avee_match = re.match(r'AVEE([np]?)(\d+)p(\d+)', avee_coded, re.IGNORECASE)
-        if avee_match:
-            sign = '-' if avee_match.group(1).lower() == 'n' else ''
-            integer = avee_match.group(2)
-            decimal = avee_match.group(3)
-            avee_value = f"{sign}{integer}.{decimal.ljust(2, '0')}V"
-        else:
-            avee_value = avee_coded
+    # Pattern 1: XXXX_YYYY- oder XXXX_YYYY_ am Anfang (z.B. OPTIC_ANSI-, DC_SHORT_)
+    prefix_match = re.match(r'^([A-Z]+_[A-Z0-9]+[-_])', long_name, re.IGNORECASE)
+    if prefix_match:
+        long_name = long_name[len(prefix_match.group(1)):]
 
-        # DACI konvertieren: DACI3p0 → 3.20uA, DACIn0p6 → 0.60uA
-        daci_match = re.match(r'DACI([np]?)(\d+)p(\d+)', daci_coded, re.IGNORECASE)
-        if daci_match:
-            sign = '-' if daci_match.group(1).lower() == 'n' else ''
-            integer = daci_match.group(2)
-            decimal = daci_match.group(3)
-            daci_value = f"{sign}{integer}.{decimal.ljust(2, '0')}uA"
-        else:
-            daci_value = daci_coded
+    # ============================================================
+    # 2. KODIERTE WERTE DYNAMISCH KONVERTIEREN
+    # ============================================================
 
-        # DC konvertieren: DC4p59 → 4.59%
-        dc_match = re.match(r'DC(\d+)p(\d+)', dc_coded, re.IGNORECASE)
-        if dc_match:
-            integer = dc_match.group(1)
-            decimal = dc_match.group(2)
-            dc_value = f"{integer}.{decimal}%"
-        else:
-            dc_value = dc_coded
+    # FV (Force Voltage): FV0P1 → 0.1V, FV1P8 → 1.8V
+    def convert_fv(match):
+        integer = match.group(1)
+        decimal = match.group(2)
+        return f"{integer}.{decimal}V"
+    long_name = re.sub(r'FV(\d+)P(\d+)', convert_fv, long_name, flags=re.IGNORECASE)
 
-        # Neuen Condition-String bauen
-        new_condition = f"{avee_value}_{daci_value}_{dc_value}"
+    # FC (Force Current): FC0P2 → 0.2mA, FCn0P2 → -0.2mA
+    def convert_fc(match):
+        sign = '-' if match.group(1).lower() == 'n' else ''
+        integer = match.group(2)
+        decimal = match.group(3)
+        return f"{sign}{integer}.{decimal}mA"
+    long_name = re.sub(r'FC([np]?)(\d+)P(\d+)', convert_fc, long_name, flags=re.IGNORECASE)
 
-        # Original Condition im Langnamen ersetzen
-        # Suche den ganzen kodierten Block und ersetze ihn
-        coded_block = f"{avee_coded}-{daci_coded}-{dc_coded}"
-        # Auch mit _ als Trenner
-        coded_block_underscore = f"{avee_coded}_{daci_coded}_{dc_coded}"
+    # AVEE (Voltage): AVEEn1p8 → -1.80V, AVEE1p8 → 1.80V
+    def convert_avee(match):
+        sign = '-' if match.group(1).lower() == 'n' else ''
+        integer = match.group(2)
+        decimal = match.group(3).ljust(2, '0')  # Mindestens 2 Dezimalstellen
+        return f"{sign}{integer}.{decimal}V"
+    long_name = re.sub(r'AVEE([np]?)(\d+)p(\d+)', convert_avee, long_name, flags=re.IGNORECASE)
 
-        # Versuche beide Varianten
-        new_name = long_name.replace(coded_block, new_condition)
-        new_name = new_name.replace(coded_block_underscore, new_condition)
+    # DACI (Current): DACI3p0 → 3.00uA, DACIn0p6 → -0.60uA
+    def convert_daci(match):
+        sign = '-' if match.group(1).lower() == 'n' else ''
+        integer = match.group(2)
+        decimal = match.group(3).ljust(2, '0')  # Mindestens 2 Dezimalstellen
+        return f"{sign}{integer}.{decimal}uA"
+    long_name = re.sub(r'DACI([np]?)(\d+)p(\d+)', convert_daci, long_name, flags=re.IGNORECASE)
 
-        # Entferne FREERUN_X_ Teil (nicht im RED Format)
-        new_name = re.sub(r'_?FREERUN_X_', '_', new_name)
-        new_name = re.sub(r'__+', '_', new_name)  # Doppelte _ entfernen
+    # DC (Duty Cycle): DC4p59 → 4.59%
+    def convert_dc(match):
+        integer = match.group(1)
+        decimal = match.group(2)
+        return f"{integer}.{decimal}%"
+    long_name = re.sub(r'(?<![A-Z])DC(\d+)p(\d+)', convert_dc, long_name, flags=re.IGNORECASE)
 
-        return new_name
+    # ============================================================
+    # 3. CLEANUP
+    # ============================================================
 
-    # Fallback: Wenn kein Pattern gefunden, Langnamen verwenden
+    # Entferne FREERUN_X_, INTFRAME_X_, etc. (Test-Modi die nicht wichtig sind)
+    long_name = re.sub(r'_?(FREERUN|INTFRAME)_X_', '_', long_name, flags=re.IGNORECASE)
+
+    # Doppelte Unterstriche entfernen
+    long_name = re.sub(r'_+', '_', long_name)
+
+    # Führende/trailing Unterstriche entfernen
+    long_name = long_name.strip('_')
+
     return long_name
 
 
