@@ -146,6 +146,7 @@ Data Octopus/
 | `3.1.7` | 23.02.2026 | `1fe887f` | Auto. Jobs: Multi-Folder Load, Do Job, Standard-Ordner, UI auf Englisch, Auto-Enable GRR |
 | `3.1.8` | 23.02.2026 | `d465ead` | GRR Analysis Debug-Output, Auto Jobs Fixes |
 | `3.1.9` | 23.02.2026 | `9c0489f` | Multi-Parameter Boxplot/Distribution, AM DATA CSV Format Konvertierung |
+| `3.2.0` | 23.02.2026 | `1f21703` | Dynamische Parameter-Konvertierung zentral in simplify_param_name() |
 
 ---
 
@@ -262,6 +263,49 @@ Data Octopus/
 | Backup-Dateien (main Kopie*)  | Sind in `.gitignore` → werden nicht getrackt         |
 | ⚠️ Uncommitted Änderungen gingen verloren (13.02.2026) | Beim Verschieben VS_Folder→Data Octopus/ wurde Git-Baseline statt Working Copy verwendet. **IMMER erst committen bevor Ordner verschoben werden!** |
 | ⚠️ REGEL: Vor Ordner-Moves    | `git stash` oder `git commit` machen, DANN erst verschieben |
+
+### 8.6 Gruppen- und Parameter-Auswahl (WICHTIG!)
+
+#### ZENTRALE FUNKTION: `simplify_param_name()`
+Diese Funktion in `main_v3.py` (~Zeile 1284) ist die **EINZIGE Stelle** wo Parameternamen formatiert werden!
+Sie wird von ALLEN Tabs verwendet (Heatmap, Charac.-Curve, Statistik, Boxplot, Distribution, etc.)
+
+#### Was macht sie?
+1. **CSV `<>` Format**: Verwendet den Teil NACH `<>` (Langname mit echten Werten)
+2. **Gruppen-Präfix entfernen**: NUR bekannte Gruppen (OPTIC, DC, ANLG, FUNC, etc.)
+3. **Kodierte Werte konvertieren**:
+   - `FV0P1` → `0.1V` (Force Voltage)
+   - `FC0P2`, `FCn0P2` → `0.2mA`, `-0.2mA` (Force Current)
+   - `AVEEn1p8` → `-1.80V`
+   - `DACI3p0`, `DACIn0p6` → `3.00uA`, `-0.60uA`
+   - `DC4p59` → `4.59%` (Duty Cycle)
+4. **Cleanup**: Testnummern, `_X_X_X`, `_NV_`, `_PEQA_`, `FREERUN_X_` entfernen
+
+#### WICHTIG: Bekannte Gruppen-Typen
+```python
+known_group_types = ['OPTIC', 'DC', 'ANLG', 'ANALOG', 'FUNC', 'FUNCTIONAL',
+                     'EFUSE', 'INIT', 'INITIALIZE', 'DIGITAL', 'POWER', 'SOT']
+```
+⚠️ Nur diese Präfixe werden entfernt! `ALLON_NORM1PCT_` wird **NICHT** entfernt (ist kein Gruppenname).
+
+#### Werte-Konvertierung (DYNAMISCH!)
+Die Konvertierung ist **dynamisch** - wenn sich Werte ändern, werden sie automatisch konvertiert:
+- `FV1P5` → `1.5V` (nicht nur `FV0P1` → `0.1V`)
+- `AVEEn2p5` → `-2.50V` (nicht nur `AVEEn1p8`)
+- Neue Patterns werden automatisch erkannt
+
+#### FALLS NEUE GRUPPEN HINZUKOMMEN:
+`known_group_types` Liste in `simplify_param_name()` erweitern!
+
+#### FALLS NEUE KODIERUNGEN HINZUKOMMEN:
+Neue Konvertierungs-Regex in `simplify_param_name()` hinzufügen:
+```python
+# Beispiel für neues Pattern XYZ:
+def convert_xyz(match):
+    value = match.group(1)
+    return f"{value}Einheit"
+name = re.sub(r'XYZ(\d+)', convert_xyz, name, flags=re.IGNORECASE)
+```
 
 ---
 
