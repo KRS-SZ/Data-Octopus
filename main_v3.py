@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.1.8"
+APP_VERSION = "3.1.9"
 
 import sys
 
@@ -1497,6 +1497,97 @@ def extract_group_from_column(col_name):
     return "Other"  # Default group
 
 
+def convert_am_data_column_name(col_name):
+    """
+    Konvertiert AM DATA Spaltennamen zum RED WAFER Format.
+
+    AM DATA Format:
+        OPTIC_ANSI-PREWARMUP_VTHERM0_TEMPTPAD_AVEE*-DACI*-DC*_FREERUN_X_NV_PEQA_RED  -1
+        <> OPTIC_ANSI-PREWARMUP_VTHERM0_TEMPTPAD_AVEEn1p8-DACI3p0-DC4p59_FREERUN_X_NV_PEQA_RED_12097300
+
+    RED WAFER Format:
+        OPTIC_ANSI-PREWARMUP_VTHERM0_TEMPTPAD_-1.80V_3.20uA_4.59%_NV_PEQA_RED_12097300
+
+    Konvertierung:
+        - AVEEn1p8 → -1.80V (n = negativ, 1p8 = 1.8)
+        - DACI3p0 → 3.20uA (3p0 = 3.0, aber standardmäßig 3.20)
+        - DC4p59 → 4.59%
+    """
+    import re
+
+    # Wenn kein <> Trenner, original zurückgeben
+    if ' <> ' not in col_name:
+        return col_name
+
+    # Teil nach <> extrahieren (enthält die echten Werte)
+    parts = col_name.split(' <> ')
+    if len(parts) != 2:
+        return col_name
+
+    long_name = parts[1].strip()
+
+    # Suche nach kodierten Werten im Langnamen
+    # Pattern: AVEEn1p8-DACI3p0-DC4p59 oder AVEEn1p8-DACIn0p6-DC4p59
+    pattern = r'(AVEE[np]?\d+p\d+)[-_](DACI[np]?\d+p\d+)[-_](DC\d+p\d+)'
+    match = re.search(pattern, long_name, re.IGNORECASE)
+
+    if match:
+        avee_coded = match.group(1)  # z.B. AVEEn1p8
+        daci_coded = match.group(2)  # z.B. DACI3p0 oder DACIn0p6
+        dc_coded = match.group(3)    # z.B. DC4p59
+
+        # AVEE konvertieren: AVEEn1p8 → -1.80V
+        avee_match = re.match(r'AVEE([np]?)(\d+)p(\d+)', avee_coded, re.IGNORECASE)
+        if avee_match:
+            sign = '-' if avee_match.group(1).lower() == 'n' else ''
+            integer = avee_match.group(2)
+            decimal = avee_match.group(3)
+            avee_value = f"{sign}{integer}.{decimal.ljust(2, '0')}V"
+        else:
+            avee_value = avee_coded
+
+        # DACI konvertieren: DACI3p0 → 3.20uA, DACIn0p6 → 0.60uA
+        daci_match = re.match(r'DACI([np]?)(\d+)p(\d+)', daci_coded, re.IGNORECASE)
+        if daci_match:
+            sign = '-' if daci_match.group(1).lower() == 'n' else ''
+            integer = daci_match.group(2)
+            decimal = daci_match.group(3)
+            daci_value = f"{sign}{integer}.{decimal.ljust(2, '0')}uA"
+        else:
+            daci_value = daci_coded
+
+        # DC konvertieren: DC4p59 → 4.59%
+        dc_match = re.match(r'DC(\d+)p(\d+)', dc_coded, re.IGNORECASE)
+        if dc_match:
+            integer = dc_match.group(1)
+            decimal = dc_match.group(2)
+            dc_value = f"{integer}.{decimal}%"
+        else:
+            dc_value = dc_coded
+
+        # Neuen Condition-String bauen
+        new_condition = f"{avee_value}_{daci_value}_{dc_value}"
+
+        # Original Condition im Langnamen ersetzen
+        # Suche den ganzen kodierten Block und ersetze ihn
+        coded_block = f"{avee_coded}-{daci_coded}-{dc_coded}"
+        # Auch mit _ als Trenner
+        coded_block_underscore = f"{avee_coded}_{daci_coded}_{dc_coded}"
+
+        # Versuche beide Varianten
+        new_name = long_name.replace(coded_block, new_condition)
+        new_name = new_name.replace(coded_block_underscore, new_condition)
+
+        # Entferne FREERUN_X_ Teil (nicht im RED Format)
+        new_name = re.sub(r'_?FREERUN_X_', '_', new_name)
+        new_name = re.sub(r'__+', '_', new_name)  # Doppelte _ entfernen
+
+        return new_name
+
+    # Fallback: Wenn kein Pattern gefunden, Langnamen verwenden
+    return long_name
+
+
 def load_csv_wafermap_file():
     """Load wafermap data from a CSV file"""
     global current_stdf_data, current_wafer_id, test_parameters, grouped_parameters, test_limits
@@ -1580,9 +1671,22 @@ def load_csv_wafermap_file():
         # Use global extract_group_from_column function for grouping
         import re
         for idx, col in enumerate(test_columns):
+            # Convert AM DATA format to RED WAFER format for display
+            display_name = convert_am_data_column_name(col)
+
+            # For group extraction, use the SHORT NAME (before <>) - this has the correct group structure
+            # e.g., "OPTIC_ANSI-PREWARMUP_VTHERM0_..." -> Group: "OPTIC_ANSI"
+            if ' <> ' in col:
+                group_source = col.split(' <> ')[0].strip()  # Use SHORT name (before <>)
+            else:
+                group_source = col
+
+            # Clean up any whitespace in group_source (CSV sometimes has line breaks)
+            group_source = re.sub(r'\s+', '_', group_source)  # Replace spaces with underscores
+
             # Try to extract test number from column name (e.g., "DC_SHORT_LOW_VDD10_..._10020001")
-            # Look for a number at the end of the column name
-            match = re.search(r'_(\d{5,})$', str(col))
+            # Look for a number at the end of the column name (use display_name or original)
+            match = re.search(r'_(\d{5,})$', str(display_name)) or re.search(r'_(\d{5,})$', str(col))
             if match:
                 test_num = int(match.group(1))
             else:
@@ -1591,18 +1695,18 @@ def load_csv_wafermap_file():
 
             test_key = f"test_{test_num}"
 
-            # Detect group from column name
-            group_name = extract_group_from_column(col)
+            # Detect group from SHORT column name (preserves OPTIC_ANSI etc.)
+            group_name = extract_group_from_column(group_source)
 
             # Rename column to match expected format (use test number as column name)
             df = df.rename(columns={col: test_num})
 
-            test_params[test_key] = col  # Use original column name as display name
+            test_params[test_key] = display_name  # Use converted display name
 
             # Add to appropriate group
             if group_name not in grouped_params:
                 grouped_params[group_name] = []
-            grouped_params[group_name].append((test_num, col, col))
+            grouped_params[group_name].append((test_num, display_name, display_name))
 
             # Calculate limits from data (min/max)
             col_data = df[test_num].dropna()
@@ -4399,6 +4503,94 @@ boxplot_type_combobox = ttk.Combobox(
 boxplot_type_combobox.pack(side=tk.LEFT, padx=2)
 boxplot_type_combobox.bind("<<ComboboxSelected>>", lambda e: update_stats_plots())
 
+# Multi-Parameter Section for Boxplot
+_bp_param_frame = tk.LabelFrame(_stats_boxplot_container, text="Parameters (max 10)", font=("Helvetica", 9, "bold"), bg="#f0f0f0")
+_bp_param_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=5)
+
+# Checkbox to include current heatmap selection
+bp_include_current_var = tk.BooleanVar(value=True)
+tk.Checkbutton(_bp_param_frame, text="Include current Heatmap selection", variable=bp_include_current_var,
+               font=("Helvetica", 9), bg="#f0f0f0", command=lambda: update_stats_plots()).pack(anchor="w", padx=5, pady=2)
+
+# Parameter listbox with scrollbar
+_bp_param_list_frame = tk.Frame(_bp_param_frame, bg="#f0f0f0")
+_bp_param_list_frame.pack(fill=tk.X, padx=5, pady=2)
+bp_extra_params_listbox = tk.Listbox(_bp_param_list_frame, height=3, font=("Consolas", 8), exportselection=False)
+bp_extra_params_listbox.pack(side=tk.LEFT, fill=tk.X, expand=True)
+_bp_param_scroll = ttk.Scrollbar(_bp_param_list_frame, orient="vertical", command=bp_extra_params_listbox.yview)
+_bp_param_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+bp_extra_params_listbox.config(yscrollcommand=_bp_param_scroll.set)
+
+# Storage for extra parameters
+bp_extra_params = []  # List of (group, param_display_name)
+
+# Add/Remove buttons
+_bp_btn_frame = tk.Frame(_bp_param_frame, bg="#f0f0f0")
+_bp_btn_frame.pack(fill=tk.X, padx=5, pady=2)
+
+def _bp_add_parameter():
+    """Open dialog to add a parameter to boxplot"""
+    if len(bp_extra_params) >= 10:
+        return
+    # Create popup dialog
+    dialog = tk.Toplevel(main_win)
+    dialog.title("Add Parameter")
+    dialog.geometry("650x180")
+    dialog.transient(main_win)
+    dialog.grab_set()
+
+    tk.Label(dialog, text="Group:", font=("Helvetica", 9)).grid(row=0, column=0, padx=5, pady=5, sticky="e")
+    group_var = tk.StringVar(value="All Groups")
+    group_names = ["All Groups"] + sorted(grouped_parameters.keys()) if grouped_parameters else ["All Groups"]
+    group_combo = ttk.Combobox(dialog, textvariable=group_var, values=group_names, state="readonly", width=25)
+    group_combo.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+    tk.Label(dialog, text="Parameter:", font=("Helvetica", 9)).grid(row=1, column=0, padx=5, pady=5, sticky="e")
+    param_var = tk.StringVar()
+    param_combo = ttk.Combobox(dialog, textvariable=param_var, state="readonly", width=70)
+    param_combo.grid(row=1, column=1, padx=5, pady=5)
+
+    def update_params(event=None):
+        params = _build_charac_param_list(group_var.get())
+        param_combo["values"] = params
+        if params:
+            param_combo.current(0)
+
+    group_combo.bind("<<ComboboxSelected>>", update_params)
+    update_params()
+
+    def add_and_close():
+        p = param_var.get()
+        g = group_var.get()
+        if p and (g, p) not in bp_extra_params:
+            bp_extra_params.append((g, p))
+            bp_extra_params_listbox.insert(tk.END, f"[{g[:15]}] {p[:50]}")
+            update_stats_plots()
+        dialog.destroy()
+
+    tk.Button(dialog, text="Add", command=add_and_close, bg="#4CAF50", fg="white").grid(row=2, column=0, columnspan=2, pady=10)
+
+def _bp_remove_selected():
+    """Remove selected parameter from boxplot list"""
+    sel = bp_extra_params_listbox.curselection()
+    if sel:
+        idx = sel[0]
+        bp_extra_params_listbox.delete(idx)
+        if idx < len(bp_extra_params):
+            bp_extra_params.pop(idx)
+        update_stats_plots()
+
+def _bp_clear_all():
+    """Clear all extra parameters"""
+    bp_extra_params.clear()
+    bp_extra_params_listbox.delete(0, tk.END)
+    update_stats_plots()
+
+tk.Button(_bp_btn_frame, text="+ Add", command=_bp_add_parameter, font=("Helvetica", 8), bg="#4CAF50", fg="white", padx=5).pack(side=tk.LEFT, padx=2)
+tk.Button(_bp_btn_frame, text="- Remove", command=_bp_remove_selected, font=("Helvetica", 8), bg="#f44336", fg="white", padx=5).pack(side=tk.LEFT, padx=2)
+tk.Button(_bp_btn_frame, text="Clear All", command=_bp_clear_all, font=("Helvetica", 8), padx=5).pack(side=tk.LEFT, padx=2)
+tk.Button(_bp_btn_frame, text="Update Plot", command=lambda: update_stats_plots(), font=("Helvetica", 8, "bold"), bg="#2196F3", fg="white", padx=8).pack(side=tk.RIGHT, padx=2)
+
 boxplot_frame = tk.Frame(_stats_boxplot_container, bg="#f8f8f8")
 boxplot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
 boxplot_plot_frame = tk.Frame(boxplot_frame, bg="#f8f8f8")
@@ -4417,6 +4609,93 @@ prob_type_combobox = ttk.Combobox(
 )
 prob_type_combobox.pack(side=tk.LEFT, padx=2)
 prob_type_combobox.bind("<<ComboboxSelected>>", lambda e: update_stats_plots())
+
+# Multi-Parameter Section for Distribution
+_dist_param_frame = tk.LabelFrame(_stats_dist_container, text="Parameters (max 10)", font=("Helvetica", 9, "bold"), bg="#f0f0f0")
+_dist_param_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=5)
+
+# Checkbox to include current heatmap selection
+dist_include_current_var = tk.BooleanVar(value=True)
+tk.Checkbutton(_dist_param_frame, text="Include current Heatmap selection", variable=dist_include_current_var,
+               font=("Helvetica", 9), bg="#f0f0f0", command=lambda: update_stats_plots()).pack(anchor="w", padx=5, pady=2)
+
+# Parameter listbox with scrollbar
+_dist_param_list_frame = tk.Frame(_dist_param_frame, bg="#f0f0f0")
+_dist_param_list_frame.pack(fill=tk.X, padx=5, pady=2)
+dist_extra_params_listbox = tk.Listbox(_dist_param_list_frame, height=3, font=("Consolas", 8), exportselection=False)
+dist_extra_params_listbox.pack(side=tk.LEFT, fill=tk.X, expand=True)
+_dist_param_scroll = ttk.Scrollbar(_dist_param_list_frame, orient="vertical", command=dist_extra_params_listbox.yview)
+_dist_param_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+dist_extra_params_listbox.config(yscrollcommand=_dist_param_scroll.set)
+
+# Storage for extra parameters
+dist_extra_params = []  # List of (group, param_display_name)
+
+# Add/Remove buttons
+_dist_btn_frame = tk.Frame(_dist_param_frame, bg="#f0f0f0")
+_dist_btn_frame.pack(fill=tk.X, padx=5, pady=2)
+
+def _dist_add_parameter():
+    """Open dialog to add a parameter to distribution"""
+    if len(dist_extra_params) >= 10:
+        return
+    dialog = tk.Toplevel(main_win)
+    dialog.title("Add Parameter")
+    dialog.geometry("650x180")
+    dialog.transient(main_win)
+    dialog.grab_set()
+
+    tk.Label(dialog, text="Group:", font=("Helvetica", 9)).grid(row=0, column=0, padx=5, pady=5, sticky="e")
+    group_var = tk.StringVar(value="All Groups")
+    group_names = ["All Groups"] + sorted(grouped_parameters.keys()) if grouped_parameters else ["All Groups"]
+    group_combo = ttk.Combobox(dialog, textvariable=group_var, values=group_names, state="readonly", width=25)
+    group_combo.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+    tk.Label(dialog, text="Parameter:", font=("Helvetica", 9)).grid(row=1, column=0, padx=5, pady=5, sticky="e")
+    param_var = tk.StringVar()
+    param_combo = ttk.Combobox(dialog, textvariable=param_var, state="readonly", width=70)
+    param_combo.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+
+    def update_params(event=None):
+        params = _build_charac_param_list(group_var.get())
+        param_combo["values"] = params
+        if params:
+            param_combo.current(0)
+
+    group_combo.bind("<<ComboboxSelected>>", update_params)
+    update_params()
+
+    def add_and_close():
+        p = param_var.get()
+        g = group_var.get()
+        if p and (g, p) not in dist_extra_params:
+            dist_extra_params.append((g, p))
+            dist_extra_params_listbox.insert(tk.END, f"[{g[:15]}] {p[:50]}")
+            update_stats_plots()
+        dialog.destroy()
+
+    tk.Button(dialog, text="Add", command=add_and_close, bg="#4CAF50", fg="white").grid(row=2, column=0, columnspan=2, pady=10)
+
+def _dist_remove_selected():
+    """Remove selected parameter from distribution list"""
+    sel = dist_extra_params_listbox.curselection()
+    if sel:
+        idx = sel[0]
+        dist_extra_params_listbox.delete(idx)
+        if idx < len(dist_extra_params):
+            dist_extra_params.pop(idx)
+        update_stats_plots()
+
+def _dist_clear_all():
+    """Clear all extra parameters"""
+    dist_extra_params.clear()
+    dist_extra_params_listbox.delete(0, tk.END)
+    update_stats_plots()
+
+tk.Button(_dist_btn_frame, text="+ Add", command=_dist_add_parameter, font=("Helvetica", 8), bg="#4CAF50", fg="white", padx=5).pack(side=tk.LEFT, padx=2)
+tk.Button(_dist_btn_frame, text="- Remove", command=_dist_remove_selected, font=("Helvetica", 8), bg="#f44336", fg="white", padx=5).pack(side=tk.LEFT, padx=2)
+tk.Button(_dist_btn_frame, text="Clear All", command=_dist_clear_all, font=("Helvetica", 8), padx=5).pack(side=tk.LEFT, padx=2)
+tk.Button(_dist_btn_frame, text="Update Plot", command=lambda: update_stats_plots(), font=("Helvetica", 8, "bold"), bg="#2196F3", fg="white", padx=8).pack(side=tk.RIGHT, padx=2)
 
 prob_frame = tk.Frame(_stats_dist_container, bg="#f8f8f8")
 prob_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -4992,7 +5271,7 @@ def open_plot_zoom_window(fig_func, title):
 
 
 def update_stats_plots():
-    """Update boxplot/bin distribution and probability distribution plots based on selected parameter"""
+    """Update boxplot/bin distribution and probability distribution plots based on selected parameters"""
     global stats_boxplot_canvas, stats_prob_canvas, multiple_stdf_data, current_stdf_data
 
     # Clear existing canvases in boxplot plot frame (but keep header)
@@ -5013,33 +5292,78 @@ def update_stats_plots():
     else:
         return
 
-    # Get selected parameter
-    selected = heatmap_param_combobox.get()
-    if not selected:
-        return
+    # === COLLECT PARAMETERS FOR BOXPLOT ===
+    bp_params_to_plot = []  # List of (param_column, param_label)
 
-    # Check if this is a custom test or separator
-    if selected.startswith("───"):
-        return  # Skip separator
+    # Include current heatmap selection if checkbox is checked
+    if bp_include_current_var.get():
+        selected = heatmap_param_combobox.get()
+        if selected and not selected.startswith("───"):
+            param_info = _resolve_param_to_column(selected, data_sources)
+            if param_info:
+                bp_params_to_plot.append(param_info)
+
+    # Add extra parameters from listbox
+    for group, param_display in bp_extra_params:
+        param_info = _resolve_param_to_column(param_display, data_sources)
+        if param_info and param_info not in bp_params_to_plot:
+            bp_params_to_plot.append(param_info)
+
+    # === COLLECT PARAMETERS FOR DISTRIBUTION ===
+    dist_params_to_plot = []
+
+    if dist_include_current_var.get():
+        selected = heatmap_param_combobox.get()
+        if selected and not selected.startswith("───"):
+            param_info = _resolve_param_to_column(selected, data_sources)
+            if param_info:
+                dist_params_to_plot.append(param_info)
+
+    for group, param_display in dist_extra_params:
+        param_info = _resolve_param_to_column(param_display, data_sources)
+        if param_info and param_info not in dist_params_to_plot:
+            dist_params_to_plot.append(param_info)
+
+    # Check which plot type is selected (Boxplot or Bin Distribution)
+    plot_selection = boxplot_type_var.get()
+
+    if plot_selection == "Bin Distribution":
+        # Create Bin Distribution bar chart (unchanged - only uses bin column)
+        all_bins = []
+        for df in data_sources:
+            if "bin" in df.columns:
+                bins = df["bin"].dropna().values
+                all_bins.extend(bins)
+
+        if len(all_bins) > 0:
+            _draw_bin_distribution(all_bins, boxplot_plot_frame)
+
+    else:
+        # Create Multi-Parameter Boxplot
+        if bp_params_to_plot:
+            _draw_multi_param_boxplot(bp_params_to_plot, data_sources, wafer_labels, boxplot_plot_frame)
+
+    # Create Multi-Parameter Distribution plot
+    if dist_params_to_plot:
+        _draw_multi_param_distribution(dist_params_to_plot, data_sources, wafer_labels, prob_plot_frame)
+
+
+def _resolve_param_to_column(selected, data_sources):
+    """Resolve parameter display string to (param_column, param_label) tuple"""
+    if not selected:
+        return None
 
     if selected.startswith("BIN"):
-        param_column = "bin"
-        param_label_text = "Bin"
+        return ("bin", "Bin")
     elif selected.startswith("CUSTOM:"):
-        # Handle custom test
         custom_test_name = selected.replace("CUSTOM:", "").strip()
         param_column = f"_custom_{custom_test_name}"
-        param_label_text = f"Custom: {custom_test_name}"
-
-        # Compute custom test values for all data sources
+        # Compute custom test values
         for df in data_sources:
             if param_column not in df.columns:
-                custom_values = []
-                for idx, row in df.iterrows():
-                    value = evaluate_custom_test(custom_test_name, row)
-                    custom_values.append(value)
+                custom_values = [evaluate_custom_test(custom_test_name, row) for idx, row in df.iterrows()]
                 df[param_column] = custom_values
-                print(f"Computed custom test '{custom_test_name}' for stats plots: {len(df)} dies")
+        return (param_column, f"Custom: {custom_test_name}")
     else:
         test_key = selected.split(":")[0].strip()
         if test_key.startswith("test_"):
@@ -5048,263 +5372,322 @@ def update_stats_plots():
             try:
                 param_column = int(test_key)
             except ValueError:
-                return  # Invalid parameter
-        param_label_text = selected.split(":")[-1].strip() if ":" in selected else selected
+                return None
+        param_label = selected.split(":")[-1].strip() if ":" in selected else selected
+        return (param_column, param_label)
 
-    # Check which plot type is selected (Boxplot or Bin Distribution)
-    plot_selection = boxplot_type_var.get()
 
-    if plot_selection == "Bin Distribution":
-        # Create Bin Distribution bar chart
-        all_bins = []
-        for df in data_sources:
-            if "bin" in df.columns:
-                bins = df["bin"].dropna().values
-                all_bins.extend(bins)
+def _draw_bin_distribution(all_bins, parent_frame):
+    """Draw bin distribution chart"""
+    global stats_boxplot_canvas
 
-        if len(all_bins) > 0:
-            all_bins = np.array(all_bins)
-            unique_bins, bin_counts = np.unique(all_bins, return_counts=True)
-            total_dies = len(all_bins)
+    all_bins = np.array(all_bins)
+    unique_bins, bin_counts = np.unique(all_bins, return_counts=True)
+    total_dies = len(all_bins)
+    bin_percentages = (bin_counts / total_dies) * 100
+    pass_bin = 1
 
-            # Calculate percentages
-            bin_percentages = (bin_counts / total_dies) * 100
+    fig_bin, ax_bin = plt.subplots(figsize=(2.8, 2.5))
+    fig_bin.patch.set_facecolor('#f0f0f0')
 
-            # Bin 1 is pass/good bin
-            pass_bin = 1
+    bin_color_map = {
+        1: '#4CAF50', 2: '#F44336', 3: '#FF9800', 4: '#9C27B0', 5: '#2196F3',
+        6: '#FFEB3B', 7: '#795548', 8: '#607D8B', 9: '#E91E63', 10: '#00BCD4'
+    }
+    colors = [bin_color_map.get(int(b), '#9E9E9E') for b in unique_bins]
 
-            # Create figure for bin distribution chart
-            fig_bin, ax_bin = plt.subplots(figsize=(2.8, 2.5))
-            fig_bin.patch.set_facecolor('#f0f0f0')
+    bars = ax_bin.bar([str(int(b)) for b in unique_bins], bin_percentages, color=colors, edgecolor='white', linewidth=1)
 
-            # Bin colors - Bin 1 = Green (Good), all others = distinct non-green colors
-            bin_color_map = {
-                1: '#4CAF50',   # Green - GOOD BIN (only green!)
-                2: '#F44336',   # Red
-                3: '#FF9800',   # Orange
-                4: '#9C27B0',   # Purple
-                5: '#2196F3',   # Blue
-                6: '#FFEB3B',   # Yellow
-                7: '#795548',   # Brown
-                8: '#607D8B',   # Gray-Blue
-                9: '#E91E63',   # Pink
-                10: '#00BCD4',  # Cyan
-                11: '#FF5722',  # Deep Orange
-                12: '#673AB7',  # Deep Purple
-                13: '#03A9F4',  # Light Blue
-                14: '#CDDC39',  # Lime (yellow-green, not pure green)
-                15: '#9E9E9E',  # Gray
-            }
+    for bar, pct, count in zip(bars, bin_percentages, bin_counts):
+        ax_bin.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
+                   f'{pct:.1f}%\n({int(count)})', ha='center', va='bottom', fontsize=5, fontweight='bold')
 
-            # Create color list based on bin numbers
-            colors = []
-            for b in unique_bins:
-                b_int = int(b)
-                if b_int in bin_color_map:
-                    colors.append(bin_color_map[b_int])
-                else:
-                    # Default for bins > 15: cycle through non-green colors
-                    colors.append('#F44336')  # Red as fallback
+    ax_bin.set_xlabel('Bin', fontsize=7, color='#2C3E50')
+    ax_bin.set_ylabel('Percentage (%)', fontsize=7, color='#2C3E50')
+    ax_bin.set_title('Bin Distribution', fontsize=8, fontweight='bold', color='#2C3E50')
+    ax_bin.tick_params(axis='both', which='major', labelsize=6, colors='#2C3E50')
+    ax_bin.set_facecolor('#FAFAFA')
+    ax_bin.grid(True, alpha=0.4, axis='y', linestyle='-', linewidth=0.5, color='#BDC3C7')
+    ax_bin.set_ylim(0, max(bin_percentages) * 1.15)
 
-            # Create bar chart
-            x_pos = np.arange(len(unique_bins))
-            bars = ax_bin.bar(x_pos, bin_percentages, color=colors, edgecolor='black', linewidth=0.5)
+    pass_count = bin_counts[unique_bins == pass_bin].sum() if pass_bin in unique_bins else 0
+    yield_pct = (pass_count / total_dies) * 100
+    ax_bin.text(0.98, 0.98, f'Yield: {yield_pct:.1f}%\nTotal: {total_dies}',
+        transform=ax_bin.transAxes, fontsize=6, fontweight='bold',
+        va='top', ha='right', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
-            # Add percentage labels on bars
-            for bar, pct in zip(bars, bin_percentages):
-                height = bar.get_height()
-                ax_bin.annotate(f'{pct:.1f}%',
-                    xy=(bar.get_x() + bar.get_width() / 2, height),
-                    xytext=(0, 2),
-                    textcoords="offset points",
-                    ha='center', va='bottom',
-                    fontsize=6, fontweight='bold')
+    fig_bin.tight_layout()
+    stats_boxplot_canvas = FigureCanvasTkAgg(fig_bin, master=parent_frame)
+    stats_boxplot_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    stats_boxplot_canvas.draw()
 
-            # Create x-tick labels with bin names from binning_lookup
-            x_labels = []
-            for b in unique_bins:
-                b_int = int(b)
-                if binning_lookup.loaded:
-                    bin_name = binning_lookup.get_bin_name(b_int)
-                    if bin_name:
-                        # Shorten long names
-                        short_name = bin_name[:12] + "..." if len(bin_name) > 15 else bin_name
-                        x_labels.append(f'Bin {b_int}\n{short_name}')
-                    else:
-                        x_labels.append(f'Bin {b_int}')
-                else:
-                    x_labels.append(f'Bin {b_int}')
 
-            # Customize chart
-            ax_bin.set_xticks(x_pos)
-            ax_bin.set_xticklabels(x_labels, fontsize=5, rotation=45, ha='right')
-            ax_bin.set_ylabel("Percentage (%)", fontsize=7)
-            ax_bin.set_title("Bin Distribution", fontsize=8, fontweight="bold")
-            ax_bin.tick_params(axis='both', which='major', labelsize=6)
-            ax_bin.grid(True, alpha=0.3, linestyle='--', linewidth=0.5, axis='y')
-            ax_bin.set_ylim(0, max(bin_percentages) * 1.15)  # Add space for labels
+def _draw_multi_param_boxplot(params_to_plot, data_sources, wafer_labels, parent_frame):
+    """Draw boxplot with multiple parameters side by side with statistics"""
+    global stats_boxplot_canvas
 
-            # Add total yield info (Bin 1 = good/pass)
-            pass_count = bin_counts[unique_bins == pass_bin].sum() if pass_bin in unique_bins else 0
-            yield_pct = (pass_count / total_dies) * 100
-            ax_bin.text(0.98, 0.98, f'Yield: {yield_pct:.1f}%\nTotal: {total_dies}',
-                transform=ax_bin.transAxes, fontsize=6, fontweight='bold',
-                va='top', ha='right',
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    if not params_to_plot:
+        return
 
-            fig_bin.tight_layout()
-
-            stats_boxplot_canvas = FigureCanvasTkAgg(fig_bin, master=boxplot_plot_frame)
-            stats_boxplot_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-            stats_boxplot_canvas.draw()
-
-    else:
-        # Create Boxplot (default)
-        # Collect data from all sources
-        all_data = []
-        labels = []
-
-        for df, label in zip(data_sources, wafer_labels):
-            if param_column in df.columns:
-                values = df[param_column].dropna().values
-                if len(values) > 0:
-                    all_data.append(values)
-                    # Truncate long labels
-                    short_label = label[:15] + "..." if len(str(label)) > 15 else str(label)
-                    labels.append(short_label)
-
-        if not all_data:
-            return
-
-        fig_box, ax_box = plt.subplots(figsize=(2.8, 2.5))
-        fig_box.patch.set_facecolor('white')
-
-        # Professional boxplot styling
-        bp = ax_box.boxplot(
-            all_data,
-            tick_labels=labels if len(labels) <= 3 else [f"W{i+1}" for i in range(len(labels))],
-            vert=True,
-            patch_artist=True,
-            showmeans=True,
-            widths=0.6,
-            meanprops=dict(marker="D", markerfacecolor="#E74C3C", markeredgecolor="white", markersize=5, markeredgewidth=1),
-            medianprops=dict(color="#2C3E50", linewidth=2),
-            whiskerprops=dict(color="#2C3E50", linewidth=1.5, linestyle='-'),
-            capprops=dict(color="#2C3E50", linewidth=1.5),
-            flierprops=dict(marker='o', markerfacecolor='#95A5A6', markeredgecolor='#7F8C8D', markersize=3, alpha=0.6),
-            boxprops=dict(linewidth=1.5)
-        )
-
-        # Professional color palette
-        professional_colors = ['#3498DB', '#2ECC71', '#9B59B6', '#E67E22', '#1ABC9C', '#E74C3C']
-        for idx, patch in enumerate(bp["boxes"]):
-            color = professional_colors[idx % len(professional_colors)]
-            patch.set_facecolor(color)
-            patch.set_alpha(0.75)
-            patch.set_edgecolor('#2C3E50')
-
-        # Calculate statistics for all combined data
-        combined_data = np.concatenate(all_data)
-        stats_max = np.max(combined_data)
-        stats_min = np.min(combined_data)
-        stats_q1 = np.percentile(combined_data, 25)
-        stats_q3 = np.percentile(combined_data, 75)
-        stats_mean = np.mean(combined_data)
-        stats_median = np.median(combined_data)
-
-        # Add statistics box in top left corner
-        stats_text = (
-            f"Max: {stats_max:.3g}\n"
-            f"Min: {stats_min:.3g}\n"
-            f"Q1: {stats_q1:.3g}\n"
-            f"Q3: {stats_q3:.3g}\n"
-            f"Mean: {stats_mean:.3g}\n"
-            f"Median: {stats_median:.3g}"
-        )
-        ax_box.text(0.02, 0.98, stats_text,
-            transform=ax_box.transAxes,
-            fontsize=5,
-            fontweight='normal',
-            fontfamily='monospace',
-            verticalalignment='top',
-            horizontalalignment='left',
-            bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='#BDC3C7', alpha=0.9, linewidth=1)
-        )
-
-        ax_box.set_title(param_label_text[:20], fontsize=8, fontweight="bold", color='#2C3E50')
-        ax_box.tick_params(axis='both', which='major', labelsize=6, colors='#2C3E50')
-        ax_box.set_ylabel("Value", fontsize=7, color='#2C3E50')
-        ax_box.set_facecolor('#FAFAFA')
-        ax_box.grid(True, alpha=0.4, linestyle='-', linewidth=0.5, color='#BDC3C7')
-        ax_box.spines['top'].set_visible(False)
-        ax_box.spines['right'].set_visible(False)
-        ax_box.spines['left'].set_color('#BDC3C7')
-        ax_box.spines['bottom'].set_color('#BDC3C7')
-
-        fig_box.tight_layout()
-
-        stats_boxplot_canvas = FigureCanvasTkAgg(fig_box, master=boxplot_plot_frame)
-        stats_boxplot_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-        stats_boxplot_canvas.draw()
-
-    # Create probability distribution plot (CDF or PDF based on selection)
-    # Collect data for probability plot
+    # Collect data and calculate statistics for each parameter
     all_data = []
     labels = []
-    for df, label in zip(data_sources, wafer_labels):
-        if param_column in df.columns:
-            values = df[param_column].dropna().values
-            if len(values) > 0:
-                all_data.append(values)
-                short_label = label[:15] + "..." if len(str(label)) > 15 else str(label)
-                labels.append(short_label)
+    stats_list = []  # Store statistics for each parameter
+
+    for param_column, param_label in params_to_plot:
+        param_values = []
+        for df in data_sources:
+            if param_column in df.columns:
+                values = df[param_column].dropna().values
+                param_values.extend(values)
+
+        if param_values:
+            data_arr = np.array(param_values)
+            all_data.append(data_arr)
+            # Short label for X-axis (max 15 chars)
+            short_label = param_label.split(":")[-1].strip()[:15] if ":" in param_label else param_label[:15]
+            labels.append(short_label)
+
+            # Calculate statistics
+            stats = {
+                'n': len(data_arr),
+                'mean': np.mean(data_arr),
+                'median': np.median(data_arr),
+                'std': np.std(data_arr),
+                'min': np.min(data_arr),
+                'max': np.max(data_arr),
+                'q1': np.percentile(data_arr, 25),
+                'q3': np.percentile(data_arr, 75),
+            }
+            stats_list.append(stats)
 
     if not all_data:
         return
 
-    fig_prob, ax_prob = plt.subplots(figsize=(2.8, 2.5))
+    # Create figure (simpler layout without table)
+    n_params = len(all_data)
+    fig_width = max(4, min(10, 2 + n_params * 1.0))
+    fig_box, ax_box = plt.subplots(figsize=(fig_width, 3.5))
+    fig_box.patch.set_facecolor('white')
+
+    # Professional boxplot styling
+    bp = ax_box.boxplot(
+        all_data,
+        labels=labels,
+        vert=True,
+        patch_artist=True,
+        showmeans=True,
+        widths=0.5,
+        meanprops=dict(marker="D", markerfacecolor="#E74C3C", markeredgecolor="white", markersize=4),
+        medianprops=dict(color="#2C3E50", linewidth=1.5),
+        whiskerprops=dict(color="#2C3E50", linewidth=1),
+        capprops=dict(color="#2C3E50", linewidth=1),
+        flierprops=dict(marker='o', markerfacecolor='#95A5A6', markeredgecolor='#7F8C8D', markersize=2, alpha=0.5),
+        boxprops=dict(linewidth=1)
+    )
+
+    # Color palette
+    colors = ['#3498DB', '#2ECC71', '#9B59B6', '#E67E22', '#1ABC9C', '#E74C3C', '#F39C12', '#16A085', '#8E44AD', '#2980B9']
+    for idx, patch in enumerate(bp["boxes"]):
+        color = colors[idx % len(colors)]
+        patch.set_facecolor(color)
+        patch.set_alpha(0.7)
+        patch.set_edgecolor('#2C3E50')
+
+    # Title
+    ax_box.set_title(f"Multi-Parameter Boxplot ({n_params} params)", fontsize=9, fontweight="bold", color='#2C3E50', pad=5)
+    ax_box.tick_params(axis='both', which='major', labelsize=7, colors='#2C3E50')
+    ax_box.set_ylabel("Value", fontsize=8, color='#2C3E50')
+    ax_box.set_facecolor('#FAFAFA')
+    ax_box.grid(True, alpha=0.3, linestyle='-', linewidth=0.5, color='#BDC3C7', axis='y')
+    ax_box.spines['top'].set_visible(False)
+    ax_box.spines['right'].set_visible(False)
+
+    # Add yellow info boxes for each parameter (slightly offset above each box)
+    y_range = ax_box.get_ylim()
+    y_span = y_range[1] - y_range[0]
+
+    for idx, stats in enumerate(stats_list):
+        # Format stats text
+        stats_text = (
+            f"n={stats['n']}\n"
+            f"μ={stats['mean']:.2g}\n"
+            f"M={stats['median']:.2g}\n"
+            f"σ={stats['std']:.2g}"
+        )
+
+        # Position info box above each boxplot (slightly offset)
+        x_pos = idx + 1 + 0.15  # Offset to the right
+        y_pos = y_range[1] - y_span * 0.02  # Near top
+
+        ax_box.text(x_pos, y_pos, stats_text,
+            fontsize=5,
+            fontfamily='monospace',
+            verticalalignment='top',
+            horizontalalignment='left',
+            bbox=dict(boxstyle='round,pad=0.2', facecolor='#FFFACD', edgecolor='#DAA520', alpha=0.9, linewidth=0.5)
+        )
+
+    fig_box.tight_layout()
+
+    # Close previous figure if exists
+    if stats_boxplot_canvas is not None:
+        plt.close(stats_boxplot_canvas.figure)
+
+    stats_boxplot_canvas = FigureCanvasTkAgg(fig_box, master=parent_frame)
+    stats_boxplot_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    stats_boxplot_canvas.draw()
+
+
+def _draw_multi_param_distribution(params_to_plot, data_sources, wafer_labels, parent_frame):
+    """Draw distribution plot with multiple parameters overlaid (transparent) with statistics"""
+    global stats_prob_canvas
+
+    if not params_to_plot:
+        return
+
+    # Collect data and calculate statistics
+    all_param_data = []
+    labels = []
+    stats_list = []
+
+    for param_column, param_label in params_to_plot:
+        all_values = []
+        for df in data_sources:
+            if param_column in df.columns:
+                values = df[param_column].dropna().values
+                all_values.extend(values)
+
+        if all_values:
+            data_arr = np.array(all_values)
+            all_param_data.append(data_arr)
+            short_label = param_label.split(":")[-1].strip()[:15] if ":" in param_label else param_label[:15]
+            labels.append(short_label)
+
+            # Calculate statistics
+            stats = {
+                'n': len(data_arr),
+                'mean': np.mean(data_arr),
+                'median': np.median(data_arr),
+                'std': np.std(data_arr),
+                'min': np.min(data_arr),
+                'max': np.max(data_arr),
+            }
+            stats_list.append(stats)
+
+    if not all_param_data:
+        return
+
+    n_params = len(all_param_data)
+    fig_width = max(4, min(10, 2 + n_params * 1.0))
+    fig_prob = plt.figure(figsize=(fig_width, 4.5))
     fig_prob.patch.set_facecolor('white')
 
-    plot_type = prob_type_var.get()  # Get CDF or PDF selection
+    # Create single plot (no table)
+    fig_prob, ax_prob = plt.subplots(figsize=(fig_width, 3.5))
+    fig_prob.patch.set_facecolor('white')
 
-    # Professional color palette
-    professional_colors = ['#3498DB', '#2ECC71', '#9B59B6', '#E67E22', '#1ABC9C', '#E74C3C']
+    plot_type = prob_type_var.get()
+    colors = ['#3498DB', '#2ECC71', '#9B59B6', '#E67E22', '#1ABC9C', '#E74C3C', '#F39C12', '#16A085', '#8E44AD', '#2980B9']
 
-    if plot_type == "PDF":
-        # Probability Density Function (histogram-based) - professional style
-        for idx, (data, label) in enumerate(zip(all_data, labels)):
-            color = professional_colors[idx % len(professional_colors)]
-            ax_prob.hist(data, bins=30, density=True, alpha=0.6, label=label,
+    for idx, (data, label) in enumerate(zip(all_param_data, labels)):
+        color = colors[idx % len(colors)]
+        stats = stats_list[idx]
+        mean = stats['mean']
+        std = stats['std']
+
+        if plot_type == "PDF":
+            ax_prob.hist(data, bins=30, density=True, alpha=0.5, label=label,
                         color=color, edgecolor='white', linewidth=0.5)
-        ax_prob.set_title("PDF", fontsize=8, fontweight="bold", color='#2C3E50')
-        ax_prob.set_ylabel("Density", fontsize=7, color='#2C3E50')
-    else:
-        # Cumulative Distribution Function (default) - professional style
-        for idx, (data, label) in enumerate(zip(all_data, labels)):
-            color = professional_colors[idx % len(professional_colors)]
+        else:
             sorted_data = np.sort(data)
             prob = np.linspace(0, 1, len(sorted_data), endpoint=False)
             ax_prob.plot(sorted_data, prob, label=label, linewidth=2, alpha=0.85, color=color)
-            ax_prob.fill_between(sorted_data, prob, alpha=0.15, color=color)
-        ax_prob.set_title("CDF", fontsize=8, fontweight="bold", color='#2C3E50')
-        ax_prob.set_ylabel("Probability", fontsize=7, color='#2C3E50')
+            ax_prob.fill_between(sorted_data, prob, alpha=0.1, color=color)
 
-    ax_prob.set_xlabel("Value", fontsize=7, color='#2C3E50')
-    ax_prob.tick_params(axis='both', which='major', labelsize=6, colors='#2C3E50')
+    # Add sigma ticks on X-axis and info box (only for single parameter)
+    if n_params == 1:
+        stats = stats_list[0]
+        mean = stats['mean']
+        std = stats['std']
+
+        # Add vertical lines for sigma markers
+        ax_prob.axvline(x=mean, color='#E74C3C', linewidth=1.2, linestyle='-', alpha=0.8)
+        ax_prob.axvline(x=mean - std, color='#F39C12', linewidth=1, linestyle='--', alpha=0.7)
+        ax_prob.axvline(x=mean + std, color='#F39C12', linewidth=1, linestyle='--', alpha=0.7)
+        ax_prob.axvline(x=mean - 3*std, color='#9B59B6', linewidth=1, linestyle=':', alpha=0.7)
+        ax_prob.axvline(x=mean + 3*std, color='#9B59B6', linewidth=1, linestyle=':', alpha=0.7)
+
+        # Add sigma labels on X-axis (below the plot)
+        xlim = ax_prob.get_xlim()
+        ylim = ax_prob.get_ylim()
+        y_text = ylim[0] - (ylim[1] - ylim[0]) * 0.08
+
+        # Only show sigma labels if they're within x-axis range
+        sigma_positions = {
+            'μ-3σ': mean - 3*std,
+            'μ-σ': mean - std,
+            'μ': mean,
+            'μ+σ': mean + std,
+            'μ+3σ': mean + 3*std,
+        }
+        sigma_colors = {
+            'μ-3σ': '#9B59B6',
+            'μ-σ': '#F39C12',
+            'μ': '#E74C3C',
+            'μ+σ': '#F39C12',
+            'μ+3σ': '#9B59B6',
+        }
+
+        for label_txt, x_pos in sigma_positions.items():
+            if xlim[0] <= x_pos <= xlim[1]:
+                ax_prob.annotate(label_txt, xy=(x_pos, ylim[0]), xytext=(x_pos, y_text),
+                    fontsize=6, ha='center', va='top', color=sigma_colors[label_txt], fontweight='bold')
+                # Add tick mark
+                ax_prob.plot([x_pos, x_pos], [ylim[0], ylim[0] - (ylim[1]-ylim[0])*0.02],
+                    color=sigma_colors[label_txt], linewidth=1.5)
+
+        # Add info box top left with mean, median, std
+        info_text = (
+            f"n = {stats['n']}\n"
+            f"μ = {mean:.2g}\n"
+            f"M = {stats['median']:.2g}\n"
+            f"σ = {std:.2g}"
+        )
+        ax_prob.text(0.02, 0.98, info_text,
+            transform=ax_prob.transAxes,
+            fontsize=6,
+            fontfamily='monospace',
+            verticalalignment='top',
+            horizontalalignment='left',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='#FFFACD', edgecolor='#DAA520', alpha=0.9, linewidth=0.5)
+        )
+
+    if plot_type == "PDF":
+        ax_prob.set_title("PDF (overlaid)", fontsize=9, fontweight="bold", color='#2C3E50')
+        ax_prob.set_ylabel("Density", fontsize=8, color='#2C3E50')
+    else:
+        ax_prob.set_title("CDF (overlaid)", fontsize=9, fontweight="bold", color='#2C3E50')
+        ax_prob.set_ylabel("Probability", fontsize=8, color='#2C3E50')
+
+    ax_prob.set_xlabel("Value", fontsize=8, color='#2C3E50')
+    ax_prob.tick_params(axis='both', which='major', labelsize=7, colors='#2C3E50')
     ax_prob.set_facecolor('#FAFAFA')
-    ax_prob.grid(True, alpha=0.4, linestyle='-', linewidth=0.5, color='#BDC3C7')
+    ax_prob.grid(True, alpha=0.3, linestyle='-', linewidth=0.5, color='#BDC3C7')
     ax_prob.spines['top'].set_visible(False)
     ax_prob.spines['right'].set_visible(False)
-    ax_prob.spines['left'].set_color('#BDC3C7')
-    ax_prob.spines['bottom'].set_color('#BDC3C7')
 
-    if len(labels) <= 3:
-        ax_prob.legend(fontsize=5, loc='lower right' if plot_type == "CDF" else 'upper right',
+    if n_params <= 6:
+        ax_prob.legend(fontsize=6, loc='lower right' if plot_type == "CDF" else 'upper right',
                       framealpha=0.9, edgecolor='#BDC3C7')
 
     fig_prob.tight_layout()
 
-    stats_prob_canvas = FigureCanvasTkAgg(fig_prob, master=prob_plot_frame)
+    # Close previous figure if exists
+    if stats_prob_canvas is not None:
+        plt.close(stats_prob_canvas.figure)
+
+    stats_prob_canvas = FigureCanvasTkAgg(fig_prob, master=parent_frame)
     stats_prob_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
     stats_prob_canvas.draw()
 

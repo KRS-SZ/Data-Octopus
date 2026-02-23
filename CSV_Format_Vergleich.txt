@@ -1,0 +1,196 @@
+================================================================================
+                    CSV FORMAT VERGLEICH: RED WAFER vs AM DATA
+================================================================================
+
+Erstellt: 2026-02-23
+Pfade:
+  - RED WAFER: Tooltest\RED Wafer 3\CSVFiles\*.csv
+  - AM DATA:   Data\AM Data\Full runs\fully\AM_P03004_CP2_V223_ENG_...\CSVFiles\*.csv
+
+================================================================================
+                              ZUSAMMENFASSUNG
+================================================================================
+
+RED WAFER CSV:  530 Spalten
+AM DATA CSV:    569 Spalten
+
+HAUPTUNTERSCHIED:
+================================================================================
+RED WAFER hat Testbedingungen DIREKT im Spaltennamen:
+  → -1.80V_3.20uA_4.59%
+
+AM DATA hat Wildcards (*) und einen separaten Langnamen nach "<>":
+  → AVEE*-DACI*-DC* <> ...AVEEn1p8-DACI3p0-DC4p59...
+
+================================================================================
+                         DETAILLIERTER VERGLEICH
+================================================================================
+
+-------------------------- HEADER-SPALTEN (1-15) -------------------------------
+
+RED WAFER                              | AM DATA
+---------------------------------------|---------------------------------------
+Date                                   | Date
+TestProgram                            | TestProgram
+Product                                | Product
+Insertion                              | Insertion
+Type                                   | Type
+Device                                 | Device
+HardBin                                | HardBin
+SoftBin                                | SoftBin
+LotID                                  | LotID
+WaferID                                | WaferID
+X                                      | X
+Y                                      | Y
+Temperature                            | Temperature
+Color                                  | Color
+TesterName                             | TesterName
+
+→ IDENTISCH ✓
+
+---------------------- INIT/SOT PARAMETER (16-18) -----------------------------
+
+RED WAFER                              | AM DATA
+---------------------------------------|---------------------------------------
+Initialize_FlowVars_1003               | Initialize_FlowVars eFuseTrialOnly -1_1003
+Initialize_FlowVars_1004               | Initialize_FlowVars Site -1_1004
+SOT_DEBUG_TESTTIME_TIMESTAMP_X_X_X_    | SOT_DEBUG_TESTTIME_TIMESTAMP_X_X_X_NV_PEQA_X
+  NV_PEQA_X_30025000                   |   -1 <> SOT_DEBUG_TESTTIME_TIMESTAMP_X_X_X_
+                                       |         NV_PEQA_X_30025000
+
+→ AM DATA hat Zusatzinfo ("eFuseTrialOnly", "Site", "-1") und "<>" Trenner
+
+---------------------- EEPROM/PIB CHECK (19-22) -------------------------------
+
+RED WAFER                              | AM DATA
+---------------------------------------|---------------------------------------
+PIB Valid_9000                         | EEpromCheck  -1 <> PIB Valid_9000
+Probecard Valid_9001                   | EEpromCheck  -1 <> Probecard Valid_9001
+PIB Not Same_9002                      | EEpromCheck  -1 <> PIB Not Same_9002
+Probecard Not Same_9003                | EEpromCheck  -1 <> Probecard Not Same_9003
+
+→ AM DATA hat "EEpromCheck -1 <>" Präfix
+
+---------------------- DC_SHORT PARAMETER --------------------------------------
+
+RED WAFER                              | AM DATA
+---------------------------------------|---------------------------------------
+DC_SHORT_LOW_VDD10_FV0P1_X_X_X_        | DC_SHORT_LOW_VDD10_FV0P1_X_X_X_PEQA_X
+  PEQA_X_10020001                      |   VDD10 22.g404hc <> DC_SHORT_LOW_VDD10_
+                                       |   FV0P1_X_X_X_PEQA_X_10020001
+
+→ AM DATA hat Pin-Info ("VDD10 22.g404hc") und "<>" Trenner
+
+---------------------- DC_LKG PARAMETER ----------------------------------------
+
+RED WAFER                              | AM DATA
+---------------------------------------|---------------------------------------
+DC_LKG_LOW_CLKREF_FV0_X_X_X_           | DC_LKG_LOW_CLKREF_FV0_X_X_X_PEQA_X
+  PEQA_X_10021000                      |   CLK_REF 0.x412 <> DC_LKG_LOW_CLKREF_
+                                       |   FV0_X_X_X_PEQA_X_10021000
+
+→ AM DATA hat Pin-Name ("CLK_REF") und Pin-Position ("0.x412")
+
+================================================================================
+                    ★★★ KRITISCHER UNTERSCHIED: OPTIC_ANSI ★★★
+================================================================================
+
+Dies ist der Parameter wo die Testbedingungen (Voltage, Current, DC%) sichtbar sind!
+
+RED WAFER FORMAT:
+-----------------
+OPTIC_ANSI-PREWARMUP_VTHERM0_TEMPTPAD_-1.80V_3.20uA_4.59%_NV_PEQA_RED_12097300
+                                      ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+                                      Testbedingungen DIREKT sichtbar!
+
+  Aufbau: TESTNAME_SIGNAL_CONDITION_COLOR_TESTNUMBER
+
+  Bedingungen im Klartext:
+    • -1.80V  = AVEE Spannung
+    • 3.20uA  = DACI Strom
+    • 4.59%   = DC (Duty Cycle)
+
+AM DATA FORMAT:
+---------------
+OPTIC_ANSI-PREWARMUP_VTHERM0_TEMPTPAD_AVEE*-DACI*-DC*_FREERUN_X_NV_PEQA_RED  -1
+  <> OPTIC_ANSI-PREWARMUP_VTHERM0_TEMPTPAD_AVEEn1p8-DACI3p0-DC4p59_FREERUN_X_NV_PEQA_RED_12097300
+                                      ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+                                      Wildcards (*)!
+
+  Aufbau: KURZNAME_mit_Wildcards -1 <> LANGNAME_mit_Werten_TESTNUMBER
+
+  Bedingungen KODIERT (nach <>):
+    • AVEEn1p8  = -1.8V (n = negativ, 1p8 = 1.8)
+    • DACI3p0   = 3.0uA (3p0 = 3.0)
+    • DC4p59   = 4.59%
+
+================================================================================
+                         WEITERE UNTERSCHIEDE
+================================================================================
+
+1. SPALTENANZAHL
+   RED WAFER: 530 Spalten
+   AM DATA:   569 Spalten (+39 mehr Parameter)
+
+2. TESTBEDINGUNGEN-FORMAT
+   RED WAFER: -1.80V_3.20uA_4.59%     (lesbar, mit Einheiten)
+   AM DATA:   AVEEn1p8-DACI3p0-DC4p59 (kodiert, ohne Einheiten)
+
+3. "<>" TRENNER
+   RED WAFER: NICHT vorhanden
+   AM DATA:   Kurzname <> Langname (Kurzname zeigt Wildcards, Langname echte Werte)
+
+4. PIN-INFORMATIONEN
+   RED WAFER: NICHT im Spaltennamen
+   AM DATA:   Pin-Name und Position (z.B. "VDD10 22.g404hc", "CLK_REF 0.x412")
+
+5. FLOWVARS
+   RED WAFER: Einfach (Initialize_FlowVars_1003)
+   AM DATA:   Mit Zusatzinfo (Initialize_FlowVars eFuseTrialOnly -1_1003)
+
+================================================================================
+                            EMPFEHLUNG
+================================================================================
+
+Um die Testbedingungen im Parameternamen sichtbar zu haben (wie bei RED WAFER):
+
+OPTION A: CSV-Export Settings ändern
+  → Am Tester/in der CSV-Export-Routine das Format anpassen
+  → Bedingungen im Klartext exportieren (-1.80V statt AVEEn1p8)
+
+OPTION B: Data Octopus Parsing anpassen
+  → Den Teil nach "<>" parsen
+  → "AVEEn1p8" → "-1.8V" konvertieren
+  → Wildcards (*) durch echte Werte ersetzen
+
+OPTION C: Langnamen verwenden
+  → Statt Kurznamen (mit *) den Langnamen (nach <>) anzeigen
+  → Zeigt zumindest "AVEEn1p8-DACI3p0-DC4p59" statt "AVEE*-DACI*-DC*"
+
+================================================================================
+                             BEISPIELE
+================================================================================
+
+GLEICHER PARAMETER in beiden Formaten:
+
+TEST: OPTIC_ANSI-PREWARMUP_DOMWLTH (Dominant Wavelength)
+─────────────────────────────────────────────────────────
+RED WAFER:
+  OPTIC_ANSI-PREWARMUP_DOMWLTH_CENTER_-1.80V_3.20uA_4.59%_NV_PEQA_RED_12097308
+
+AM DATA:
+  OPTIC_ANSI-PREWARMUP_DOMWLTH_CENTER_AVEE*-DACI*-DC*_FREERUN_X_NV_PEQA_RED  -1
+  <> OPTIC_ANSI-PREWARMUP_DOMWLTH_CENTER_AVEEn1p8-DACI3p0-DC4p59_FREERUN_X_NV_PEQA_RED_12097308
+
+─────────────────────────────────────────────────────────
+
+TEST: OPTIC_ANSI-POSTWARMUP_VTHERM0 (Thermistor Voltage)
+─────────────────────────────────────────────────────────
+RED WAFER:
+  OPTIC_ANSI-POSTWARMUP_VTHERM0_TEMPTPAD_-1.80V_3.20uA_4.59%_NV_PEQA_RED_12097304
+
+AM DATA:
+  OPTIC_ANSI-POSTWARMUP_VTHERM0_TEMPTPAD_AVEE*-DACI*-DC*_FREERUN_X_NV_PEQA_RED  -1
+  <> OPTIC_ANSI-POSTWARMUP_VTHERM0_TEMPTPAD_AVEEn1p8-DACI3p0-DC4p59_FREERUN_X_NV_PEQA_RED_12097304
+
+================================================================================
