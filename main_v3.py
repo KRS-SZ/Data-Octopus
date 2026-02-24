@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.5"
+APP_VERSION = "3.2.6"
 
 import sys
 
@@ -6583,6 +6583,21 @@ def update_multi_stdf_heatmap():
         ax.xaxis.tick_top()
         ax.set_xlabel("X Coordinate", fontsize=10)
         ax.set_ylabel("Y Coordinate", fontsize=10)
+
+        # Set axis ticks to show actual die coordinates (not grid indices)
+        # Calculate tick positions and labels for X axis
+        x_tick_step = max(1, grid_width // 10)  # Show ~10 ticks max
+        x_tick_positions = np.arange(0, grid_width, x_tick_step)
+        x_tick_labels = [str(int(x_min + pos)) for pos in x_tick_positions]
+        ax.set_xticks(x_tick_positions)
+        ax.set_xticklabels(x_tick_labels)
+
+        # Calculate tick positions and labels for Y axis
+        y_tick_step = max(1, grid_height // 10)  # Show ~10 ticks max
+        y_tick_positions = np.arange(0, grid_height, y_tick_step)
+        y_tick_labels = [str(int(y_min + pos)) for pos in y_tick_positions]
+        ax.set_yticks(y_tick_positions)
+        ax.set_yticklabels(y_tick_labels)
 
         # Title with wafer name and parameter
         ax.set_title(f"{short_wafer_id}\n{short_param}", fontsize=11, fontweight='bold')
