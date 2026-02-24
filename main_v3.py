@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.10"
+APP_VERSION = "3.2.11"
 
 import sys
 
@@ -136,6 +136,7 @@ class BinningLookup:
     def __init__(self):
         self.bin_ranges = []  # List of (start, end, hbin, hbin_name, description)
         self.bin_definitions = {}  # hbin -> (hbin_name, description)
+        self.test_definitions = []  # List of test definitions with all columns
         self.loaded = False
         self.file_path = None
 
@@ -153,54 +154,104 @@ class BinningLookup:
         try:
             df = pd.read_excel(excel_path, sheet_name=sheet_name)
 
-            # The BinTable has columns: hbin, hbinName, Description, and test number ranges
-            # Based on the structure we saw, columns are:
-            # hbin, hbinName, Description, (unnamed), (unnamed), (unnamed),
-            # test_start, test_end, ...
-
             self.bin_ranges = []
             self.bin_definitions = {}
+            self.test_definitions = []
 
+            # First pass: Load bin definitions (rows 0-15 with hbin numbers)
             for idx, row in df.iterrows():
                 hbin = row.iloc[0] if pd.notna(row.iloc[0]) else None
                 hbin_name = row.iloc[1] if pd.notna(row.iloc[1]) else ""
                 description = row.iloc[2] if pd.notna(row.iloc[2]) else ""
 
-                # Get test number range (columns 5 and 6 seem to be start/end based on data)
-                test_start = row.iloc[5] if len(row) > 5 and pd.notna(row.iloc[5]) else None
-                test_end = row.iloc[6] if len(row) > 6 and pd.notna(row.iloc[6]) else None
-
-                # Also check column 4 for the hbin if it appears there
-                hbin_col4 = row.iloc[4] if len(row) > 4 and pd.notna(row.iloc[4]) else None
-
-                # Store bin definition
+                # Store bin definition (only for rows with integer hbin in first column)
                 if hbin is not None and not pd.isna(hbin):
                     try:
                         hbin_int = int(hbin)
-                        self.bin_definitions[hbin_int] = (str(hbin_name), str(description))
+                        if hbin_int >= 1 and hbin_int <= 15:
+                            self.bin_definitions[hbin_int] = (str(hbin_name), str(description))
                     except (ValueError, TypeError):
                         pass
 
-                # Store test range to bin mapping
-                if test_start is not None and test_end is not None:
+            # Second pass: Load test definitions (rows with TestInstance in column B)
+            # These start after the header row that contains "TestInstance"
+            header_found = False
+            for idx, row in df.iterrows():
+                # Check if this is the header row
+                col1_val = str(row.iloc[1]) if pd.notna(row.iloc[1]) else ""
+                if col1_val == "TestInstance":
+                    header_found = True
+                    continue
+
+                # Skip rows before header or empty rows
+                if not header_found:
+                    continue
+
+                # Get test definition data
+                test_instance = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ""
+                test_name = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else ""
+                comment = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
+
+                # Skip empty rows
+                if not test_instance and not test_name:
+                    continue
+
+                # Get Hbin (column 4)
+                hbin = None
+                if len(row) > 4 and pd.notna(row.iloc[4]):
                     try:
-                        start_int = int(test_start)
-                        end_int = int(test_end)
-                        # Use hbin from column 4 if available, otherwise from column 0
-                        bin_num = hbin_col4 if hbin_col4 is not None else hbin
-                        if bin_num is not None:
-                            bin_int = int(bin_num)
-                            self.bin_ranges.append((start_int, end_int, bin_int, str(hbin_name), str(description)))
+                        hbin = int(row.iloc[4])
                     except (ValueError, TypeError):
                         pass
+
+                # Get Fail Sbin (column 5)
+                fail_sbin = None
+                if len(row) > 5 and pd.notna(row.iloc[5]):
+                    try:
+                        fail_sbin = int(row.iloc[5])
+                    except (ValueError, TypeError):
+                        pass
+
+                # Get Start Test Number (column 6)
+                start_test_num = None
+                if len(row) > 6 and pd.notna(row.iloc[6]):
+                    try:
+                        start_test_num = int(row.iloc[6])
+                    except (ValueError, TypeError):
+                        pass
+
+                # Get Max Test Number (column 7)
+                max_test_num = None
+                if len(row) > 7 and pd.notna(row.iloc[7]):
+                    try:
+                        max_test_num = int(row.iloc[7])
+                    except (ValueError, TypeError):
+                        pass
+
+                # Store test definition
+                self.test_definitions.append({
+                    'test_instance': test_instance,
+                    'test_name': test_name,
+                    'comment': comment,
+                    'hbin': hbin,
+                    'fail_sbin': fail_sbin,
+                    'start_test_num': start_test_num,
+                    'max_test_num': max_test_num
+                })
+
+                # Also store in bin_ranges for lookup
+                if start_test_num is not None and max_test_num is not None and hbin is not None:
+                    self.bin_ranges.append((start_test_num, max_test_num, hbin, test_instance, comment))
 
             self.loaded = True
             self.file_path = excel_path
-            print(f"BinningLookup: Loaded {len(self.bin_definitions)} bin definitions and {len(self.bin_ranges)} test ranges from {excel_path}")
+            print(f"BinningLookup: Loaded {len(self.bin_definitions)} bin definitions and {len(self.test_definitions)} test definitions from {excel_path}")
             return True
 
         except Exception as e:
             print(f"BinningLookup: Failed to load {excel_path}: {e}")
+            import traceback
+            traceback.print_exc()
             self.loaded = False
             return False
 
@@ -3916,39 +3967,47 @@ load_binning_button.pack(side=tk.LEFT, padx=2)
 
 # Show Bin Legend button
 def show_bin_legend():
-    """Show a popup window with all bin definitions"""
+    """Show a popup window with all bin definitions and test definitions"""
     if not binning_lookup.loaded:
         tk.messagebox.showinfo("No Binning Loaded",
             "Please load a binning Excel file first.\n\nClick 'Load Binning' to select a file.")
         return
 
-    # Create popup window
+    # Create popup window - larger to accommodate test definitions
     legend_win = tk.Toplevel(main_win)
     legend_win.title("Bin Legend / Bin-Definitionen")
-    legend_win.geometry("600x400")
+    legend_win.geometry("1200x700")
     legend_win.transient(main_win)
 
     # Create header
     header_frame = tk.Frame(legend_win, bg="#9C27B0", pady=5)
     header_frame.pack(fill=tk.X)
-    tk.Label(header_frame, text="Bin Definitions", font=("Helvetica", 12, "bold"),
+    tk.Label(header_frame, text="Bin Definitions & Test Mapping", font=("Helvetica", 12, "bold"),
              bg="#9C27B0", fg="white").pack()
     if binning_lookup.file_path:
         tk.Label(header_frame, text=f"Source: {os.path.basename(binning_lookup.file_path)}",
                  font=("Helvetica", 9), bg="#9C27B0", fg="white").pack()
 
-    # Create scrollable frame for bins
-    canvas = tk.Canvas(legend_win)
-    scrollbar = ttk.Scrollbar(legend_win, orient="vertical", command=canvas.yview)
-    scrollable_frame = tk.Frame(canvas)
+    # Create notebook for two tabs
+    tabs_frame = ttk.Notebook(legend_win)
+    tabs_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-    scrollable_frame.bind(
+    # Tab 1: Bin Definitions (original)
+    bin_tab = tk.Frame(tabs_frame)
+    tabs_frame.add(bin_tab, text=f"📊 Bin Definitions ({len(binning_lookup.bin_definitions)})")
+
+    # Create scrollable frame for bins
+    bin_canvas = tk.Canvas(bin_tab)
+    bin_scrollbar = ttk.Scrollbar(bin_tab, orient="vertical", command=bin_canvas.yview)
+    bin_scrollable_frame = tk.Frame(bin_canvas)
+
+    bin_scrollable_frame.bind(
         "<Configure>",
-        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        lambda e: bin_canvas.configure(scrollregion=bin_canvas.bbox("all"))
     )
 
-    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
+    bin_canvas.create_window((0, 0), window=bin_scrollable_frame, anchor="nw")
+    bin_canvas.configure(yscrollcommand=bin_scrollbar.set)
 
     # Bin colors (same as in get_bin_colormap)
     bin_colors = {
@@ -3965,29 +4024,141 @@ def show_bin_legend():
 
         # Color indicator
         color = bin_colors.get(hbin, '#808080')
-        color_label = tk.Label(scrollable_frame, text="  ██  ", font=("Helvetica", 12),
+        color_label = tk.Label(bin_scrollable_frame, text="  ██  ", font=("Helvetica", 12),
                                fg=color, bg="white")
         color_label.grid(row=row, column=0, padx=5, pady=2, sticky="w")
 
         # Bin number
-        bin_label = tk.Label(scrollable_frame, text=f"Bin {hbin}:", font=("Helvetica", 10, "bold"),
+        bin_label = tk.Label(bin_scrollable_frame, text=f"Bin {hbin}:", font=("Helvetica", 10, "bold"),
                             bg="white", width=8, anchor="w")
         bin_label.grid(row=row, column=1, padx=5, pady=2, sticky="w")
 
         # Bin name
-        name_label = tk.Label(scrollable_frame, text=hbin_name, font=("Helvetica", 10),
+        name_label = tk.Label(bin_scrollable_frame, text=hbin_name, font=("Helvetica", 10),
                              bg="white", width=25, anchor="w")
         name_label.grid(row=row, column=2, padx=5, pady=2, sticky="w")
 
         # Description
-        desc_label = tk.Label(scrollable_frame, text=description[:50] + "..." if len(description) > 50 else description,
+        desc_label = tk.Label(bin_scrollable_frame, text=description[:50] + "..." if len(description) > 50 else description,
                              font=("Helvetica", 9), fg="gray", bg="white", anchor="w")
         desc_label.grid(row=row, column=3, padx=5, pady=2, sticky="w")
 
         row += 1
 
-    canvas.pack(side="left", fill="both", expand=True, padx=10, pady=10)
-    scrollbar.pack(side="right", fill="y")
+    bin_canvas.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+    bin_scrollbar.pack(side="right", fill="y")
+
+    # Tab 2: Test Definitions (NEW!)
+    test_tab = tk.Frame(tabs_frame)
+    tabs_frame.add(test_tab, text=f"📋 Test Definitions ({len(binning_lookup.test_definitions)})")
+
+    # Create Treeview for test definitions (better for table with many columns)
+    test_tree_frame = tk.Frame(test_tab)
+    test_tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+    # Scrollbars
+    test_scrollbar_y = ttk.Scrollbar(test_tree_frame, orient="vertical")
+    test_scrollbar_x = ttk.Scrollbar(test_tree_frame, orient="horizontal")
+
+    # Define columns
+    columns = ("hbin", "sbin", "start_num", "max_num", "test_instance", "comment")
+    test_tree = ttk.Treeview(test_tree_frame, columns=columns, show="headings",
+                             yscrollcommand=test_scrollbar_y.set,
+                             xscrollcommand=test_scrollbar_x.set)
+
+    # Configure scrollbars
+    test_scrollbar_y.config(command=test_tree.yview)
+    test_scrollbar_x.config(command=test_tree.xview)
+
+    # Define headings and column widths
+    test_tree.heading("hbin", text="HBin")
+    test_tree.heading("sbin", text="SBin")
+    test_tree.heading("start_num", text="Start Test#")
+    test_tree.heading("max_num", text="Max Test#")
+    test_tree.heading("test_instance", text="Test Instance")
+    test_tree.heading("comment", text="Comment")
+
+    test_tree.column("hbin", width=50, anchor="center")
+    test_tree.column("sbin", width=60, anchor="center")
+    test_tree.column("start_num", width=100, anchor="center")
+    test_tree.column("max_num", width=100, anchor="center")
+    test_tree.column("test_instance", width=300, anchor="w")
+    test_tree.column("comment", width=400, anchor="w")
+
+    # Add alternating row colors
+    test_tree.tag_configure('oddrow', background='#f0f0f0')
+    test_tree.tag_configure('evenrow', background='white')
+
+    # Add color tags for different bins
+    for hbin, color in bin_colors.items():
+        test_tree.tag_configure(f'bin{hbin}', foreground=color)
+
+    # Populate tree with test definitions
+    for i, test_def in enumerate(binning_lookup.test_definitions):
+        hbin = test_def.get('hbin', '')
+        sbin = test_def.get('fail_sbin', '')
+        start_num = test_def.get('start_test_num', '')
+        max_num = test_def.get('max_test_num', '')
+        test_instance = test_def.get('test_instance', '')
+        comment = test_def.get('comment', '')
+
+        # Format values
+        hbin_str = str(hbin) if hbin is not None else ''
+        sbin_str = str(sbin) if sbin is not None else ''
+        start_str = str(start_num) if start_num is not None else ''
+        max_str = str(max_num) if max_num is not None else ''
+
+        # Determine row tag
+        row_tag = 'oddrow' if i % 2 == 0 else 'evenrow'
+
+        test_tree.insert("", "end", values=(hbin_str, sbin_str, start_str, max_str, test_instance, comment),
+                        tags=(row_tag,))
+
+    # Pack treeview and scrollbars
+    test_scrollbar_y.pack(side="right", fill="y")
+    test_scrollbar_x.pack(side="bottom", fill="x")
+    test_tree.pack(side="left", fill="both", expand=True)
+
+    # Add search frame for Test Definitions tab
+    search_frame = tk.Frame(test_tab)
+    search_frame.pack(fill=tk.X, padx=5, pady=5, before=test_tree_frame)
+
+    tk.Label(search_frame, text="Search:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=5)
+    search_var = tk.StringVar()
+    search_entry = tk.Entry(search_frame, textvariable=search_var, width=30, font=("Helvetica", 9))
+    search_entry.pack(side=tk.LEFT, padx=5)
+
+    def search_tests(*args):
+        search_term = search_var.get().lower()
+        # Clear tree
+        for item in test_tree.get_children():
+            test_tree.delete(item)
+        # Re-populate with filtered items
+        for i, test_def in enumerate(binning_lookup.test_definitions):
+            test_instance = test_def.get('test_instance', '')
+            comment = test_def.get('comment', '')
+            test_name = test_def.get('test_name', '')
+
+            # Check if search term matches
+            if search_term and search_term not in test_instance.lower() and \
+               search_term not in comment.lower() and search_term not in test_name.lower():
+                continue
+
+            hbin = test_def.get('hbin', '')
+            sbin = test_def.get('fail_sbin', '')
+            start_num = test_def.get('start_test_num', '')
+            max_num = test_def.get('max_test_num', '')
+
+            hbin_str = str(hbin) if hbin is not None else ''
+            sbin_str = str(sbin) if sbin is not None else ''
+            start_str = str(start_num) if start_num is not None else ''
+            max_str = str(max_num) if max_num is not None else ''
+
+            row_tag = 'oddrow' if i % 2 == 0 else 'evenrow'
+            test_tree.insert("", "end", values=(hbin_str, sbin_str, start_str, max_str, test_instance, comment),
+                            tags=(row_tag,))
+
+    search_var.trace('w', search_tests)
 
     # Close button
     close_btn = tk.Button(legend_win, text="Close", command=legend_win.destroy,
