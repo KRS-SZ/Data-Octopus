@@ -39,14 +39,15 @@ Tool zur **Analyse von Halbleiter-Testdaten** aus STDF-Dateien:
 ## 3. STARTEN DER ANWENDUNG
 
 ```bash
-# Desktop-GUI (Standard)
-& "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\python.exe" "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\main.py"
+# Desktop-GUI (Standard) - WICHTIG: main_v3.py ist die AKTUELLE Version!
+& "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\python.exe" "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\main_v3.py"
 
 # Web-App (Streamlit)
 streamlit run "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\src\stdf_analyzer\web\app.py"
 ```
 
 ⚠️ **IMMER Python 3.13 lokal verwenden** (nicht fb-python) – wegen tkinter!
+⚠️ **IMMER main_v3.py verwenden** (nicht main.py) – main.py ist veraltet!
 
 ---
 

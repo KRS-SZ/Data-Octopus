@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.4"
+APP_VERSION = "3.2.5"
 
 import sys
 
@@ -1271,21 +1271,56 @@ def update_source_buttons():
     """Update button visibility based on selected file source (STDF, CSV, or MC-300)"""
     source = file_source_var.get()
 
+    # Hide all buttons first
+    select_multiple_stdf_button.pack_forget()
+    select_csv_button.pack_forget()
+    try:
+        select_mc300_button.pack_forget()
+    except:
+        pass
+
     if source == "STDF":
-        # Show STDF button, hide others
         select_multiple_stdf_button.pack(side=tk.LEFT, padx=3)
-        select_csv_button.pack_forget()
-        select_mc300_button.pack_forget()
     elif source == "CSV":
-        # Hide STDF button, show CSV button
-        select_multiple_stdf_button.pack_forget()
         select_csv_button.pack(side=tk.LEFT, padx=3)
-        select_mc300_button.pack_forget()
-    else:  # MC-300
-        # Hide STDF/CSV buttons, show MC-300 button
-        select_multiple_stdf_button.pack_forget()
-        select_csv_button.pack_forget()
-        select_mc300_button.pack(side=tk.LEFT, padx=3)
+    elif source == "MC-300":
+        try:
+            select_mc300_button.pack(side=tk.LEFT, padx=3)
+        except:
+            pass
+
+
+def sort_test_params_numerically(items):
+    """
+    ZENTRALE SORTIER-FUNKTION für alle Parameter-Listen.
+
+    Sortiert Parameter nach der numerischen test_num (10011000, 10011001, ...).
+    Wird von ALLEN Tabs verwendet (Wafer, Multi-Wafer, Charac-Curve, Statistics, etc.)
+
+    Args:
+        items: Kann sein:
+            - dict.items(): Liste von (test_key, test_name) Tupeln
+            - list: Liste von Tupeln (test_num, name, full_name)
+
+    Returns:
+        Sortierte Liste
+    """
+    def sort_key(item):
+        # Handle dict.items() format: (test_key, test_name)
+        if isinstance(item, tuple) and len(item) >= 2:
+            first = item[0]
+            # Wenn erstes Element ein String ist (z.B. "test_10011000")
+            if isinstance(first, str) and first.startswith("test_"):
+                try:
+                    return int(first.replace("test_", ""))
+                except ValueError:
+                    pass
+            # Wenn erstes Element direkt eine Zahl ist (z.B. 10011000 aus grouped_parameters)
+            elif isinstance(first, (int, float)):
+                return int(first)
+        return float('inf')  # Nicht-numerische ans Ende
+
+    return sorted(items, key=sort_key)
 
 
 def simplify_param_name(param_name):
@@ -1667,16 +1702,21 @@ def convert_am_data_column_name(col_name):
     return long_name
 
 
+# ============================================================================
+# MC-300 LOADER (STANDALONE - Modular, berührt CSV/STDF nicht)
+# ============================================================================
 def load_mc300_file():
     """
     Load wafermap data from MC-300 format file (ASAP MC-300 Prober).
 
+    STANDALONE FUNKTION - Berührt CSV/STDF Routinen NICHT.
+
     MC-300 Format:
-    - Zeile 1-15: Header (Typ, Datum, Wafer-ID, Version, Produktionsstätte, Rezept, etc.)
+    - Zeile 1-15: Header (Typ, Datum, Wafer-ID, etc.)
     - Zeile 11: Anzahl Dies
-    - Zeile 16: Anzahl Parameter (108 = 2 X/Y + 106 Messparameter)
-    - Zeile 17+: Parameter-Definitionen (T98=X-Pos, T99=Y-Pos, T1-T106=Messparameter)
-    - Danach: Messdaten (1 Zeile pro Die, Werte durch Leerzeichen getrennt, BIN am Ende)
+    - Zeile 16: Anzahl Parameter
+    - Zeile 17+: Parameter-Definitionen
+    - Danach: Messdaten
     """
     global current_stdf_data, current_wafer_id, test_parameters, grouped_parameters, test_limits
     global multiple_stdf_data, multiple_wafer_ids
@@ -1697,20 +1737,20 @@ def load_mc300_file():
 
         # Parse Header (Zeile 1-15)
         header_info = {
-            'type': lines[0].strip() if len(lines) > 0 else '',           # SCHEIBE
-            'datetime_device': lines[1].strip() if len(lines) > 1 else '', # 04.02.2026 15:39:08/ASAP_MC300
-            'wafer_id': lines[2].strip() if len(lines) > 2 else '',        # PEQUIN00000
-            'version': lines[5].strip() if len(lines) > 5 else '',         # 0.00
-            'production_site': lines[6].strip() if len(lines) > 6 else '', # OSSFR
-            'recipe': lines[7].strip() if len(lines) > 7 else '',          # LIV_stress1
-            'num_dies': int(lines[10].strip()) if len(lines) > 10 else 0,  # 56
-            'num_params': int(lines[15].strip()) if len(lines) > 15 else 0 # 108
+            'type': lines[0].strip() if len(lines) > 0 else '',
+            'datetime_device': lines[1].strip() if len(lines) > 1 else '',
+            'wafer_id': lines[2].strip() if len(lines) > 2 else '',
+            'version': lines[5].strip() if len(lines) > 5 else '',
+            'production_site': lines[6].strip() if len(lines) > 6 else '',
+            'recipe': lines[7].strip() if len(lines) > 7 else '',
+            'num_dies': int(lines[10].strip()) if len(lines) > 10 else 0,
+            'num_params': int(lines[15].strip()) if len(lines) > 15 else 0
         }
 
         print(f"MC-300 Header: Wafer={header_info['wafer_id']}, Dies={header_info['num_dies']}, Params={header_info['num_params']}")
 
         # Parse Parameter-Definitionen (ab Zeile 17)
-        param_start_line = 16  # 0-indexed, Zeile 17
+        param_start_line = 16
         param_definitions = []
 
         for i in range(header_info['num_params']):
@@ -1718,20 +1758,16 @@ def load_mc300_file():
                 line = lines[param_start_line + i].strip()
                 parts = line.split()
                 if len(parts) >= 2:
-                    param_id = parts[0]  # T1, T2, etc.
-                    param_name = parts[1]  # IfArrO1, UfO1, etc.
-                    param_unit = parts[2] if len(parts) > 2 and parts[2] != '-' else ''
-                    param_condition = parts[3] if len(parts) > 3 and parts[3] != '-' else ''
                     param_definitions.append({
-                        'id': param_id,
-                        'name': param_name,
-                        'unit': param_unit,
-                        'condition': param_condition
+                        'id': parts[0],
+                        'name': parts[1],
+                        'unit': parts[2] if len(parts) > 2 and parts[2] != '-' else '',
+                        'condition': parts[3] if len(parts) > 3 and parts[3] != '-' else ''
                     })
 
         print(f"Parsed {len(param_definitions)} parameter definitions")
 
-        # Parse Messdaten (nach Parameter-Definitionen)
+        # Parse Messdaten
         data_start_line = param_start_line + header_info['num_params']
         die_data = []
 
@@ -1740,7 +1776,6 @@ def load_mc300_file():
                 line = lines[data_start_line + i].strip()
                 values = line.split()
                 if len(values) >= header_info['num_params']:
-                    # Konvertiere wissenschaftliche Notation zu Float
                     float_values = []
                     for v in values[:header_info['num_params']]:
                         try:
@@ -1748,43 +1783,24 @@ def load_mc300_file():
                         except ValueError:
                             float_values.append(0.0)
 
-                    # BIN ist der letzte Wert (falls vorhanden)
                     bin_value = int(float(values[-1])) if len(values) > header_info['num_params'] else 1
-
-                    die_data.append({
-                        'values': float_values,
-                        'bin': bin_value
-                    })
+                    die_data.append({'values': float_values, 'bin': bin_value})
 
         print(f"Parsed {len(die_data)} die measurements")
 
-        # Erstelle DataFrame im gleichen Format wie CSV/STDF
-        import pandas as pd
+        # Erstelle DataFrame
+        x_idx, y_idx = 0, 1
 
-        # X ist immer Index 0, Y ist immer Index 1 in den Datenzeilen
-        x_idx = 0  # Erstes Feld = X-Koordinate
-        y_idx = 1  # Zweites Feld = Y-Koordinate
-
-        print(f"DEBUG: Using X_idx={x_idx}, Y_idx={y_idx}")
-        print(f"DEBUG: First die: X={die_data[0]['values'][x_idx]}, Y={die_data[0]['values'][y_idx]}")
-
-        # Baue DataFrame - Spaltennamen müssen zu Heatmap-Funktion passen!
         data_dict = {
-            'die_x': [int(d['values'][x_idx]) for d in die_data],
-            'die_y': [int(d['values'][y_idx]) for d in die_data],
             'x': [int(d['values'][x_idx]) for d in die_data],
             'y': [int(d['values'][y_idx]) for d in die_data],
             'bin': [d['bin'] for d in die_data],
-            'HardBin': [d['bin'] for d in die_data],
-            'SoftBin': [d['bin'] for d in die_data],
         }
 
-        # Füge alle Messparameter hinzu (außer X/Y)
-        # Parameter starten ab Index 2 (nach X-Pos und Y-Pos)
-        param_idx = 1
+        # Füge Messparameter hinzu (ab Index 2)
         for i, param in enumerate(param_definitions):
-            if i >= 2:  # Überspringe X-Pos (0) und Y-Pos (1)
-                col_name = f"{param['name']}"
+            if i >= 2:
+                col_name = param['name']
                 if param['unit']:
                     col_name += f"_{param['unit']}"
                 if param['condition']:
@@ -1792,10 +1808,8 @@ def load_mc300_file():
                 data_dict[col_name] = [d['values'][i] for d in die_data]
 
         df = pd.DataFrame(data_dict)
-        print(f"DEBUG: DataFrame columns: {list(df.columns)[:10]}...")
-        print(f"DEBUG: DataFrame shape: {df.shape}")
-        print(f"DEBUG: X range: {df['x'].min()} to {df['x'].max()}")
-        print(f"DEBUG: Y range: {df['y'].min()} to {df['y'].max()}")
+        print(f"MC-300 DataFrame: {len(df)} rows, {len(df.columns)} columns")
+        print(f"X range: {df['x'].min()}-{df['x'].max()}, Y range: {df['y'].min()}-{df['y'].max()}")
 
         # Setze globale Variablen
         current_wafer_id = header_info['wafer_id']
@@ -1805,8 +1819,7 @@ def load_mc300_file():
         multiple_stdf_data.append(df)
         multiple_wafer_ids.append(current_wafer_id)
 
-        # Baue test_parameters und grouped_parameters
-        # Parameter von test_1 bis test_106 (chronologisch)
+        # Baue test_parameters und grouped_parameters für MC-300
         test_parameters.clear()
         grouped_parameters.clear()
         test_limits.clear()
@@ -1816,8 +1829,8 @@ def load_mc300_file():
 
         param_num = 1
         for i, param in enumerate(param_definitions):
-            if i >= 2:  # Überspringe X-Pos (0) und Y-Pos (1)
-                col_name = f"{param['name']}"
+            if i >= 2:
+                col_name = param['name']
                 if param['unit']:
                     col_name += f"_{param['unit']}"
                 if param['condition']:
@@ -1828,22 +1841,23 @@ def load_mc300_file():
                 grouped_parameters[mc300_group].append((param_num, col_name, col_name))
                 param_num += 1
 
-        print(f"DEBUG: Created {param_num-1} test parameters (test_1 to test_{param_num-1})")
+        print(f"MC-300: {len(test_parameters)} parameters in group '{mc300_group}'")
 
         # Update UI
         update_wafer_tab_selection_list()
         update_group_combobox()
         on_group_selected()
+        update_charac_params()  # Charac-Curve Parameter-Listen aktualisieren
         refresh_heatmap_display()
 
-        print(f"Successfully loaded MC-300 file: {len(die_data)} dies, {len(param_definitions)-2} parameters")
-        messagebox.showinfo("Success", f"Loaded MC-300 file:\n{header_info['wafer_id']}\n{len(die_data)} dies, {len(param_definitions)-2} parameters")
+        print(f"Successfully loaded MC-300: {header_info['wafer_id']}")
+        messagebox.showinfo("Success", f"Loaded MC-300:\n{header_info['wafer_id']}\n{len(die_data)} dies, {param_num-1} parameters")
 
     except Exception as e:
-        print(f"Error loading MC-300 file: {e}")
+        print(f"Error loading MC-300: {e}")
         import traceback
         traceback.print_exc()
-        messagebox.showerror("Error", f"Failed to load MC-300 file:\n{str(e)}")
+        messagebox.showerror("Error", f"Failed to load MC-300:\n{str(e)}")
 
 
 def load_csv_wafermap_file():
@@ -4362,47 +4376,29 @@ wafer_select_all_btn = tk.Button(
 )
 wafer_select_all_btn.pack(side=tk.LEFT, padx=2)
 
-def remove_selected_wafer():
-    """Remove the currently selected wafer from the list"""
+def unload_all_wafers():
+    """Unload all wafers and reset everything"""
     global multiple_stdf_data, multiple_wafer_ids, current_stdf_data, current_wafer_id
-    global grouped_parameters, test_parameters
+    global test_parameters, grouped_parameters, test_limits
 
-    current_idx = wafer_tab_selected_var.get()
+    multiple_stdf_data.clear()
+    multiple_wafer_ids.clear()
+    current_stdf_data = None
+    current_wafer_id = None
+    test_parameters.clear()
+    grouped_parameters.clear()
+    test_limits.clear()
 
-    if not multiple_wafer_ids or current_idx >= len(multiple_wafer_ids):
-        print("No wafer selected to remove")
-        return
-
-    removed_wafer = multiple_wafer_ids[current_idx]
-    print(f"Removing wafer: {removed_wafer}")
-
-    # Remove from lists
-    multiple_stdf_data.pop(current_idx)
-    multiple_wafer_ids.pop(current_idx)
-
-    # Update current wafer if needed
-    if multiple_wafer_ids:
-        new_idx = min(current_idx, len(multiple_wafer_ids) - 1)
-        wafer_tab_selected_var.set(new_idx)
-        current_wafer_id = multiple_wafer_ids[new_idx]
-        current_stdf_data = multiple_stdf_data[new_idx]
-    else:
-        # No wafers left
-        current_wafer_id = None
-        current_stdf_data = None
-        grouped_parameters = {}
-        test_parameters = {}
-
-    # Refresh the UI
     update_wafer_tab_selection_list()
+    update_group_combobox()
     refresh_heatmap_display()
-    print(f"Wafer removed. {len(multiple_wafer_ids)} wafer(s) remaining.")
+    print("All wafers unloaded")
 
-wafer_remove_btn = tk.Button(
-    wafer_select_btn_frame, text="Remove", command=remove_selected_wafer,
+wafer_unload_all_btn = tk.Button(
+    wafer_select_btn_frame, text="Unload All", command=unload_all_wafers,
     font=("Helvetica", 7), bg="#f44336", fg="white"
 )
-wafer_remove_btn.pack(side=tk.LEFT, padx=2)
+wafer_unload_all_btn.pack(side=tk.LEFT, padx=2)
 
 wafer_tab_count_label = tk.Label(
     wafer_select_btn_frame, text="0 Wafer", font=("Helvetica", 8), fg="gray"
@@ -5051,11 +5047,31 @@ def _ensure_charac_canvas():
 def _build_charac_param_list(group_name):
     """Build parameter list for Charac.-Curve (same logic as heatmap on_group_selected)."""
     params = ["BIN (Bin Number)"]
+
+    # Helper für numerische Sortierung
+    def sort_key(item):
+        if isinstance(item, tuple):
+            test_key = f"test_{item[0]}"
+            try:
+                return (0, item[0])  # Numerisch nach test_num
+            except:
+                return (1, str(item))
+        else:
+            # item ist (test_key, test_name)
+            test_key = item[0]
+            if test_key.startswith("test_"):
+                try:
+                    return (0, int(test_key.replace("test_", "")))
+                except ValueError:
+                    pass
+            return (1, str(item))
+
     if group_name == "\u2500\u2500\u2500 Custom Tests \u2500\u2500\u2500":
         for tn in sorted(custom_tests.keys()):
             params.append(f"CUSTOM: {tn}")
     elif group_name == "All Groups" or not grouped_parameters:
-        for tk_, tn in sorted(test_parameters.items(), key=lambda x: simplify_param_name(x[1]).upper()):
+        # Numerisch sortieren
+        for tk_, tn in sorted(test_parameters.items(), key=sort_key):
             params.append(f"{tk_}: {simplify_param_name(tn)}")
         if custom_tests:
             params.append("\u2500\u2500\u2500 Custom Tests \u2500\u2500\u2500")
@@ -5064,7 +5080,8 @@ def _build_charac_param_list(group_name):
     else:
         if group_name in grouped_parameters:
             gp = grouped_parameters[group_name]
-            sp = sorted(gp, key=lambda x: simplify_param_name(x[2] if len(x) > 2 else x[1]).upper())
+            # Numerisch sortieren nach test_num (p[0])
+            sp = sorted(gp, key=lambda x: x[0])
             for p in sp:
                 tnum = p[0]
                 fname = p[2] if len(p) > 2 else p[1]
@@ -5131,6 +5148,14 @@ def _get_cc_col(df, p):
         try:
             left = p.split(":")[0].strip()
             raw_left = left
+
+            # ERST: Versuche direkt über test_parameters (für MC-300 und andere)
+            if raw_left in test_parameters:
+                orig = test_parameters[raw_left]
+                if orig in df.columns:
+                    return orig
+
+            # DANN: Versuche als Integer (für CSV)
             if left.startswith("test_"):
                 left = left[5:]
             n = int(left)
@@ -5164,7 +5189,12 @@ def _get_cc_col(df, p):
                 if isinstance(c, str) and c.endswith(suffix):
                     return c
         except ValueError:
-            pass
+            # Integer conversion failed - try test_parameters lookup with raw_left
+            left = p.split(":")[0].strip()
+            if left in test_parameters:
+                orig = test_parameters[left]
+                if orig in df.columns:
+                    return orig
     # Fallback: exact match
     if p in df.columns:
         return p
@@ -5518,21 +5548,25 @@ def on_group_selected():
 
     param_options = ["BIN (Bin Number)"]
 
+    # Helper function for numeric sorting of test_X keys
+    def sort_key(item):
+        test_key = item[0] if isinstance(item, tuple) else item
+        if isinstance(test_key, str) and test_key.startswith("test_"):
+            try:
+                return (0, int(test_key.replace("test_", "")))  # Numerisch sortieren
+            except ValueError:
+                pass
+        # Fallback: alphabetisch
+        if isinstance(item, tuple):
+            return (1, simplify_param_name(item[1]).upper())
+        return (1, str(item).upper())
+
     if selected_group == "─── Custom Tests ───":
         # Show only custom tests
         for test_name in sorted(custom_tests.keys()):
             param_options.append(f"CUSTOM: {test_name}")
     elif selected_group == "All Groups" or not grouped_parameters:
-        # Show all parameters - sort NUMERICALLY by test number for MC-300, alphabetically otherwise
-        def sort_key(item):
-            test_key = item[0]  # z.B. "test_1", "test_23"
-            if test_key.startswith("test_"):
-                try:
-                    return (0, int(test_key.replace("test_", "")))  # Numerisch sortieren
-                except ValueError:
-                    pass
-            return (1, simplify_param_name(item[1]).upper())  # Alphabetisch als Fallback
-
+        # Show all parameters - sort NUMERICALLY by test number
         for test_key, test_name in sorted(test_parameters.items(), key=sort_key):
             simple_name = simplify_param_name(test_name)
             param_options.append(f"{test_key}: {simple_name}")
@@ -5686,15 +5720,37 @@ def _resolve_param_to_column(selected, data_sources):
         return (param_column, f"Custom: {custom_test_name}")
     else:
         test_key = selected.split(":")[0].strip()
-        if test_key.startswith("test_"):
-            param_column = int(test_key.replace("test_", ""))
+        param_label = selected.split(":")[-1].strip() if ":" in selected else selected
+
+        # Prüfe ob der test_key in test_parameters existiert und verwende den Spaltennamen
+        if test_key in test_parameters:
+            param_column = test_parameters[test_key]  # String-Spaltenname (für MC-300)
+            # Prüfe ob Spalte in mindestens einem DataFrame existiert
+            for df in data_sources:
+                if param_column in df.columns:
+                    return (param_column, param_label)
+            # Falls nicht, versuche als Integer (für CSV)
+            try:
+                param_num = int(test_key.replace("test_", ""))
+                for df in data_sources:
+                    if param_num in df.columns:
+                        return (param_num, param_label)
+            except ValueError:
+                pass
+            return (param_column, param_label)
+        elif test_key.startswith("test_"):
+            # Fallback: Versuche als Integer (für CSV)
+            try:
+                param_column = int(test_key.replace("test_", ""))
+                return (param_column, param_label)
+            except ValueError:
+                return (test_key, param_label)
         else:
             try:
                 param_column = int(test_key)
+                return (param_column, param_label)
             except ValueError:
-                return None
-        param_label = selected.split(":")[-1].strip() if ":" in selected else selected
-        return (param_column, param_label)
+                return (test_key, param_label)
 
 
 def _draw_bin_distribution(all_bins, parent_frame):
@@ -6208,8 +6264,20 @@ def load_stdf_files_threaded(stdf_paths, title="Loading"):
         # Update parameter combobox
         if multiple_stdf_data:
             param_options = ["BIN (Bin Number)"]
-            for test_key, test_name in sorted(test_parameters.items()):
-                param_options.append(f"{test_key}: {test_name}")
+            # Sortierung EXAKT wie im Wafer Tab (on_group_selected):
+            # Nach test_num (Integer) sortieren, nicht alphabetisch
+            def sort_key(item):
+                test_key = item[0]
+                if test_key.startswith("test_"):
+                    try:
+                        return int(test_key.replace("test_", ""))
+                    except ValueError:
+                        pass
+                return float('inf')
+
+            for test_key, test_name in sorted(test_parameters.items(), key=sort_key):
+                simple_name = simplify_param_name(test_name)
+                param_options.append(f"{test_key}: {simple_name}")
 
             heatmap_param_combobox["values"] = param_options
             if param_options:
@@ -6433,18 +6501,26 @@ def update_multi_stdf_heatmap():
         test_key = selected.split(":")[0].strip()
         # Prüfe ob der test_key in test_parameters existiert und verwende den Spaltennamen
         if test_key in test_parameters:
-            param_column = test_parameters[test_key]  # Verwende den tatsächlichen Spaltennamen
+            param_column = test_parameters[test_key]  # Verwende den Spaltennamen (String)
+            # Falls die Spalte nicht existiert, versuche als Integer
+            if param_column not in df.columns:
+                try:
+                    param_num = int(test_key.replace("test_", ""))
+                    if param_num in df.columns:
+                        param_column = param_num
+                except ValueError:
+                    pass
         elif test_key.startswith("test_"):
-            # Fallback für alte Logik (STDF/CSV mit numerischen Spalten)
-            param_num = int(test_key.replace("test_", ""))
-            if param_num in df.columns:
-                param_column = param_num
-            elif test_key in test_parameters:
-                param_column = test_parameters[test_key]
-            else:
-                param_column = param_num
+            # Fallback: Versuche direkt als Integer (für CSV)
+            try:
+                param_column = int(test_key.replace("test_", ""))
+            except ValueError:
+                param_column = test_key
         else:
-            param_column = int(test_key) if test_key.isdigit() else test_key
+            try:
+                param_column = int(test_key)
+            except ValueError:
+                param_column = test_key
         param_label = selected
 
     # Single wafer display - larger figure
@@ -6459,8 +6535,6 @@ def update_multi_stdf_heatmap():
         norm = None
 
     if param_column not in df.columns:
-        print(f"DEBUG: param_column '{param_column}' not in df.columns")
-        print(f"DEBUG: Available columns: {list(df.columns)[:10]}...")  # Erste 10 Spalten
         ax.set_title(f"Parameter '{param_column}' not found in wafer {wafer_id}")
         ax.text(0.5, 0.5, f"Parameter not available", ha='center', va='center', fontsize=14, transform=ax.transAxes)
     else:
@@ -6498,26 +6572,17 @@ def update_multi_stdf_heatmap():
             aspect="equal",
             interpolation="nearest",
             origin="upper",
-            extent=[x_min - 0.5, x_max + 0.5, y_max + 0.5, y_min - 0.5]  # [left, right, bottom, top] - Y invertiert für origin=upper
         )
 
         # Display wafer name and parameter
         short_wafer_id = str(wafer_id)[:40] + "..." if len(str(wafer_id)) > 40 else str(wafer_id)
         short_param = param_label[:40] + "..." if len(str(param_label)) > 40 else param_label
 
-        # X-axis bleibt oben (X wächst nach rechts, Y wächst nach unten)
+        # Move X-axis to top
         ax.xaxis.set_label_position('top')
         ax.xaxis.tick_top()
         ax.set_xlabel("X Coordinate", fontsize=10)
         ax.set_ylabel("Y Coordinate", fontsize=10)
-
-        # Setze korrekte Achsen-Ticks für echte Koordinaten (beginnend bei 0)
-        # X: 0, 1, 2, ... nach rechts
-        # Y: 0, 1, 2, ... nach unten
-        x_tick_positions = list(range(x_min, x_max + 1))
-        y_tick_positions = list(range(y_min, y_max + 1))
-        ax.set_xticks(x_tick_positions)
-        ax.set_yticks(y_tick_positions)
 
         # Title with wafer name and parameter
         ax.set_title(f"{short_wafer_id}\n{short_param}", fontsize=11, fontweight='bold')
@@ -7081,10 +7146,28 @@ def update_stdf_heatmap():
         return
     else:
         test_key = selected.split(":")[0].strip()
-        if test_key.startswith("test_"):
-            param_column = int(test_key.replace("test_", ""))
+        # Prüfe ob der test_key in test_parameters existiert und verwende den Spaltennamen
+        if test_key in test_parameters:
+            param_column = test_parameters[test_key]  # Verwende den Spaltennamen (String)
+            # Falls die Spalte nicht existiert, versuche als Integer
+            if param_column not in current_stdf_data.columns:
+                try:
+                    param_num = int(test_key.replace("test_", ""))
+                    if param_num in current_stdf_data.columns:
+                        param_column = param_num
+                except ValueError:
+                    pass
+        elif test_key.startswith("test_"):
+            # Fallback: Versuche direkt als Integer (für CSV)
+            try:
+                param_column = int(test_key.replace("test_", ""))
+            except ValueError:
+                param_column = test_key
         else:
-            param_column = int(test_key)
+            try:
+                param_column = int(test_key)
+            except ValueError:
+                param_column = test_key
         param_label = selected
 
     if param_column not in current_stdf_data.columns:
@@ -8554,10 +8637,27 @@ def on_heatmap_click(event):
         param_label = "Bin"
     else:
         test_key = selected.split(":")[0].strip()
-        if test_key.startswith("test_"):
-            param_column = int(test_key.replace("test_", ""))
+        # Prüfe ob der test_key in test_parameters existiert und verwende den Spaltennamen
+        if test_key in test_parameters:
+            param_column = test_parameters[test_key]  # String-Spaltenname (für MC-300)
+            # Falls die Spalte nicht existiert, versuche als Integer
+            if param_column not in data_source.columns:
+                try:
+                    param_num = int(test_key.replace("test_", ""))
+                    if param_num in data_source.columns:
+                        param_column = param_num
+                except ValueError:
+                    pass
+        elif test_key.startswith("test_"):
+            try:
+                param_column = int(test_key.replace("test_", ""))
+            except ValueError:
+                param_column = test_key
         else:
-            param_column = int(test_key)
+            try:
+                param_column = int(test_key)
+            except ValueError:
+                param_column = test_key
         param_label = selected
 
     x_click = event.xdata
@@ -14379,7 +14479,7 @@ def on_compare_mode_changed():
     else:
         # Show full parameter names (default behavior)
         param_options = ["BIN (Bin Number)"]
-        for test_key, test_name in sorted(multi_wafer_test_params.items()):
+        for test_key, test_name in sort_test_params_numerically(multi_wafer_test_params.items()):
             display_text = f"{test_key}: {test_name}"
             # Add bin info if available
             if binning_lookup.loaded:
@@ -14658,7 +14758,7 @@ def add_multi_wafer_csv_files():
     if num_added > 0:
         # Update parameter combobox (with bin info if available)
         param_options = ["BIN (Bin Number)"]
-        for test_key, test_name in sorted(multi_wafer_test_params.items()):
+        for test_key, test_name in sort_test_params_numerically(multi_wafer_test_params.items()):
             display_text = f"{test_key}: {test_name}"
             # Add bin info if available
             if binning_lookup.loaded:
@@ -14887,7 +14987,7 @@ def add_multi_wafer_stdf_files():
 
         if multi_wafer_stdf_data:
             param_options = ["BIN (Bin Number)"]
-            for test_key, test_name in sorted(multi_wafer_test_params.items()):
+            for test_key, test_name in sort_test_params_numerically(multi_wafer_test_params.items()):
                 display_text = f"{test_key}: {test_name}"
                 # Add bin info if available
                 if binning_lookup.loaded:
@@ -18810,7 +18910,7 @@ def update_diffmap_params():
         bin_has_data = diffmap_result_data['bin'].notna().sum() > 0
     diffmap_param_items.append(("BIN (Bin Number)", not bin_has_data))
 
-    for test_key, test_name in sorted(diffmap_test_params.items()):
+    for test_key, test_name in sort_test_params_numerically(diffmap_test_params.items()):
         # Get the column key used in diffmap_result_data
         if test_key.startswith("test_"):
             param_num = int(test_key.replace("test_", ""))
@@ -19003,13 +19103,17 @@ def calculate_diffmap():
 
     # OPTIMIZED: Build all columns at once to avoid DataFrame fragmentation
     result_data = {
-        'x': merged['x'].values,
-        'y': merged['y'].values
+        'x': np.asarray(merged['x'].values).ravel(),
+        'y': np.asarray(merged['y'].values).ravel()
     }
 
     # Calculate difference for bin
     if 'bin_ref' in merged.columns and 'bin_comp' in merged.columns:
-        result_data['bin'] = merged['bin_ref'].values - merged['bin_comp'].values
+        try:
+            diff_vals = merged['bin_ref'].values - merged['bin_comp'].values
+            result_data['bin'] = np.asarray(diff_vals).ravel()
+        except Exception as e:
+            print(f"Warning: Could not calculate bin diff: {e}")
 
     # Calculate difference for all numeric parameters
     diff_count = 0
@@ -19022,10 +19126,18 @@ def calculate_diffmap():
 
         if ref_col in merged.columns and comp_col in merged.columns:
             try:
-                result_data[col] = merged[ref_col].values - merged[comp_col].values
+                ref_vals = merged[ref_col].values
+                comp_vals = merged[comp_col].values
+                # Ensure 1D arrays - some STDF files have nested data
+                if hasattr(ref_vals, 'ndim') and ref_vals.ndim > 1:
+                    continue
+                if hasattr(comp_vals, 'ndim') and comp_vals.ndim > 1:
+                    continue
+                diff_vals = ref_vals - comp_vals
+                result_data[col] = np.asarray(diff_vals).ravel()
                 diff_count += 1
-            except:
-                pass  # Skip silently for speed
+            except Exception as e:
+                pass  # Skip columns that can't be subtracted
 
     # Create DataFrame all at once (much faster, no fragmentation warnings)
     diffmap_result_data = pd.DataFrame(result_data)
@@ -19593,6 +19705,9 @@ def update_diffmap_heatmap_display():
         return
 
     selected = diffmap_param_combobox.get()
+
+    if not selected:
+        return
 
     if not selected:
         return
@@ -20589,6 +20704,13 @@ def on_grr_viz_group_change(event=None):
                             param_options.append(display_name)
                             break
 
+    # Sort param_options by test number (numerically) before setting values
+    def extract_test_num(p):
+        import re as re_local
+        match = re_local.search(r'test_(\d+)', p)
+        return int(match.group(1)) if match else float('inf')
+
+    param_options = sorted(param_options, key=extract_test_num)
     grr_viz_param_combo['values'] = param_options
     if grr_viz_param_var.get() not in param_options:
         grr_viz_param_var.set("None")
@@ -25797,7 +25919,12 @@ def _rebuild_grr_params_after_load():
     grr_viz_group_var.set("All Groups")
 
     viz_params = ["None"]
-    for p in grr_available_params:
+    # Sort by test number (numerically) like in Wafer Tab
+    def extract_test_num_grr(p):
+        test_num_match = re_mod.search(r'_(\d{5,})$', str(p))
+        return int(test_num_match.group(1)) if test_num_match else float('inf')
+
+    for p in sorted(grr_available_params, key=extract_test_num_grr):
         if p != "BIN":
             test_num_match = re_mod.search(r'_(\d{5,})$', str(p))
             if test_num_match:
