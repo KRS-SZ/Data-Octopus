@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.12"
+APP_VERSION = "3.2.13"
 
 import sys
 
@@ -5670,7 +5670,19 @@ def update_limits_display(test_num=None):
     # Extract test number from selection
     test_key = selected.split(":")[0].strip()
     if test_key.startswith("test_"):
-        test_num = int(test_key.replace("test_", ""))
+        try:
+            test_num = int(test_key.replace("test_", ""))
+        except ValueError:
+            limit_lo_var.set("")
+            limit_hi_var.set("")
+            limit_units_var.set("")
+            return
+    elif test_key.lower() in ['bin', 'softbin', 'hardbin', 'sbin', 'hbin']:
+        # Bin columns don't have test limits
+        limit_lo_var.set("")
+        limit_hi_var.set("")
+        limit_units_var.set("")
+        return
     else:
         try:
             test_num = int(test_key)
