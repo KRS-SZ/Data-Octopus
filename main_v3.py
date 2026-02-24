@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.7"
+APP_VERSION = "3.2.8"
 
 import sys
 
@@ -6983,7 +6983,7 @@ def _estimate_full_wafer_extent(plot_data):
     # Calculate center for reference (used for wafer circle drawing)
     x_center = (data_x_min + data_x_max) / 2
     y_center = (data_y_min + data_y_max) / 2
-    
+
     data_width = data_x_max - data_x_min
     data_height = data_y_max - data_y_min
     estimated_radius = max(data_width, data_height) / 2
@@ -8314,7 +8314,10 @@ def show_die_data_popup(x_coord, y_coord, data_source, selected_param_column):
             die_row = wd['die_row']
             if col in die_row.index:
                 value = die_row[col]
-                if pd.notna(value):
+                # Handle both scalar and Series values
+                if hasattr(value, 'iloc'):
+                    value = value.iloc[0] if len(value) > 0 else None
+                if pd.notna(value) if not hasattr(value, '__len__') or isinstance(value, str) else True:
                     if isinstance(value, float):
                         row_values.append(f"{value:.4g}")
                     else:
