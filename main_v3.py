@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.8"
+APP_VERSION = "3.2.9"
 
 import sys
 
@@ -7080,7 +7080,7 @@ def _get_cached_grid(data_id, param_column, plot_data):
 
 def update_stdf_heatmap():
     """Update STDF heatmap display based on selected parameter - OPTIMIZED VERSION"""
-    global heatmap_canvas, current_stdf_data, current_wafer_id, _current_fig, _current_ax
+    global heatmap_canvas, current_stdf_data, current_wafer_id, _current_fig, _current_ax, selected_die_coords
 
     if current_stdf_data is None or current_stdf_data.empty:
         print("No STDF data loaded for heatmap")
