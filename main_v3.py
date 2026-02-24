@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.11"
+APP_VERSION = "3.2.12"
 
 import sys
 
@@ -2044,6 +2044,26 @@ def load_csv_wafermap_file():
         print(f"Detected groups from CSV: {list(grouped_params.keys())}")
         for grp, params in grouped_params.items():
             print(f"  {grp}: {len(params)} parameters")
+
+        # Add "Binning" group with bin-related columns
+        binning_group_params = []
+        if 'bin' in df.columns:
+            binning_group_params.append(('bin', 'BIN (Result Bin)', 'BIN (Result Bin)'))
+        if 'SoftBin' in df.columns:
+            binning_group_params.append(('SoftBin', 'SoftBin', 'SoftBin'))
+        if 'HardBin' in df.columns:
+            binning_group_params.append(('HardBin', 'HardBin', 'HardBin'))
+        # Also check lowercase/alternative names
+        for col in df.columns:
+            col_lower = str(col).lower()
+            if col_lower in ['softbin', 'sbin', 'soft_bin'] and col not in [p[0] for p in binning_group_params]:
+                binning_group_params.append((col, f'SoftBin ({col})', f'SoftBin ({col})'))
+            elif col_lower in ['hardbin', 'hbin', 'hard_bin'] and col not in [p[0] for p in binning_group_params]:
+                binning_group_params.append((col, f'HardBin ({col})', f'HardBin ({col})'))
+
+        if binning_group_params:
+            grouped_params['Binning'] = binning_group_params
+            print(f"  Binning: {len(binning_group_params)} parameters")
 
         # Update global variables
         current_stdf_data = df
