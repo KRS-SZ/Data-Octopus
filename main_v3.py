@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.9"
+APP_VERSION = "3.2.10"
 
 import sys
 
@@ -6556,6 +6556,9 @@ def update_multi_stdf_heatmap():
 
         # Estimate full wafer extent for proper display
         full_extent, center_info = _estimate_full_wafer_extent(plot_data)
+        # center_info contains (x_center, y_center, estimated_radius, data_x_min, data_y_min)
+        data_x_min = center_info[3] if len(center_info) > 3 else x_min
+        data_y_min = center_info[4] if len(center_info) > 4 else y_min
 
         # Use vectorized grid computation with full wafer extent
         grid, x_min, y_min, x_max, y_max, grid_width, grid_height = _compute_grid_fast(
@@ -6585,8 +6588,7 @@ def update_multi_stdf_heatmap():
         ax.set_ylabel("Y Coordinate", fontsize=10)
 
         # Set axis ticks to show actual die coordinates (not grid indices)
-        # x_min/y_min come from _compute_grid_fast which uses full_wafer_extent
-        # We need to show the actual coordinate values on the axis
+        # x_min/y_min are the grid boundaries from full_wafer_extent
         x_tick_step = max(1, grid_width // 10)  # Show ~10 ticks max
         x_tick_positions = np.arange(0, grid_width, x_tick_step)
         x_tick_labels = [str(int(x_min + pos)) for pos in x_tick_positions]
@@ -6971,8 +6973,8 @@ def draw_notch_marker(ax, grid_width, grid_height, notch_orientation, marker_siz
 def _estimate_full_wafer_extent(plot_data):
     """
     Estimate full wafer extent based on measured die positions.
-    Returns exact data bounds - no margins added.
-    The axis labels will match the actual die coordinates.
+    Assumes a circular wafer and estimates the full extent from partial data.
+    Returns expanded bounds for better visual display, plus actual data bounds for axis labels.
     """
     x_vals = plot_data["x"].values
     y_vals = plot_data["y"].values
@@ -6980,17 +6982,39 @@ def _estimate_full_wafer_extent(plot_data):
     data_x_min, data_x_max = int(x_vals.min()), int(x_vals.max())
     data_y_min, data_y_max = int(y_vals.min()), int(y_vals.max())
 
-    # Calculate center for reference (used for wafer circle drawing)
+    # Calculate the center and radius from measured data
     x_center = (data_x_min + data_x_max) / 2
     y_center = (data_y_min + data_y_max) / 2
 
+    # Estimate radius based on the furthest point from center
+    dx = np.abs(x_vals - x_center)
+    dy = np.abs(y_vals - y_center)
+    measured_radius = np.sqrt(dx**2 + dy**2).max()
+
+    # For partial wafers, estimate full wafer dimensions
     data_width = data_x_max - data_x_min
     data_height = data_y_max - data_y_min
-    estimated_radius = max(data_width, data_height) / 2
 
-    # Return exact data bounds - no margins
-    # This ensures axis labels match actual die coordinates
-    return (data_x_min, data_y_min, data_x_max, data_y_max), (x_center, y_center, estimated_radius)
+    # Estimate full wafer radius - add some margin for unmeasured areas
+    estimated_radius = max(data_width, data_height) / 2 * 1.05
+
+    # If measured radius is significantly smaller than data extent radius,
+    # the wafer center might not be in the data - use data extent + margin
+    if measured_radius < estimated_radius * 0.5:
+        # Data might be off-center, extend from data bounds
+        margin = max(3, int(max(data_width, data_height) * 0.15))
+        x_min = data_x_min - margin
+        y_min = data_y_min - margin
+        x_max = data_x_max + margin
+        y_max = data_y_max + margin
+    else:
+        # Extend from estimated center
+        x_min = int(x_center - estimated_radius)
+        y_min = int(y_center - estimated_radius)
+        x_max = int(x_center + estimated_radius)
+        y_max = int(y_center + estimated_radius)
+
+    return (x_min, y_min, x_max, y_max), (x_center, y_center, estimated_radius, data_x_min, data_y_min)
 
 
 def _draw_wafer_circle(ax, grid_width, grid_height, x_min, y_min, center_info=None):
