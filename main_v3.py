@@ -1966,8 +1966,8 @@ def load_csv_wafermap_file():
         # Standardize column names
         df = df.rename(columns={x_col: 'x', y_col: 'y'})
 
-        # Look for bin column
-        bin_col_candidates = ['bin', 'BIN', 'Bin', 'HARD_BIN', 'hard_bin', 'SOFT_BIN', 'soft_bin', 'HB', 'SB']
+        # Look for bin column - WICHTIG: HardBin und SoftBin müssen zuerst kommen!
+        bin_col_candidates = ['HardBin', 'SoftBin', 'hardbin', 'softbin', 'bin', 'BIN', 'Bin', 'HARD_BIN', 'hard_bin', 'SOFT_BIN', 'soft_bin', 'HB', 'SB']
         bin_col = None
         for candidate in bin_col_candidates:
             if candidate in df.columns:
