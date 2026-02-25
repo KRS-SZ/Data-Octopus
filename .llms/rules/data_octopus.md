@@ -48,6 +48,8 @@ streamlit run "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\src\stdf_analyz
 
 ⚠️ **IMMER Python 3.13 lokal verwenden** (nicht fb-python) – wegen tkinter!
 ⚠️ **IMMER main_v3.py verwenden** (nicht main.py) – main.py ist veraltet!
+⚠️ **DEVMATE: IMMER vom Terminal starten** – NIEMALS anders! Befehl oben kopieren und ausführen!
+⚠️ **DEVMATE: execute_command mit `interactive: true`** – damit die Ausgabe im VS Code Terminal sichtbar ist!
 
 ---
 
@@ -168,6 +170,12 @@ Devmate macht weitere Änderung → Version wird 3.2.2 → Commit
 | `3.1.8` | 23.02.2026 | `d465ead` | GRR Analysis Debug-Output, Auto Jobs Fixes |
 | `3.1.9` | 23.02.2026 | `9c0489f` | Multi-Parameter Boxplot/Distribution, AM DATA CSV Format Konvertierung |
 | `3.2.0` | 23.02.2026 | `1f21703` | Dynamische Parameter-Konvertierung zentral in simplify_param_name() |
+| `3.2.5` | 24.02.2026 | `50daa84` | Diffmap Tab: Fix 1D Array ValueError bei DataFrame-Erstellung |
+| `3.2.6` | 24.02.2026 | `f49f094` | Wafer Tab: Heatmap Achsenbeschriftung zeigt echte Die-Koordinaten |
+| `3.2.7` | 24.02.2026 | `489c913` | Wafer Tab: Koordinatensystem - exakte Daten-Grenzen |
+| `3.2.8` | 24.02.2026 | `627caad` | Fix ValueError beim Die-Klick (Series statt Skalar) |
+| `3.2.9` | 24.02.2026 | `af90885` | Fix rotes Auswahlrechteck - selected_die_coords global |
+| `3.2.10` | 24.02.2026 | `12b3f49` | Restore larger wafermap display with margins like v3.7 |
 
 ---
 
@@ -341,39 +349,57 @@ name = re.sub(r'XYZ(\d+)', convert_xyz, name, flags=re.IGNORECASE)
 
 ---
 
-## 9.1 🚨 MONTAG 24.02.2026 – REFACTORING STARTEN
+## 9.1 🚨 REFACTORING-PLAN (Stand 24.02.2026)
 
-### AKTION: Code-Modularisierung beginnen
+### ANALYSE-ERGEBNIS: main_v3.py = 34.754 Zeilen monolithischer Code
 
-**ZIEL:** main_v3.py (34.340 Zeilen) schrittweise modularisieren
+#### 🔴 KRITISCHE FINDINGS
 
-#### Phase 1: config.py erstellen (1h)
+| Problem | Details |
+|---------|---------|
+| **Duplikation** | `BinningLookup` + `get_bin_colormap()` existieren ZWEIMAL (in core/binning.py UND main_v3.py) |
+| **Ungenutzte Module** | `src/stdf_analyzer/core/stdf_parser.py` existiert aber wird NICHT verwendet |
+| **~70+ Globale Variablen** | `current_stdf_data`, `grouped_parameters`, `test_limits`, etc. |
+| **Klare Funktions-Cluster** | Können als separate Module extrahiert werden |
+
+#### FUNKTIONS-CLUSTER (identifiziert)
+
+| Cluster | Zeilen ca. | Extrahierbar als |
+|---------|------------|------------------|
+| Wafer Tab | 3000-4500 | `gui/wafer_tab.py` |
+| Diffmap Tab | 5500-6500 | `gui/diffmap_tab.py` |
+| Statistics | 5000-6500 | `gui/statistics_tab.py` |
+| GRR Tab | 20000-22000 | `gui/grr_tab.py` |
+| PPT Export | 21000-23000 | `services/ppt_export.py` |
+| Multi-Wafer | 15000-17000 | `gui/multi_wafer_tab.py` |
+
+### REFACTORING-PHASEN
+
+#### Phase 1: Quick Wins (30 min) ⭐ START HIER
 ```python
-# src/config.py
+# In main_v3.py ändern:
+from src.stdf_analyzer.core.binning import BinningLookup, get_bin_colormap
+# → Lokale Kopien in main_v3.py LÖSCHEN (~140 Zeilen weniger)
+```
+
+#### Phase 2: config.py erstellen (1h)
+```python
+# src/stdf_analyzer/core/config.py
 KNOWN_GROUP_TYPES = ['OPTIC', 'DC', 'ANLG', 'ANALOG', 'FUNC', 'FUNCTIONAL',
                      'EFUSE', 'INIT', 'INITIALIZE', 'DIGITAL', 'POWER', 'SOT']
-
-VALUE_PATTERNS = {
-    'FV': {'regex': r'FV(\d+)P(\d+)', 'unit': 'V', 'description': 'Force Voltage'},
-    'FC': {'regex': r'FC([np]?)(\d+)P(\d+)', 'unit': 'mA', 'description': 'Force Current'},
-    'AVEE': {'regex': r'AVEE([np]?)(\d+)p(\d+)', 'unit': 'V', 'description': 'AVEE Voltage'},
-    'DACI': {'regex': r'DACI([np]?)(\d+)p(\d+)', 'unit': 'uA', 'description': 'DACI Current'},
-    'DC': {'regex': r'(?<![A-Z])DC(\d+)p(\d+)', 'unit': '%', 'description': 'Duty Cycle'},
-}
-
+VALUE_PATTERNS = {...}
 CLEANUP_PATTERNS = ['FREERUN', 'INTFRAME', '_NV_', '_PEQA_', '_X_X_X']
 ```
 
-#### Phase 2: parameter_utils.py extrahieren (2h)
+#### Phase 3: parameter_utils.py extrahieren (2h)
 ```
 src/stdf_analyzer/core/parameter_utils.py
-├── simplify_param_name()      # Aus main_v3.py Zeile 1284
+├── simplify_param_name()       # Aus main_v3.py Zeile 1284
 ├── extract_group_from_column() # Aus main_v3.py Zeile 1395
-├── convert_coded_value()       # Neue Helper-Funktion
-└── _build_param_list()         # Wiederverwendbare Param-Listen
+└── convert_coded_value()       # Neue Helper-Funktion
 ```
 
-#### Phase 3: AppState-Klasse (3h)
+#### Phase 4: AppState-Klasse (3h)
 ```python
 # src/stdf_analyzer/core/app_state.py
 class AppState:
@@ -382,38 +408,54 @@ class AppState:
         self.grouped_parameters = {}
         self.test_parameters = {}
         self.multiple_stdf_data = []
-        self.multiple_wafer_ids = []
-        self.custom_tests = {}
-        # ... weitere wichtige Globals
+        # ... ersetzt 70+ globale Variablen
 ```
 
-#### Phase 4: Tests für parameter_utils (2h)
-```python
-# tests/test_parameter_utils.py
-def test_simplify_fv():
-    assert simplify_param_name("FV0P1") == "0.1V"
-    assert simplify_param_name("FV1P8") == "1.8V"
-
-def test_simplify_avee():
-    assert simplify_param_name("AVEEn1p8") == "-1.80V"
-
-def test_group_prefix_removal():
-    assert "OPTIC_ANSI" not in simplify_param_name("OPTIC_ANSI-ALLOFF_...")
-    assert "ALLON" in simplify_param_name("OPTIC_ANSI-ALLON_...")
+#### Phase 5: Tab-Module (1 Woche)
+```
+src/stdf_analyzer/gui/
+├── wafer_tab.py      (~1500 Zeilen)
+├── diffmap_tab.py    (~1000 Zeilen)
+├── statistics_tab.py (~1500 Zeilen)
+├── grr_tab.py        (~2000 Zeilen)
+└── ppt_export.py     (~2000 Zeilen)
 ```
 
-### REIHENFOLGE MORGEN:
+### WORKFLOW FÜR REFACTORING
+1. ⚠️ **VOR jeder Änderung:** `git commit` als Backup
+2. ⚠️ **Nach jeder Phase:** App testen
+3. ⚠️ **Alte Funktionen erst löschen wenn Import funktioniert**
 
-1. **ERST:** `git commit -m "v3.2.0 Backup vor Refactoring"`
-2. **DANN:** Phase 1 (config.py) - risikoarm, kein Impact auf main_v3.py
-3. **DANN:** Phase 2 (parameter_utils.py) - Import in main_v3.py hinzufügen
-4. **DANN:** Testen ob alles noch funktioniert
-5. **OPTIONAL:** Phase 3-4 wenn Zeit
+---
 
-### WICHTIG:
-- ⚠️ **Jede Phase einzeln committen**
-- ⚠️ **Nach jeder Phase App testen**
-- ⚠️ **Alte Funktionen in main_v3.py erst löschen wenn Import funktioniert**
+## 9.2 🔧 BINNING-FEATURE (Stand 24.02.2026)
+
+### ✅ ERLEDIGT (v3.2.11 - v3.2.14)
+
+| Version | Feature |
+|---------|---------|
+| **3.2.11** | Show Bins Popup erweitert: 2 Tabs (Bin Definitions + Test Definitions mit 120 Tests) |
+| **3.2.12** | "Binning" Gruppe im Group-Dropdown hinzugefügt |
+| **3.2.13** | Fix ValueError bei Binning Gruppe (bin/softbin/hardbin sind keine test_keys) |
+| **3.2.14** | Binning Gruppe an 2. Stelle + korrekte SoftBin/HardBin Erkennung |
+
+### AKTUELLER STAND
+- **"Binning" Gruppe** erscheint jetzt an **2. Stelle** im Group-Dropdown (direkt nach "All Groups")
+- **HardBin und SoftBin** werden korrekt erkannt (2 parameters)
+- **Show Bins Button** zeigt:
+  - Tab 1: 15 Bin-Definitionen mit Farben
+  - Tab 2: 120 Test-Definitionen mit Suchfunktion (HBin, SBin, Start/Max Test#, Comment)
+
+### 🔄 TODO FÜR MORGEN
+1. **Testen** ob Binning-Gruppe korrekt funktioniert (Wafermap nach HardBin/SoftBin färben)
+2. **Prüfen** ob andere Tabs (Multi-Wafer, Diffmap, GRR) auch Binning-Gruppe haben sollten
+3. **Optional**: Binning-Excel automatisch laden wenn Projekt-Ordner gewählt wird
+
+### EXCEL-DATEI
+`Data\AM Data\Binning\Copy of HN2_Binning&TestNumber_V0.36.xlsx`
+- Sheet: "BinTable"
+- 15 Bin-Definitionen (hbin 1-15)
+- 120 Test-Definitionen
 
 ---
 
