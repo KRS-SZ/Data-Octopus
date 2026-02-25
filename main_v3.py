@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.16"
+APP_VERSION = "3.2.19"
 
 import sys
 
@@ -1980,6 +1980,17 @@ def load_csv_wafermap_file():
             df['bin'] = 1
             print("No bin column found, created default bin column (all bins = 1)")
 
+        # Detect and preserve SoftBin column BEFORE renaming test parameters
+        sbin_col_found = None
+        sbin_candidates = ['SoftBin', 'softbin', 'sbin', 'SOFT_BIN', 'soft_bin', 'SB']
+        for candidate in sbin_candidates:
+            if candidate in df.columns and candidate != bin_col:
+                sbin_col_found = candidate
+                if candidate != 'sbin':
+                    df = df.rename(columns={candidate: 'sbin'})
+                    print(f"  Renamed SoftBin column '{candidate}' -> 'sbin'")
+                break
+
         # Extract wafer ID from filename
         wafer_id = os.path.basename(csv_path).replace('.csv', '').replace('.CSV', '')
 
@@ -1989,8 +2000,8 @@ def load_csv_wafermap_file():
         test_limits_dict = {}
 
         numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()
-        # Exclude x, y, bin from parameter list
-        exclude_cols = ['x', 'y', 'bin']
+        # Exclude x, y, bin, sbin from parameter list
+        exclude_cols = ['x', 'y', 'bin', 'sbin']
         test_columns = [col for col in numeric_columns if col not in exclude_cols]
 
         # Use global extract_group_from_column function for grouping
@@ -5971,25 +5982,81 @@ def _resolve_param_to_column(selected, data_sources):
 
 
 def _draw_bin_distribution(all_bins, parent_frame):
-    """Draw bin distribution chart"""
-    global stats_boxplot_canvas
+    """Draw bin distribution chart with Bin Summary Table"""
+    global stats_boxplot_canvas, binning_lookup, multiple_stdf_data, current_stdf_data, softbin_column, hardbin_column
 
     all_bins = np.array(all_bins)
     unique_bins, bin_counts = np.unique(all_bins, return_counts=True)
     total_dies = len(all_bins)
     bin_percentages = (bin_counts / total_dies) * 100
-    pass_bin = 1
 
-    fig_bin, ax_bin = plt.subplots(figsize=(2.8, 2.5))
+    # Get SoftBin data if available
+    softbin_data = {}
+    data_sources = multiple_stdf_data if multiple_stdf_data else ([current_stdf_data] if current_stdf_data is not None else [])
+    for df in data_sources:
+        if df is None:
+            continue
+        # Auto-detect SoftBin column from ALL df columns (global softbin_column may not be set)
+        sb_col = None
+        if softbin_column and softbin_column in df.columns:
+            sb_col = softbin_column
+        else:
+            for col in df.columns:
+                if str(col).lower() in ['softbin', 'sbin', 'soft_bin']:
+                    sb_col = col
+                    break
+        # Detect HardBin column: 'bin' (STDF) or hardbin_column (CSV, e.g. 'HardBin')
+        hb_col = None
+        if 'bin' in df.columns:
+            hb_col = 'bin'
+        elif hardbin_column and hardbin_column in df.columns:
+            hb_col = hardbin_column
+        else:
+            for col in df.columns:
+                if str(col).lower() in ['hardbin', 'hbin', 'hard_bin']:
+                    hb_col = col
+                    break
+
+        bin_cols = [col for col in df.columns if 'bin' in str(col).lower()]
+        print(f"[DEBUG SoftBin] sb_col={sb_col!r}, hb_col={hb_col!r}, bin-related cols={bin_cols}")
+        if sb_col:
+            print(f"[DEBUG SoftBin] sample values: {df[sb_col].dropna().unique()[:10]}")
+        if sb_col and hb_col:
+            for hbin in unique_bins:
+                mask = df[hb_col] == hbin
+                softbins = df.loc[mask, sb_col].dropna().unique()
+                if int(hbin) not in softbin_data:
+                    softbin_data[int(hbin)] = set()
+                softbin_data[int(hbin)].update([int(sb) for sb in softbins])
+
+    # Create figure with 2 subplots: Bar chart (top) + Summary Table (bottom)
+    fig_bin = plt.figure(figsize=(8, 7))
+    gs = fig_bin.add_gridspec(2, 1, height_ratios=[1, 1.2], hspace=0.3)
+    ax_bin = fig_bin.add_subplot(gs[0])
+    ax_table = fig_bin.add_subplot(gs[1])
+    ax_table.axis('off')
+
+    # === BAR CHART (top) ===
+    pass_bin = 1
     fig_bin.patch.set_facecolor('#f0f0f0')
 
     bin_color_map = {
         1: '#4CAF50', 2: '#F44336', 3: '#FF9800', 4: '#9C27B0', 5: '#2196F3',
-        6: '#FFEB3B', 7: '#795548', 8: '#607D8B', 9: '#E91E63', 10: '#00BCD4'
+        6: '#FFEB3B', 7: '#795548', 8: '#607D8B', 9: '#E91E63', 10: '#00BCD4',
+        11: '#8BC34A', 12: '#FF5722', 13: '#673AB7', 14: '#03A9F4', 15: '#CDDC39'
     }
     colors = [bin_color_map.get(int(b), '#9E9E9E') for b in unique_bins]
 
-    bars = ax_bin.bar([str(int(b)) for b in unique_bins], bin_percentages, color=colors, edgecolor='white', linewidth=1)
+    x_labels = []
+    for b in unique_bins:
+        b_int = int(b)
+        name = binning_lookup.get_bin_name(b_int) if binning_lookup.loaded else ""
+        if name:
+            short_name = name[:10] + "\u2026" if len(name) > 10 else name
+            x_labels.append(f"{b_int}\n{short_name}")
+        else:
+            x_labels.append(str(b_int))
+    bars = ax_bin.bar(x_labels, bin_percentages, color=colors, edgecolor='white', linewidth=1)
 
     for bar, pct, count in zip(bars, bin_percentages, bin_counts):
         ax_bin.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
@@ -6008,6 +6075,48 @@ def _draw_bin_distribution(all_bins, parent_frame):
     ax_bin.text(0.98, 0.98, f'Yield: {yield_pct:.1f}%\nTotal: {total_dies}',
         transform=ax_bin.transAxes, fontsize=6, fontweight='bold',
         va='top', ha='right', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+
+    # === BIN SUMMARY TABLE (bottom) ===
+    table_data = []
+    headers = ['HardBin', 'Name', 'Count', 'Yield %', 'SoftBins']
+
+    for i, (hbin, count, pct) in enumerate(zip(unique_bins, bin_counts, bin_percentages)):
+        hbin_int = int(hbin)
+        # Get bin name from BinningLookup
+        bin_name = binning_lookup.get_bin_name(hbin_int) if binning_lookup.loaded else ""
+        if not bin_name:
+            bin_name = "Good Die" if hbin_int == 1 else f"Fail Bin {hbin_int}"
+
+        # Get associated SoftBins
+        softbins_str = ""
+        if hbin_int in softbin_data and softbin_data[hbin_int]:
+            sb_list = sorted(softbin_data[hbin_int])[:5]  # Max 5 SoftBins anzeigen
+            softbins_str = ", ".join([str(sb) for sb in sb_list])
+            if len(softbin_data[hbin_int]) > 5:
+                softbins_str += f"... (+{len(softbin_data[hbin_int]) - 5})"
+
+        table_data.append([str(hbin_int), bin_name[:20], str(int(count)), f'{pct:.1f}%', softbins_str])
+
+    # Create table
+    if table_data:
+        table = ax_table.table(
+            cellText=table_data,
+            colLabels=headers,
+            loc='center',
+            cellLoc='center',
+            colColours=['#E8E8E8'] * len(headers)
+        )
+        table.auto_set_font_size(False)
+        table.set_fontsize(7)
+        table.scale(1.0, 1.5)
+
+        # Color the HardBin column cells
+        for i, hbin in enumerate(unique_bins):
+            color = bin_color_map.get(int(hbin), '#9E9E9E')
+            table[(i + 1, 0)].set_facecolor(color)
+            table[(i + 1, 0)].set_text_props(color='white', fontweight='bold')
+
+        ax_table.set_title('Bin Summary Table', fontsize=8, fontweight='bold', color='#2C3E50', pad=10)
 
     fig_bin.tight_layout()
     stats_boxplot_canvas = FigureCanvasTkAgg(fig_bin, master=parent_frame)

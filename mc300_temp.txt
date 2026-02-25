@@ -1,0 +1,253 @@
+
+> def load_mc300_file():
+      """
+      Load wafermap data from MC-300 format file (ASAP MC-300 Prober).
+  
+      MC-300 Format:
+      - Zeile 1-15: Header (Typ, Datum, Wafer-ID, Version, Produktionsst├ñtte, Rezept, etc.)
+      - Zeile 11: Anzahl Dies
+      - Zeile 16: Anzahl Parameter (108 = 2 X/Y + 106 Messparameter)
+      - Zeile 17+: Parameter-Definitionen (T98=X-Pos, T99=Y-Pos, T1-T106=Messparameter)
+      - Danach: Messdaten (1 Zeile pro Die, Werte durch Leerzeichen getrennt, BIN am Ende)
+      """
+      global current_stdf_data, current_wafer_id, test_parameters, grouped_parameters, test_limits
+      global multiple_stdf_data, multiple_wafer_ids
+  
+      file_path = filedialog.askopenfilename(
+          title="Select MC-300 file",
+          filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+      )
+  
+      if not file_path:
+          return
+  
+      print(f"Loading MC-300 file: {file_path}")
+  
+      try:
+          with open(file_path, 'r', encoding='utf-8') as f:
+              lines = f.readlines()
+  
+          # Parse Header (Zeile 1-15)
+          header_info = {
+              'type': lines[0].strip() if len(lines) > 0 else '',           # SCHEIBE
+              'datetime_device': lines[1].strip() if len(lines) > 1 else '', # 04.02.2026 15:39:08/ASAP_MC300
+              'wafer_id': lines[2].strip() if len(lines) > 2 else '',        # PEQUIN00000
+              'version': lines[5].strip() if len(lines) > 5 else '',         # 0.00
+              'production_site': lines[6].strip() if len(lines) > 6 else '', # OSSFR
+              'recipe': lines[7].strip() if len(lines) > 7 else '',          # LIV_stress1
+              'num_dies': int(lines[10].strip()) if len(lines) > 10 else 0,  # 56
+              'num_params': int(lines[15].strip()) if len(lines) > 15 else 0 # 108
+          }
+  
+          print(f"MC-300 Header: Wafer={header_info['wafer_id']}, Dies={header_info['num_dies']}, Params={header_info['num_params']}")
+  
+          # Parse Parameter-Definitionen (ab Zeile 17)
+          param_start_line = 16  # 0-indexed, Zeile 17
+          param_definitions = []
+  
+          for i in range(header_info['num_params']):
+              if param_start_line + i < len(lines):
+                  line = lines[param_start_line + i].strip()
+                  parts = line.split()
+                  if len(parts) >= 2:
+                      param_id = parts[0]  # T1, T2, etc.
+                      param_name = parts[1]  # IfArrO1, UfO1, etc.
+                      param_unit = parts[2] if len(parts) > 2 and parts[2] != '-' else ''
+                      param_condition = parts[3] if len(parts) > 3 and parts[3] != '-' else ''
+                      param_definitions.append({
+                          'id': param_id,
+                          'name': param_name,
+                          'unit': param_unit,
+                          'condition': param_condition
+                      })
+  
+          print(f"Parsed {len(param_definitions)} parameter definitions")
+  
+          # Parse Messdaten (nach Parameter-Definitionen)
+          data_start_line = param_start_line + header_info['num_params']
+          die_data = []
+  
+          for i in range(header_info['num_dies']):
+              if data_start_line + i < len(lines):
+                  line = lines[data_start_line + i].strip()
+                  values = line.split()
+                  if len(values) >= header_info['num_params']:
+                      # Konvertiere wissenschaftliche Notation zu Float
+                      float_values = []
+                      for v in values[:header_info['num_params']]:
+                          try:
+                              float_values.append(float(v))
+                          except ValueError:
+                              float_values.append(0.0)
+  
+                      # BIN ist der letzte Wert (falls vorhanden)
+                      bin_value = int(float(values[-1])) if len(values) > header_info['num_params'] else 1
+  
+                      die_data.append({
+                          'values': float_values,
+                          'bin': bin_value
+                      })
+  
+          print(f"Parsed {len(die_data)} die measurements")
+  
+          # Erstelle DataFrame im gleichen Format wie CSV/STDF
+          import pandas as pd
+  
+          # X ist immer Index 0, Y ist immer Index 1 in den Datenzeilen
+          x_idx = 0  # Erstes Feld = X-Koordinate
+          y_idx = 1  # Zweites Feld = Y-Koordinate
+  
+          print(f"DEBUG: Using X_idx={x_idx}, Y_idx={y_idx}")
+          print(f"DEBUG: First die: X={die_data[0]['values'][x_idx]}, Y={die_data[0]['values'][y_idx]}")
+  
+          # Baue DataFrame - Spaltennamen m├╝ssen zu Heatmap-Funktion passen!
+          data_dict = {
+              'die_x': [int(d['values'][x_idx]) for d in die_data],
+              'die_y': [int(d['values'][y_idx]) for d in die_data],
+              'x': [int(d['values'][x_idx]) for d in die_data],
+              'y': [int(d['values'][y_idx]) for d in die_data],
+              'bin': [d['bin'] for d in die_data],
+              'HardBin': [d['bin'] for d in die_data],
+              'SoftBin': [d['bin'] for d in die_data],
+          }
+  
+          # F├╝ge alle Messparameter hinzu (au├ƒer X/Y)
+          # Parameter starten ab Index 2 (nach X-Pos und Y-Pos)
+          param_idx = 1
+          for i, param in enumerate(param_definitions):
+              if i >= 2:  # ├£berspringe X-Pos (0) und Y-Pos (1)
+                  col_name = f"{param['name']}"
+                  if param['unit']:
+                      col_name += f"_{param['unit']}"
+                  if param['condition']:
+                      col_name += f"_{param['condition']}"
+                  data_dict[col_name] = [d['values'][i] for d in die_data]
+  
+          df = pd.DataFrame(data_dict)
+          print(f"DEBUG: DataFrame columns: {list(df.columns)[:10]}...")
+          print(f"DEBUG: DataFrame shape: {df.shape}")
+          print(f"DEBUG: X range: {df['x'].min()} to {df['x'].max()}")
+          print(f"DEBUG: Y range: {df['y'].min()} to {df['y'].max()}")
+  
+          # Setze globale Variablen
+          current_wafer_id = header_info['wafer_id']
+          current_stdf_data = df
+  
+          # F├╝ge zu Multiple Wafers hinzu
+          multiple_stdf_data.append(df)
+          multiple_wafer_ids.append(current_wafer_id)
+  
+          # Baue test_parameters und grouped_parameters
+          # Parameter von test_1 bis test_106 (chronologisch)
+          test_parameters.clear()
+          grouped_parameters.clear()
+          test_limits.clear()
+  
+          mc300_group = f"MC300_{header_info['recipe']}"
+          grouped_parameters[mc300_group] = []
+  
+          param_num = 1
+          for i, param in enumerate(param_definitions):
+              if i >= 2:  # ├£berspringe X-Pos (0) und Y-Pos (1)
+                  col_name = f"{param['name']}"
+                  if param['unit']:
+                      col_name += f"_{param['unit']}"
+                  if param['condition']:
+                      col_name += f"_{param['condition']}"
+  
+                  test_key = f"test_{param_num}"
+                  test_parameters[test_key] = col_name
+                  grouped_parameters[mc300_group].append((param_num, col_name, col_name))
+                  param_num += 1
+  
+          print(f"DEBUG: Created {param_num-1} test parameters (test_1 to test_{param_num-1})")
+  
+          # Update UI
+          update_wafer_tab_selection_list()
+          update_group_combobox()
+          on_group_selected()
+          refresh_heatmap_display()
+  
+          print(f"Successfully loaded MC-300 file: {len(die_data)} dies, {len(param_definitions)-2} parameters")
+          messagebox.showinfo("Success", f"Loaded MC-300 file:\n{header_info['wafer_id']}\n{len(die_data)} dies, {len(param_definitions)-2} parameters")
+  
+      except Exception as e:
+          print(f"Error loading MC-300 file: {e}")
+          import traceback
+          traceback.print_exc()
+          messagebox.showerror("Error", f"Failed to load MC-300 file:\n{str(e)}")
+  
+  
+  def load_csv_wafermap_file():
+      """Load wafermap data from a CSV file"""
+      global current_stdf_data, current_wafer_id, test_parameters, grouped_parameters, test_limits
+      global multiple_stdf_data, multiple_wafer_ids, die_image_directory
+  
+      csv_path = filedialog.askopenfilename(
+          title="Select a CSV file with wafermap data",
+          filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+      )
+  
+      if not csv_path:
+          return
+  
+      try:
+          print(f"Loading CSV file: {csv_path}")
+  
+          # Read CSV file
+          df = pd.read_csv(csv_path)
+  
+          # Check for required columns (x, y coordinates)
+          # Common column names for coordinates
+          x_col_candidates = ['x', 'X', 'x_coord', 'X_COORD', 'X_Coordinate', 'x_coordinate', 'DIE_X', 'die_x', 'col', 'COL', 'Column']
+          y_col_candidates = ['y', 'Y', 'y_coord', 'Y_COORD', 'Y_Coordinate', 'y_coordinate', 'DIE_Y', 'die_y', 'row', 'ROW', 'Row']
+  
+          x_col = None
+          y_col = None
+  
+          for candidate in x_col_candidates:
+              if candidate in df.columns:
+                  x_col = candidate
+                  break
+  
+          for candidate in y_col_candidates:
+              if candidate in df.columns:
+                  y_col = candidate
+                  break
+  
+          if x_col is None or y_col is None:
+              # If standard names not found, try to guess from first few columns
+              print(f"Warning: Could not find standard x/y columns. Available columns: {df.columns.tolist()}")
+              # Try to prompt user or use first two numeric columns
+              numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+              if len(numeric_cols) >= 2:
+                  x_col = numeric_cols[0]
+                  y_col = numeric_cols[1]
+                  print(f"Using '{x_col}' as X coordinate and '{y_col}' as Y coordinate")
+              else:
+                  print("ERROR: Could not identify coordinate columns in CSV")
+                  return
+  
+          # Standardize column names
+          df = df.rename(columns={x_col: 'x', y_col: 'y'})
+  
+          # Look for bin column
+          bin_col_candidates = ['bin', 'BIN', 'Bin', 'HARD_BIN', 'hard_bin', 'SOFT_BIN', 'soft_bin', 'HB', 'SB']
+          bin_col = None
+          for candidate in bin_col_candidates:
+              if candidate in df.columns:
+                  bin_col = candidate
+                  df = df.rename(columns={bin_col: 'bin'})
+                  break
+  
+          if 'bin' not in df.columns:
+              # Create a default bin column (all pass = bin 1)
+              df['bin'] = 1
+              print("No bin column found, created default bin column (all bins = 1)")
+  
+          # Extract wafer ID from filename
+          wafer_id = os.path.basename(csv_path).replace('.csv', '').replace('.CSV', '')
+  
+          # Build test parameters from remaining numeric columns
+          test_params = {}
+
