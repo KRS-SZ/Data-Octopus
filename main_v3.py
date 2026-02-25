@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.14"
+APP_VERSION = "3.2.15"
 
 import sys
 
@@ -1296,6 +1296,8 @@ current_wafer_id = None
 test_parameters = {}
 grouped_parameters = {}  # Dictionary: group_name -> list of (test_num, short_name, full_name)
 test_limits = {}  # Dictionary: test_num -> {'lo_limit': value, 'hi_limit': value, 'units': str}
+hardbin_column = None  # Column name for HardBin (detected from CSV)
+softbin_column = None  # Column name for SoftBin (detected from CSV)
 
 # Wafer Configuration (from WCR record)
 current_wafer_config = {
@@ -2045,33 +2047,19 @@ def load_csv_wafermap_file():
         for grp, params in grouped_params.items():
             print(f"  {grp}: {len(params)} parameters")
 
-        # Add "Binning" group with bin-related columns - check various column name formats
-        binning_group_params = []
-        added_cols = set()
+        # Store HardBin/SoftBin column names for later use in heatmap
+        global hardbin_column, softbin_column
+        hardbin_column = None
+        softbin_column = None
 
         for col in df.columns:
             col_lower = str(col).lower()
-            if col in added_cols:
-                continue
-            # Check for bin column
-            if col_lower == 'bin' or col == 'bin':
-                binning_group_params.append((col, 'BIN (Result Bin)', 'BIN (Result Bin)'))
-                added_cols.add(col)
-            # Check for SoftBin
+            if col_lower in ['hardbin', 'hbin', 'hard_bin']:
+                hardbin_column = col
+                print(f"  Found HardBin column: '{col}'")
             elif col_lower in ['softbin', 'sbin', 'soft_bin']:
-                binning_group_params.append((col, 'SoftBin', 'SoftBin'))
-                added_cols.add(col)
-            # Check for HardBin
-            elif col_lower in ['hardbin', 'hbin', 'hard_bin']:
-                binning_group_params.append((col, 'HardBin', 'HardBin'))
-                added_cols.add(col)
-
-        if binning_group_params:
-            # Insert "Binning" at the beginning (will be 2nd after "All Groups")
-            new_grouped_params = {'Binning': binning_group_params}
-            new_grouped_params.update(grouped_params)
-            grouped_params = new_grouped_params
-            print(f"  Binning: {len(binning_group_params)} parameters (HardBin, SoftBin, etc.)")
+                softbin_column = col
+                print(f"  Found SoftBin column: '{col}'")
 
         # Update global variables
         current_stdf_data = df
@@ -2211,13 +2199,21 @@ def load_csv_wafermap_file():
         # Update UI
         update_group_combobox()
 
-        param_options = ["BIN (Bin Number)"]
+        # Build param options with HardBin/SoftBin first (as default)
+        param_options = []
+        if hardbin_column:
+            param_options.append("HardBin")
+        if softbin_column:
+            param_options.append("SoftBin")
+        if not param_options:
+            param_options.append("BIN (Bin Number)")
+
         for test_key, test_name in sorted(test_parameters.items()):
             param_options.append(f"{test_key}: {test_name}")
 
         heatmap_param_combobox["values"] = param_options
         if param_options:
-            heatmap_param_combobox.current(0)
+            heatmap_param_combobox.current(0)  # Default to first item (HardBin)
 
         # Update Charac.-Curve dropdowns
         update_charac_params()
@@ -5753,11 +5749,20 @@ def update_group_combobox():
 
 def on_group_selected():
     """Handle group selection - update parameter dropdown with tests from selected group"""
-    global grouped_parameters, test_parameters, custom_tests
+    global grouped_parameters, test_parameters, custom_tests, hardbin_column, softbin_column
 
     selected_group = heatmap_group_combobox.get()
 
-    param_options = ["BIN (Bin Number)"]
+    # Start with HardBin and SoftBin if available
+    param_options = []
+    if hardbin_column:
+        param_options.append(f"HardBin")
+    if softbin_column:
+        param_options.append(f"SoftBin")
+
+    # Fallback to generic BIN if no HardBin/SoftBin found
+    if not param_options:
+        param_options = ["BIN (Bin Number)"]
 
     # Helper function for numeric sorting of test_X keys
     def sort_key(item):
@@ -5774,6 +5779,7 @@ def on_group_selected():
 
     if selected_group == "─── Custom Tests ───":
         # Show only custom tests
+        param_options = []  # Clear bins for custom tests
         for test_name in sorted(custom_tests.keys()):
             param_options.append(f"CUSTOM: {test_name}")
     elif selected_group == "All Groups" or not grouped_parameters:
@@ -6691,6 +6697,16 @@ def update_multi_stdf_heatmap():
     if selected.startswith("BIN"):
         param_column = "bin"
         param_label = "Bin"
+    elif selected == "HardBin":
+        # Use detected HardBin column
+        param_column = hardbin_column if hardbin_column else "HardBin"
+        param_label = "HardBin"
+        print(f"DEBUG: Using HardBin column: '{param_column}'")
+    elif selected == "SoftBin":
+        # Use detected SoftBin column
+        param_column = softbin_column if softbin_column else "SoftBin"
+        param_label = "SoftBin"
+        print(f"DEBUG: Using SoftBin column: '{param_column}'")
     elif is_custom_test:
         # Handle custom test - compute values for each die
         custom_test_name = selected.replace("CUSTOM:", "").strip()
@@ -6737,10 +6753,14 @@ def update_multi_stdf_heatmap():
     # Single wafer display - larger figure
     fig, ax = plt.subplots(figsize=(10, 9), constrained_layout=True)
 
-    # Choose colormap - use custom bin colormap for bin values
-    if param_column == "bin":
-        unique_bins = df[param_column].dropna().unique() if param_column in df.columns else []
+    # Choose colormap - use custom bin colormap for bin values (bin, HardBin, SoftBin)
+    param_column_lower = str(param_column).lower() if param_column else ""
+    is_bin_column = param_column_lower in ["bin", "hardbin", "softbin", "hard_bin", "soft_bin", "hbin", "sbin"]
+
+    if is_bin_column and param_column in df.columns:
+        unique_bins = df[param_column].dropna().unique()
         cmap, norm = get_bin_colormap(unique_bins)
+        print(f"DEBUG Heatmap: Using bin colormap for '{param_column}', unique bins: {sorted(unique_bins)}")
     else:
         cmap = "viridis"
         norm = None
@@ -6849,6 +6869,26 @@ def update_multi_stdf_heatmap():
 
         # Create colorbar
         cbar = fig.colorbar(im, ax=ax, fraction=0.024, pad=0.01)
+
+        # Add bin legend with names from BinningLookup (if loaded)
+        if is_bin_column and binning_lookup.loaded:
+            # Get unique bins and their names
+            unique_bins_sorted = sorted([int(b) for b in unique_bins if not np.isnan(b)])
+            legend_text = ""
+            for bin_val in unique_bins_sorted:
+                bin_name = binning_lookup.get_bin_name(bin_val)
+                if bin_name:
+                    legend_text += f"Bin {bin_val}: {bin_name}\n"
+                else:
+                    legend_text += f"Bin {bin_val}\n"
+
+            if legend_text:
+                # Add text box with bin legend
+                props = dict(boxstyle='round', facecolor='white', alpha=0.9, edgecolor='gray')
+                ax.text(1.02, 0.98, legend_text.strip(), transform=ax.transAxes, fontsize=8,
+                       verticalalignment='top', horizontalalignment='left',
+                       bbox=props, family='monospace')
+                print(f"DEBUG: Added bin legend with {len(unique_bins_sorted)} bins")
 
         # Store for slider
         first_im = im
@@ -8137,18 +8177,26 @@ def update_plm_wafermap():
         else:
             plm_not_found += 1
 
-    # Set axis properties
+    # Set axis properties - match Data Heatmap style
     ax.set_xlim(-0.5, grid_width - 0.5)
     ax.set_ylim(-0.5, grid_height - 0.5)
     ax.set_aspect('equal')
-    ax.set_xlabel('X', fontsize=10, fontweight='bold')
-    ax.set_ylabel('Y', fontsize=10, fontweight='bold')
-    # Truncate title to fit width, reduce font size by 50%
-    short_wafer_id = wafer_id[:20] + "..." if len(str(wafer_id)) > 20 else wafer_id
-    ax.set_title(f"PLM: {short_wafer_id} [{selected_plm_type}]\n{plm_found} files, {plm_not_found} empty",
-                fontsize=6, fontweight='bold')
 
-    # Add coordinate labels - show actual X/Y coordinates
+    # Move X-axis to top (like Data Heatmap)
+    ax.xaxis.set_label_position('top')
+    ax.xaxis.tick_top()
+    ax.set_xlabel("X Coordinate", fontsize=10)
+    ax.set_ylabel("Y Coordinate", fontsize=10)
+
+    # Invert Y-axis to match Data Heatmap orientation (lower Y values at bottom)
+    ax.invert_yaxis()
+
+    # Truncate title to fit width
+    short_wafer_id = wafer_id[:40] + "..." if len(str(wafer_id)) > 40 else wafer_id
+    ax.set_title(f"{short_wafer_id}\nPLM [{selected_plm_type}]: {plm_found} files",
+                fontsize=11, fontweight='bold')
+
+    # Add coordinate labels - show actual X/Y coordinates (like Data Heatmap)
     tick_step = max(1, grid_width // 10)
     x_ticks = range(0, grid_width, tick_step)
     ax.set_xticks(x_ticks)
@@ -8158,6 +8206,10 @@ def update_plm_wafermap():
     y_ticks = range(0, grid_height, tick_step_y)
     ax.set_yticks(y_ticks)
     ax.set_yticklabels([str(y_min + i) for i in y_ticks], fontsize=8)
+
+    # Draw notch marker if orientation is available (like Data Heatmap)
+    if current_wafer_config and current_wafer_config.get('notch_orientation'):
+        draw_notch_marker(ax, grid_width, grid_height, current_wafer_config['notch_orientation'])
 
     fig.tight_layout()
 
