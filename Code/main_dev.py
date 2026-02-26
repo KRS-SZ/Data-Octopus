@@ -13808,50 +13808,55 @@ def update_multi_wafer_stats_table():
                 if col in df.columns:
                     vals = df[col].dropna().values
                     if len(vals) > 0:
-                        # DIREKT berechnen!
+                        # DIREKT berechnen! Nutze calculate_basic_stats für Konsistenz
                         try:
+                            vals_stats = calculate_basic_stats(vals)
                             if mkey == "count":
-                                row.append(f"{len(vals)}")
+                                row.append(f"{vals_stats['count']}")
                             elif mkey == "mean":
-                                row.append(f"{np.mean(vals):.4g}")
+                                row.append(f"{vals_stats['mean']:.4g}")
                             elif mkey == "median":
-                                row.append(f"{np.median(vals):.4g}")
+                                row.append(f"{vals_stats['median']:.4g}")
                             elif mkey == "std":
-                                row.append(f"{np.std(vals, ddof=1):.4g}")
+                                row.append(f"{vals_stats['std']:.4g}")
                             elif mkey == "min":
-                                row.append(f"{np.min(vals):.4g}")
+                                row.append(f"{vals_stats['min']:.4g}")
                             elif mkey == "max":
-                                row.append(f"{np.max(vals):.4g}")
+                                row.append(f"{vals_stats['max']:.4g}")
                             elif mkey == "range":
-                                row.append(f"{np.max(vals) - np.min(vals):.4g}")
+                                row.append(f"{vals_stats['range']:.4g}")
                             elif mkey == "cv":
-                                m = np.mean(vals)
+                                m = vals_stats['mean']
                                 if m != 0:
-                                    row.append(f"{(np.std(vals, ddof=1)/abs(m))*100:.2f}%")
+                                    row.append(f"{(vals_stats['std']/abs(m))*100:.2f}%")
                                 else:
                                     row.append("-")
                             elif mkey == "sigma1":
-                                m, s = np.mean(vals), np.std(vals, ddof=1)
+                                m, s = vals_stats['mean'], vals_stats['std']
                                 row.append(f"{m-s:.3g}~{m+s:.3g}")
                             elif mkey == "sigma2":
-                                m, s = np.mean(vals), np.std(vals, ddof=1)
+                                m, s = vals_stats['mean'], vals_stats['std']
                                 row.append(f"{m-2*s:.3g}~{m+2*s:.3g}")
                             elif mkey == "sigma3":
-                                m, s = np.mean(vals), np.std(vals, ddof=1)
+                                m, s = vals_stats['mean'], vals_stats['std']
                                 row.append(f"{m-3*s:.3g}~{m+3*s:.3g}")
                             elif mkey == "p25":
-                                row.append(f"{np.percentile(vals, 25):.4g}")
+                                pct = calculate_percentiles(vals, [25])
+                                row.append(f"{pct['p25']:.4g}")
                             elif mkey == "p75":
-                                row.append(f"{np.percentile(vals, 75):.4g}")
+                                pct = calculate_percentiles(vals, [75])
+                                row.append(f"{pct['p75']:.4g}")
                             elif mkey == "p95":
-                                row.append(f"{np.percentile(vals, 95):.4g}")
+                                pct = calculate_percentiles(vals, [95])
+                                row.append(f"{pct['p95']:.4g}")
                             elif mkey == "iqr":
-                                row.append(f"{np.percentile(vals, 75) - np.percentile(vals, 25):.4g}")
+                                pct = calculate_percentiles(vals, [25, 75])
+                                row.append(f"{pct['p75'] - pct['p25']:.4g}")
                             elif mkey == "skewness":
                                 n = len(vals)
                                 if n >= 3:
-                                    m = np.mean(vals)
-                                    s = np.std(vals, ddof=1)
+                                    m = vals_stats['mean']
+                                    s = vals_stats['std']
                                     if s > 0:
                                         skew = np.mean(((vals - m) / s) ** 3)
                                         row.append(f"{skew:.4g}")
@@ -13862,8 +13867,8 @@ def update_multi_wafer_stats_table():
                             elif mkey == "kurtosis":
                                 n = len(vals)
                                 if n >= 4:
-                                    m = np.mean(vals)
-                                    s = np.std(vals, ddof=1)
+                                    m = vals_stats['mean']
+                                    s = vals_stats['std']
                                     if s > 0:
                                         kurt = np.mean(((vals - m) / s) ** 4) - 3
                                         row.append(f"{kurt:.4g}")
@@ -22858,10 +22863,14 @@ def generate_plm_gage_slides(prs, content_layout, raw_param, plm_type):
         title_para.font.bold = True
 
         # Calculate means
-        mean_grr = np.mean(all_grr)
-        mean_ndc = np.mean(all_ndc)
-        mean_repeat = np.mean(all_repeat)
-        mean_reprod = np.mean(all_reprod)
+        grr_stats = calculate_basic_stats(np.array(all_grr))
+        ndc_stats = calculate_basic_stats(np.array(all_ndc))
+        repeat_stats = calculate_basic_stats(np.array(all_repeat))
+        reprod_stats = calculate_basic_stats(np.array(all_reprod))
+        mean_grr = grr_stats['mean']
+        mean_ndc = ndc_stats['mean']
+        mean_repeat = repeat_stats['mean']
+        mean_reprod = reprod_stats['mean']
 
         # Status assessment
         if mean_grr < 10:
@@ -23342,7 +23351,7 @@ def generate_plm_gage_slides(prs, content_layout, raw_param, plm_type):
                 cell = s_table.cell(row_idx, s_cols - 1)
                 cell.text = ''
                 p = cell.text_frame.paragraphs[0]
-                avg_val = np.mean(grr_values) if grr_values else 0
+                avg_val = float(np.mean(grr_values)) if grr_values else 0
                 p.text = f"{avg_val:.1f}%"
                 p.font.size = Pt(7)
                 p.font.bold = True
@@ -23502,8 +23511,9 @@ def update_grr_multi_param_table(all_param_results, file_names, die_coords):
 
             # Calculate statistics for this die across files
             if values:
-                mean_val = np.mean(values)
-                std_val = np.std(values)
+                val_stats = calculate_basic_stats(np.array(values))
+                mean_val = val_stats['mean']
+                std_val = val_stats['std']
                 range_val = np.max(values) - np.min(values)
                 cv_val = (std_val / mean_val * 100) if mean_val != 0 else 0
                 row_data.extend([f"{mean_val:.4g}", f"{std_val:.4g}", f"{range_val:.4g}", f"{cv_val:.2f}%"])
@@ -25331,13 +25341,14 @@ def _build_plm_dataframe(folder_path, plm_type_filter=None):
         if len(valid_values) == 0:
             continue
 
+        plm_stats = calculate_basic_stats(valid_values)
         stats = {
-            f"{plm_type}_mean": float(np.mean(valid_values)),
-            f"{plm_type}_median": float(np.median(valid_values)),
-            f"{plm_type}_std": float(np.std(valid_values)),
-            f"{plm_type}_min": float(np.min(valid_values)),
-            f"{plm_type}_max": float(np.max(valid_values)),
-            f"{plm_type}_pixels": int(len(valid_values)),
+            f"{plm_type}_mean": float(plm_stats['mean']),
+            f"{plm_type}_median": float(plm_stats['median']),
+            f"{plm_type}_std": float(plm_stats['std']),
+            f"{plm_type}_min": float(plm_stats['min']),
+            f"{plm_type}_max": float(plm_stats['max']),
+            f"{plm_type}_pixels": int(plm_stats['count']),
         }
 
         if (x, y) not in die_data:
@@ -25608,10 +25619,11 @@ def _auto_integrate_plm_params(file_info, file_path):
         if len(valid_values) == 0:
             continue
 
+        plm_stats2 = calculate_basic_stats(valid_values)
         stats = {
-            f"PLM_{plm_type}_mean": float(np.mean(valid_values)),
-            f"PLM_{plm_type}_median": float(np.median(valid_values)),
-            f"PLM_{plm_type}_std": float(np.std(valid_values)),
+            f"PLM_{plm_type}_mean": float(plm_stats2['mean']),
+            f"PLM_{plm_type}_median": float(plm_stats2['median']),
+            f"PLM_{plm_type}_std": float(plm_stats2['std']),
             f"PLM_{plm_type}_min": float(np.min(valid_values)),
             f"PLM_{plm_type}_max": float(np.max(valid_values)),
         }
@@ -26853,10 +26865,11 @@ def create_grr_data_display(parent_frame, file_info, file_idx):
     cbar.set_label('Value', fontsize=8)
 
     # Add statistics text box (like Multi-Wafer)
+    valid_stats = calculate_basic_stats(valid_data) if len(valid_data) > 0 else {'mean': 0}
     stats_text = (
         f"Min: {global_min:.3g}\n"
         f"Max: {global_max:.3g}\n"
-        f"Mean: {np.mean(valid_data) if len(valid_data) > 0 else 0:.3g}"
+        f"Mean: {valid_stats['mean']:.3g}"
     )
     ax.text(0.02, 0.98, stats_text,
         transform=ax.transAxes,
@@ -29091,37 +29104,38 @@ def generate_stats_table():
                     values = df[param_column].dropna().values
                     if len(values) > 0:
                         try:
+                            val_stats = calculate_basic_stats(np.array(values))
                             if measure == "count":
                                 val = len(values)
                             elif measure == "mean":
-                                val = f"{np.mean(values):.4g}"
+                                val = f"{val_stats['mean']:.4g}"
                             elif measure == "median":
-                                val = f"{np.median(values):.4g}"
+                                val = f"{val_stats['median']:.4g}"
                             elif measure == "std":
-                                val = f"{np.std(values):.4g}"
+                                val = f"{val_stats['std']:.4g}"
                             elif measure == "min":
-                                val = f"{np.min(values):.4g}"
+                                val = f"{val_stats['min']:.4g}"
                             elif measure == "max":
-                                val = f"{np.max(values):.4g}"
+                                val = f"{val_stats['max']:.4g}"
                             elif measure == "range":
-                                val = f"{np.max(values) - np.min(values):.4g}"
+                                val = f"{val_stats['range']:.4g}"
                             elif measure == "cv":
-                                mean_val = np.mean(values)
+                                mean_val = val_stats['mean']
                                 if mean_val != 0:
-                                    val = f"{(np.std(values) / abs(mean_val)) * 100:.2f}%"
+                                    val = f"{(val_stats['std'] / abs(mean_val)) * 100:.2f}%"
                                 else:
                                     val = "N/A"
                             elif measure == "sigma1":
-                                mean_val = np.mean(values)
-                                std_val = np.std(values)
+                                mean_val = val_stats['mean']
+                                std_val = val_stats['std']
                                 val = f"{mean_val-std_val:.3g} - {mean_val+std_val:.3g}"
                             elif measure == "sigma2":
-                                mean_val = np.mean(values)
-                                std_val = np.std(values)
+                                mean_val = val_stats['mean']
+                                std_val = val_stats['std']
                                 val = f"{mean_val-2*std_val:.3g} - {mean_val+2*std_val:.3g}"
                             elif measure == "sigma3":
-                                mean_val = np.mean(values)
-                                std_val = np.std(values)
+                                mean_val = val_stats['mean']
+                                std_val = val_stats['std']
                                 val = f"{mean_val-3*std_val:.3g} - {mean_val+3*std_val:.3g}"
                             elif measure == "p25":
                                 val = f"{np.percentile(values, 25):.4g}"
@@ -29192,29 +29206,30 @@ def export_stats_table_to_excel():
                     values = df[param_column].dropna().values
                     if len(values) > 0:
                         try:
+                            val_stats2 = calculate_basic_stats(np.array(values))
                             if measure == "count":
                                 val = len(values)
                             elif measure == "mean":
-                                val = np.mean(values)
+                                val = val_stats2['mean']
                             elif measure == "median":
-                                val = np.median(values)
+                                val = val_stats2['median']
                             elif measure == "std":
-                                val = np.std(values)
+                                val = val_stats2['std']
                             elif measure == "min":
-                                val = np.min(values)
+                                val = val_stats2['min']
                             elif measure == "max":
-                                val = np.max(values)
+                                val = val_stats2['max']
                             elif measure == "range":
-                                val = np.max(values) - np.min(values)
+                                val = val_stats2['range']
                             elif measure == "cv":
-                                mean_val = np.mean(values)
-                                val = (np.std(values) / abs(mean_val)) * 100 if mean_val != 0 else None
+                                mean_val = val_stats2['mean']
+                                val = (val_stats2['std'] / abs(mean_val)) * 100 if mean_val != 0 else None
                             elif measure == "sigma1":
-                                val = f"{np.mean(values)-np.std(values):.6g} - {np.mean(values)+np.std(values):.6g}"
+                                val = f"{val_stats2['mean']-val_stats2['std']:.6g} - {val_stats2['mean']+val_stats2['std']:.6g}"
                             elif measure == "sigma2":
-                                val = f"{np.mean(values)-2*np.std(values):.6g} - {np.mean(values)+2*np.std(values):.6g}"
+                                val = f"{val_stats2['mean']-2*val_stats2['std']:.6g} - {val_stats2['mean']+2*val_stats2['std']:.6g}"
                             elif measure == "sigma3":
-                                val = f"{np.mean(values)-3*np.std(values):.6g} - {np.mean(values)+3*np.std(values):.6g}"
+                                val = f"{val_stats2['mean']-3*val_stats2['std']:.6g} - {val_stats2['mean']+3*val_stats2['std']:.6g}"
                             elif measure == "p25":
                                 val = np.percentile(values, 25)
                             elif measure == "p75":
@@ -31338,7 +31353,8 @@ def create_powerpoint_presentation(output_path=None):
                                 all_vals.extend(df[col_to_use].dropna().values)
 
                         if all_vals:
-                            stats_text = f"N={len(all_vals)} | Mean={np.mean(all_vals):.3g} | Std={np.std(all_vals):.3g} | Min={np.min(all_vals):.3g} | Max={np.max(all_vals):.3g}"
+                            all_stats = calculate_basic_stats(np.array(all_vals))
+                            stats_text = f"N={all_stats['count']} | Mean={all_stats['mean']:.3g} | Std={all_stats['std']:.3g} | Min={all_stats['min']:.3g} | Max={all_stats['max']:.3g}"
                             stats_box = slide.shapes.add_textbox(
                                 Inches(stats_cfg.get("x", 0.3)),
                                 Inches(stats_cfg.get("y", 6.8)),
@@ -31576,7 +31592,8 @@ def create_powerpoint_presentation(output_path=None):
 
                             # Add overall statistics annotation
                             all_arr = np.array(all_values)
-                            stats_text = f"Overall Stats:\nN={len(all_arr)}\nMean={np.mean(all_arr):.4g}\nStd={np.std(all_arr):.4g}\nMin={np.min(all_arr):.4g}\nMax={np.max(all_arr):.4g}"
+                            all_arr_stats = calculate_basic_stats(all_arr)
+                            stats_text = f"Overall Stats:\nN={all_arr_stats['count']}\nMean={all_arr_stats['mean']:.4g}\nStd={all_arr_stats['std']:.4g}\nMin={all_arr_stats['min']:.4g}\nMax={all_arr_stats['max']:.4g}"
                             ax.text(0.98, 0.98, stats_text, transform=ax.transAxes, fontsize=9,
                                    verticalalignment='top', horizontalalignment='right',
                                    bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
@@ -31613,14 +31630,15 @@ def create_powerpoint_presentation(output_path=None):
                                 values = df[param_column].dropna().values
                                 if len(values) > 0:
                                     short_label = str(wafer_id)[:20] + "..." if len(str(wafer_id)) > 20 else str(wafer_id)
+                                    wafer_stats = calculate_basic_stats(np.array(values))
                                     stats_rows.append({
                                         'Wafer': short_label,
-                                        'Count': len(values),
-                                        'Mean': np.mean(values),
-                                        'Std': np.std(values),
-                                        'Min': np.min(values),
-                                        'Max': np.max(values),
-                                        'Median': np.median(values)
+                                        'Count': wafer_stats['count'],
+                                        'Mean': wafer_stats['mean'],
+                                        'Std': wafer_stats['std'],
+                                        'Min': wafer_stats['min'],
+                                        'Max': wafer_stats['max'],
+                                        'Median': wafer_stats['median']
                                     })
 
                         if stats_rows:
@@ -31863,12 +31881,14 @@ def create_powerpoint_presentation(output_path=None):
                                 # Calculate and display statistics in top left corner
                                 # Combine all data for overall statistics
                                 combined_data = np.concatenate(all_data)
-                                stats_max = np.max(combined_data)
-                                stats_min = np.min(combined_data)
-                                stats_q1 = np.percentile(combined_data, 25)
-                                stats_q3 = np.percentile(combined_data, 75)
-                                stats_mean = np.mean(combined_data)
-                                stats_median = np.median(combined_data)
+                                combined_stats = calculate_basic_stats(combined_data)
+                                pct_stats = calculate_percentiles(combined_data, [25, 75])
+                                stats_max = combined_stats['max']
+                                stats_min = combined_stats['min']
+                                stats_q1 = pct_stats['p25']
+                                stats_q3 = pct_stats['p75']
+                                stats_mean = combined_stats['mean']
+                                stats_median = combined_stats['median']
 
                                 # Format statistics text
                                 stats_text = (
@@ -32585,8 +32605,8 @@ def create_powerpoint_presentation(output_path=None):
                         tf.word_wrap = True
 
                         # Find which component is dominant
-                        avg_repeat = np.mean(repeatability)
-                        avg_reprod = np.mean(reproducibility)
+                        avg_repeat = float(np.mean(repeatability))
+                        avg_reprod = float(np.mean(reproducibility))
 
                         p = tf.paragraphs[0]
                         p.text = "Interpretation:"
