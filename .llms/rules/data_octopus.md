@@ -535,3 +535,62 @@ Rules:       Data Octopus\.llms\rules\data_octopus.md  (← DIESE DATEI)
 - Neue Features in Abschnitt 7 dokumentieren
 - Neue Fallen/Fixes in Abschnitt 8 ergänzen
 - Bei Struktur-Änderungen Abschnitt 4 aktualisieren
+
+---
+
+## 13. 🚀 TODO NÄCHSTE SESSION (27.02.2026) – VOLLSTÄNDIGE MODULARISIERUNG
+
+### GOAL: main_v5.py soll ALLE Features von main.py haben
+
+**AKTUELLER STAND:**
+- ✅ main.py (v4.0.0) = ~34.500 Zeilen, MONOLITHISCH aber FUNKTIONIERT
+- ✅ main_v5.py (v5.0.0) = ~470 Zeilen Controller, MODULAR aber VEREINFACHTE TABS
+- ⚠️ GUI-Tab Module = ~500 Zeilen pro Tab (VORLAGEN, nicht vollständiger Code)
+
+**ZIEL:**
+- 🔒 main.py BLEIBT UNVERÄNDERT (Desktop-Version)
+- main_v5.py wird voll funktionsfähig mit ALLEN Features
+- GUI-Tab Module bekommen den KOMPLETTEN Code aus main.py
+
+### REFACTORING-LISTE (nach Priorität)
+
+| # | Tab | Zeilen in main.py | Zeilen aktuell | TODO |
+|---|-----|-------------------|----------------|------|
+| 1 | **Wafer Tab** | ~3.000 | ~550 | Code aus main.py extrahieren |
+| 2 | **Multi-Wafer Tab** | ~2.500 | ~450 | Code aus main.py extrahieren |
+| 3 | **Diffmap Tab** | ~1.500 | ~640 | Code aus main.py extrahieren |
+| 4 | **Statistics Tab** | ~2.000 | ~450 | Code aus main.py extrahieren |
+| 5 | **Charac-Curve Tab** | ~1.500 | ~480 | Code aus main.py extrahieren |
+| 6 | **GRR Tab** | ~5.000 | ~470 | Code aus main.py extrahieren |
+| 7 | **Pixel Analysis Tab** | ~2.000 | ~500 | Code aus main.py extrahieren |
+| 8 | **Report/PPT Tab** | ~6.000 | ~500 | Code aus main.py extrahieren |
+| **GESAMT** | | **~25.000** | **~4.500** | **~20.000 Zeilen zu extrahieren** |
+
+### WORKFLOW PRO TAB
+
+1. Code-Block in main_dev.py identifizieren (Zeilen X bis Y)
+2. Globale Variablen → als Klassen-Attribute umwandeln
+3. Funktionen → als Klassen-Methoden umwandeln
+4. In gui/{tab}_tab.py einfügen
+5. In main_v5.py testen
+6. Commit nach jedem Tab
+
+### GESCHÄTZTER AUFWAND
+
+| Phase | Dauer |
+|-------|-------|
+| Wafer Tab | 2-3h |
+| Multi-Wafer Tab | 2-3h |
+| Diffmap Tab | 1-2h |
+| Statistics Tab | 2h |
+| Charac-Curve Tab | 1-2h |
+| GRR Tab | 4-5h (komplex!) |
+| Pixel Analysis | 2h |
+| Report/PPT | 4-5h (komplex!) |
+| **GESAMT** | **~20-25h (3-4 Sessions)** |
+
+### WICHTIG
+
+⚠️ **main.py (v4.0.0) NIEMALS ANFASSEN** – das ist die funktionierende Desktop-Version!
+⚠️ **Nur main_v5.py und die GUI-Module bearbeiten**
+⚠️ **Nach jedem Tab: Testen ob main_v5.py noch startet**
