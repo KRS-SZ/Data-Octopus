@@ -15924,8 +15924,8 @@ def update_multi_wafer_display():
                 ax_hist.text(count + max_count * 0.02, bin_center, f'{int(count)}',
                            va='center', ha='left', fontsize=5, color='#333')
 
-        ax_hist.axhline(y=np.mean(all_values), color='red', linestyle='--', linewidth=1.5, label=f'Mean: {np.mean(all_values):.2f}')
-        ax_hist.axhline(y=np.median(all_values), color='green', linestyle='-', linewidth=1.5, label=f'Median: {np.median(all_values):.2f}')
+        ax_hist.axhline(y=calculate_basic_stats(all_values)['mean'], color='red', linestyle='--', linewidth=1.5, label=f'Mean: {calculate_basic_stats(all_values)["mean"]:.2f}')
+        ax_hist.axhline(y=calculate_basic_stats(all_values)['median'], color='green', linestyle='-', linewidth=1.5, label=f'Median: {calculate_basic_stats(all_values)["median"]:.2f}')
         ax_hist.set_xlabel('Count', fontsize=8)
         ax_hist.set_ylabel(param_label[:25], fontsize=8)
         ax_hist.legend(fontsize=6, loc='upper right')
@@ -17165,8 +17165,9 @@ def update_multi_wafer_boxplot():
     # Add statistics annotation if checkbox is enabled
     if multi_wafer_boxplot_stats_var.get():
         for i, data in enumerate(boxplot_data):
-            mean_val = np.mean(data)
-            median_val = np.median(data)
+            basic_stats = calculate_basic_stats(np.array(data))
+            mean_val = basic_stats['mean']
+            median_val = basic_stats['median']
             # Position text slightly to the right of each boxplot
             x_pos = i + 1 + 0.35
             # Add mean and median as small text next to each box
