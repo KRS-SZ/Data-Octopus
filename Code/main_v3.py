@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.21"
+APP_VERSION = "3.2.22"
 
 import sys
 
@@ -130,6 +130,13 @@ print("Starting application...")
 # Binning Lookup - Import from core module (deduplicated in v3.2.21)
 # ============================================================================
 from src.stdf_analyzer.core.binning import BinningLookup, get_bin_colormap, BIN_COLORS
+from src.stdf_analyzer.core.config import (
+    KNOWN_GROUP_TYPES,
+    MAIN_GROUPS,
+    GROUP_NORMALIZATION,
+    DETAILED_GROUP_PATTERNS,
+    GROUP_PREFIXES,
+)
 
 # Global binning lookup instance
 binning_lookup = BinningLookup()
@@ -1159,15 +1166,14 @@ def simplify_param_name(param_name):
     # Nur bekannte Gruppen-Typen am Anfang entfernen (OPTIC_, DC_, ANLG_, FUNC_, etc.)
     # NICHT beliebige XXXX_YYYY_ Patterns - die könnten Testnamen sein!
     # ============================================================
-    known_group_types = ['OPTIC', 'DC', 'ANLG', 'ANALOG', 'FUNC', 'FUNCTIONAL',
-                         'EFUSE', 'INIT', 'INITIALIZE', 'DIGITAL', 'POWER', 'SOT']
+    # KNOWN_GROUP_TYPES is imported from src.stdf_analyzer.core.config
 
     # Pattern: GRUPPE_SUBGRUPPE- oder GRUPPE_SUBGRUPPE_ am Anfang
     # z.B. OPTIC_ANSI-, DC_SHORT_, ANLG_DISPLAYI-
     prefix_match = re.match(r'^([A-Z]+)_([A-Z0-9]+[-_])', name, re.IGNORECASE)
     if prefix_match:
         group_type = prefix_match.group(1).upper()
-        if group_type in known_group_types:
+        if group_type in KNOWN_GROUP_TYPES:
             # Nur entfernen wenn es eine bekannte Gruppe ist
             name = name[len(prefix_match.group(0)):]
 
@@ -1245,113 +1251,9 @@ def extract_group_from_column(col_name):
     This is a global function used by both Wafermap and Multi-Wafermap tabs."""
     col_str = str(col_name).upper()
 
-    # Define detailed subgroup patterns for each main group
-    # Format: (pattern_to_match, group_name)
-    detailed_patterns = [
-        # DC subgroups
-        ('DC_CONT', 'DC_CONT'),
-        ('DC_LKG', 'DC_LKG'),
-        ('DC_LEAKAGE', 'DC_LKG'),
-        ('DC_IDD', 'DC_IDD'),
-        ('DC_VDD', 'DC_VDD'),
-        ('DC_IDDQ', 'DC_IDDQ'),
-        ('DC_POWER', 'DC_POWER'),
-        ('DC_DIODE', 'DC_DIODE'),
-        ('DC_RES', 'DC_RES'),
-        ('DC_CAP', 'DC_CAP'),
-        ('DC_SHORT', 'DC_SHORT'),
-        ('DC_OPEN', 'DC_OPEN'),
-        ('DC_CLAMP', 'DC_CLAMP'),
-        ('DC_PMU', 'DC_PMU'),
-        ('DC_FORCE', 'DC_FORCE'),
-        ('DC_MEAS', 'DC_MEAS'),
-
-        # ANALOG subgroups
-        ('ANLG_ADC', 'ANLG_ADC'),
-        ('ANLG_DAC', 'ANLG_DAC'),
-        ('ANLG_BANDGAP', 'ANLG_BANDGAP'),
-        ('ANLG_PLL', 'ANLG_PLL'),
-        ('ANLG_OSC', 'ANLG_OSC'),
-        ('ANLG_LDO', 'ANLG_LDO'),
-        ('ANLG_AMP', 'ANLG_AMP'),
-        ('ANLG_COMP', 'ANLG_COMP'),
-        ('ANLG_REF', 'ANLG_REF'),
-        ('ANLG_BIAS', 'ANLG_BIAS'),
-        ('ANLG_TRIM', 'ANLG_TRIM'),
-        ('ANALOG_ADC', 'ANLG_ADC'),
-        ('ANALOG_DAC', 'ANLG_DAC'),
-        ('ANALOG_BANDGAP', 'ANLG_BANDGAP'),
-        ('ANALOG_PLL', 'ANLG_PLL'),
-
-        # OPTIC/OPTICAL subgroups
-        ('OPTIC_ANSI', 'OPTIC_ANSI'),
-        ('OPTIC_IEC', 'OPTIC_IEC'),
-        ('OPTIC_POWER', 'OPTIC_POWER'),
-        ('OPTIC_CURRENT', 'OPTIC_CURRENT'),
-        ('OPTIC_THRESHOLD', 'OPTIC_THRESHOLD'),
-        ('OPTIC_SLOPE', 'OPTIC_SLOPE'),
-        ('OPTIC_LIV', 'OPTIC_LIV'),
-        ('OPTIC_WAVE', 'OPTIC_WAVE'),
-        ('OPTIC_SPEC', 'OPTIC_SPEC'),
-        ('OPTIC_EYE', 'OPTIC_EYE'),
-        ('OPTIC_MOD', 'OPTIC_MOD'),
-        ('OPTIC_EXT', 'OPTIC_EXT'),
-        ('OPTIC_SENS', 'OPTIC_SENS'),
-        ('OPTIC_RESP', 'OPTIC_RESP'),
-        ('OPTIC_DARK', 'OPTIC_DARK'),
-        ('OPTIC_PREWARMUP', 'OPTIC_PREWARMUP'),
-        ('OPTIC_WARMUP', 'OPTIC_WARMUP'),
-        ('OPTICAL_ANSI', 'OPTIC_ANSI'),
-        ('OPTICAL_IEC', 'OPTIC_IEC'),
-        ('OPTICAL_POWER', 'OPTIC_POWER'),
-
-        # FUNC/FUNCTIONAL subgroups
-        ('FUNC_BIST', 'FUNC_BIST'),
-        ('FUNC_SCAN', 'FUNC_SCAN'),
-        ('FUNC_MBIST', 'FUNC_MBIST'),
-        ('FUNC_LBIST', 'FUNC_LBIST'),
-        ('FUNC_JTAG', 'FUNC_JTAG'),
-        ('FUNC_GPIO', 'FUNC_GPIO'),
-        ('FUNC_SPI', 'FUNC_SPI'),
-        ('FUNC_I2C', 'FUNC_I2C'),
-        ('FUNC_I3C', 'FUNC_I3C'),
-        ('FUNC_UART', 'FUNC_UART'),
-        ('FUNC_MEM', 'FUNC_MEM'),
-        ('FUNC_LOGIC', 'FUNC_LOGIC'),
-        ('FUNCTIONAL_BIST', 'FUNC_BIST'),
-        ('FUNCTIONAL_SCAN', 'FUNC_SCAN'),
-
-        # EFUSE subgroups
-        ('EFUSE_PROG', 'EFUSE_PROG'),
-        ('EFUSE_READ', 'EFUSE_READ'),
-        ('EFUSE_VERIFY', 'EFUSE_VERIFY'),
-        ('EFUSE_TRIM', 'EFUSE_TRIM'),
-
-        # INIT/INITIALIZE subgroups
-        ('INIT_POWER', 'INIT_POWER'),
-        ('INIT_RESET', 'INIT_RESET'),
-        ('INIT_CONFIG', 'INIT_CONFIG'),
-        ('INITIALIZE_POWER', 'INIT_POWER'),
-        ('INITIALIZE_RESET', 'INIT_RESET'),
-
-        # DIGITAL subgroups
-        ('DIGITAL_IO', 'DIGITAL_IO'),
-        ('DIGITAL_TIMING', 'DIGITAL_TIMING'),
-        ('DIGITAL_FREQ', 'DIGITAL_FREQ'),
-        ('DIGITAL_CLK', 'DIGITAL_CLK'),
-
-        # POWER subgroups
-        ('POWER_SUPPLY', 'POWER_SUPPLY'),
-        ('POWER_RAIL', 'POWER_RAIL'),
-        ('POWER_CONS', 'POWER_CONS'),
-
-        # TEST subgroups
-        ('TEST_SETUP', 'TEST_SETUP'),
-        ('TEST_MEAS', 'TEST_MEAS'),
-    ]
-
+    # Use imported DETAILED_GROUP_PATTERNS from config.py
     # First, check for detailed patterns (longer patterns first = more specific)
-    for pattern, group in sorted(detailed_patterns, key=lambda x: -len(x[0])):
+    for pattern, group in sorted(DETAILED_GROUP_PATTERNS, key=lambda x: -len(x[0])):
         if pattern in col_str:
             return group
 
@@ -1363,18 +1265,10 @@ def extract_group_from_column(col_name):
             first_part = parts[0]
             second_part = parts[1]
 
-            # Known main groups
-            main_groups = ['DC', 'ANLG', 'ANALOG', 'OPTIC', 'OPTICAL', 'FUNC', 'FUNCTIONAL',
-                           'EFUSE', 'INIT', 'INITIALIZE', 'DIGITAL', 'POWER', 'TEST', 'MEAS']
-
-            if first_part in main_groups:
-                # Normalize main group name
-                normalized_main = {
-                    'ANALOG': 'ANLG',
-                    'OPTICAL': 'OPTIC',
-                    'FUNCTIONAL': 'FUNC',
-                    'INITIALIZE': 'INIT'
-                }.get(first_part, first_part)
+            # Use imported MAIN_GROUPS from config.py
+            if first_part in MAIN_GROUPS:
+                # Normalize main group name using imported GROUP_NORMALIZATION
+                normalized_main = GROUP_NORMALIZATION.get(first_part, first_part)
 
                 # Create subgroup if second part is meaningful (not just numbers)
                 if len(second_part) >= 2 and not second_part.isdigit():
@@ -1388,11 +1282,8 @@ def extract_group_from_column(col_name):
             if len(first_part) >= 2 and len(first_part) <= 10:
                 return first_part.title()
 
-    # Fallback: Check for known prefixes at start
-    prefixes = ['OPTIC', 'OPTICAL', 'DC', 'ELECTRICAL', 'ANALOG', 'ANLG', 'DIGITAL',
-               'POWER', 'SIGNAL', 'TEST', 'MEAS', 'PARAM', 'FUNC', 'EFUSE', 'INIT']
-
-    for prefix in prefixes:
+    # Fallback: Check for known prefixes at start (using imported GROUP_PREFIXES)
+    for prefix in GROUP_PREFIXES:
         if col_str.startswith(prefix):
             return prefix.title()
 
