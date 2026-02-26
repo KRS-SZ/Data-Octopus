@@ -40,10 +40,10 @@ Tool zur **Analyse von Halbleiter-Testdaten** aus STDF-Dateien:
 
 ```bash
 # Desktop-GUI (Standard) - WICHTIG: main_v3.py ist die AKTUELLE Version!
-& "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\python.exe" "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\main_v3.py"
+& "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\python.exe" "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\code\main_v3.py"
 
 # Web-App (Streamlit)
-streamlit run "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\src\stdf_analyzer\web\app.py"
+streamlit run "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\code\src\stdf_analyzer\web\app.py"
 ```
 
 ⚠️ **IMMER Python 3.13 lokal verwenden** (nicht fb-python) – wegen tkinter!
@@ -57,35 +57,42 @@ streamlit run "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\src\stdf_analyz
 
 ```
 Data Octopus/
-├── main.py                    # Haupt-Desktop-Anwendung (~31k Zeilen, monolithisch)
-├── src/
-│   └── stdf_analyzer/
-│       ├── core/              # Business-Logik (UI-unabhängig)
-│       │   ├── binning.py     # Bin-Definitionen und Lookup
-│       │   ├── stdf_parser.py # STDF/CSV Parsing
-│       │   └── wafermap.py    # Wafermap-Generierung
-│       ├── gui/               # (Placeholder – GUI ist in main.py)
-│       ├── services/          # Externe Dienste
-│       └── web/               # Streamlit Web-App
-│           ├── app.py
-│           └── app_nicegui.py
-├── tests/                     # Unit Tests (pytest)
-├── saved_jobs/                # Gespeicherte Job-Konfigurationen
-├── Jobs/                      # Job-Dateien
+├── code/                      # 🆕 ALLE CODE-DATEIEN (ab 26.02.2026)
+│   ├── main_v3.py             # Haupt-Desktop-Anwendung (~35k Zeilen) ← AKTUELLE VERSION!
+│   ├── main.py                # Legacy (veraltet)
+│   ├── src/
+│   │   └── stdf_analyzer/
+│   │       ├── core/          # Business-Logik (UI-unabhängig)
+│   │       │   ├── binning.py
+│   │       │   ├── stdf_parser.py
+│   │       │   └── wafermap.py
+│   │       ├── gui/           # (Placeholder)
+│   │       ├── services/      # Externe Dienste
+│   │       └── web/           # Streamlit Web-App
+│   ├── tests/                 # Unit Tests (pytest)
+│   ├── pyproject.toml         # Projekt-Konfiguration
+│   ├── requirements.txt       # Dependencies
+│   ├── Dockerfile             # Docker-Support
+│   └── docker-compose.yml
+│
 ├── AM Data/                   # STDF/CSV Testdaten
-├── PPT/                       # PowerPoint-Reports (Output)
+├── Binning/                   # Binning-Excel Dateien
+├── Data/                      # Weitere Testdaten
+├── Jobs/                      # Job-Dateien
+├── saved_jobs/                # Gespeicherte Job-Konfigurationen
+├── Report/                    # PowerPoint-Reports (Output)
 ├── Tooltest/                  # Test-Daten für Entwicklung
-├── pyproject.toml             # Projekt-Konfiguration
-├── requirements.txt           # Dependencies
-├── Dockerfile                 # Docker-Support
-├── docker-compose.yml
-└── .gitignore
+├── README.md                  # Projekt-Beschreibung
+├── DEPLOYMENT.md              # Deployment-Infos
+└── .llms/                     # Devmate Rules
 ```
 
 ### 4.1 Hinweis zur Struktur
-- `main.py` ist **monolithisch** (~31.000 Zeilen) – enthält die komplette Desktop-GUI
+- **`code/` Ordner** enthält ALLE Python-Dateien und Konfiguration (ab 26.02.2026 aufgeräumt)
+- `main_v3.py` ist **monolithisch** (~35.000 Zeilen) – enthält die komplette Desktop-GUI
 - `src/stdf_analyzer/core/` enthält extrahierte Module (Binning, Parser, Wafermap)
 - Viele `main - Kopie*.py` und `main *.py` Dateien = **Backups** verschiedener Versionen (in .gitignore)
+- **Daten-Ordner bleiben im Root** für einfachen Zugriff
 
 ---
 
@@ -176,6 +183,7 @@ Devmate macht weitere Änderung → Version wird 3.2.2 → Commit
 | `3.2.8` | 24.02.2026 | `627caad` | Fix ValueError beim Die-Klick (Series statt Skalar) |
 | `3.2.9` | 24.02.2026 | `af90885` | Fix rotes Auswahlrechteck - selected_die_coords global |
 | `3.2.10` | 24.02.2026 | `12b3f49` | Restore larger wafermap display with margins like v3.7 |
+| `3.2.19` | 25.02.2026 | `c1037c8` | Fix SoftBins in Bin Summary Table - SoftBin-Spalte beim CSV-Laden als 'sbin' preserved |
 
 ---
 
@@ -483,14 +491,15 @@ PLM-Types auf Manifold: **Bridged, Bridged-Pixels, Stitched, UniformitySyn** und
 
 ```
 Projekt:     c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\
+Code:        c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\code\
 Python 3.13: C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\python.exe
-Main GUI:    Data Octopus\main.py
-Core Module: Data Octopus\src\stdf_analyzer\core\
-Web App:     Data Octopus\src\stdf_analyzer\web\app.py
-Tests:       Data Octopus\tests\
+Main GUI:    Data Octopus\code\main_v3.py  ← AKTUELLE VERSION
+Core Module: Data Octopus\code\src\stdf_analyzer\core\
+Web App:     Data Octopus\code\src\stdf_analyzer\web\app.py
+Tests:       Data Octopus\code\tests\
 Testdaten:   Data Octopus\AM Data\
 Jobs:        Data Octopus\saved_jobs\
-PPT Output:  Data Octopus\PPT\
+PPT Output:  Data Octopus\Report\
 Rules:       Data Octopus\.llms\rules\data_octopus.md  (← DIESE DATEI)
 ```
 
