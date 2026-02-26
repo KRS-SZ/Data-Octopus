@@ -143,9 +143,12 @@ from src.stdf_analyzer.core.parameter_utils import (
     sort_test_params_numerically,
     convert_am_data_column_name,
 )
+from src.stdf_analyzer.core.data_loader import load_csv_file
 # AppState class is available for future migration of global variables
 # Usage: from src.stdf_analyzer.core.app_state import app_state
 # See app_state.py for documentation on migrating global variables
+
+# DiffmapTab will be imported after tab_diffmap is created (line ~889)
 
 # Global binning lookup instance
 binning_lookup = BinningLookup()
