@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.22"
+APP_VERSION = "3.2.23"
 
 import sys
 
@@ -136,6 +136,12 @@ from src.stdf_analyzer.core.config import (
     GROUP_NORMALIZATION,
     DETAILED_GROUP_PATTERNS,
     GROUP_PREFIXES,
+)
+from src.stdf_analyzer.core.parameter_utils import (
+    simplify_param_name,
+    extract_group_from_column,
+    sort_test_params_numerically,
+    convert_am_data_column_name,
 )
 
 # Global binning lookup instance
@@ -1094,300 +1100,64 @@ def update_source_buttons():
             pass
 
 
-def sort_test_params_numerically(items):
-    """
-    ZENTRALE SORTIER-FUNKTION für alle Parameter-Listen.
+# NOTE: sort_test_params_numerically, simplify_param_name, extract_group_from_column,
+# and convert_am_data_column_name are now imported from src.stdf_analyzer.core.parameter_utils
 
-    Sortiert Parameter nach der numerischen test_num (10011000, 10011001, ...).
-    Wird von ALLEN Tabs verwendet (Wafer, Multi-Wafer, Charac-Curve, Statistics, etc.)
+wafermap_canvas = None
+current_stdf_data = None
+current_wafer_id = None
+test_parameters = {}
+grouped_parameters = {}  # Dictionary: group_name -> list of (test_num, short_name, full_name)
+test_limits = {}  # Dictionary: test_num -> {'lo_limit': value, 'hi_limit': value, 'units': str}
+hardbin_column = None  # Column name for HardBin (detected from CSV)
+softbin_column = None  # Column name for SoftBin (detected from CSV)
 
-    Args:
-        items: Kann sein:
-            - dict.items(): Liste von (test_key, test_name) Tupeln
-            - list: Liste von Tupeln (test_num, name, full_name)
-
-    Returns:
-        Sortierte Liste
-    """
-    def sort_key(item):
-        # Handle dict.items() format: (test_key, test_name)
-        if isinstance(item, tuple) and len(item) >= 2:
-            first = item[0]
-            # Wenn erstes Element ein String ist (z.B. "test_10011000")
-            if isinstance(first, str) and first.startswith("test_"):
-                try:
-                    return int(first.replace("test_", ""))
-                except ValueError:
-                    pass
-            # Wenn erstes Element direkt eine Zahl ist (z.B. 10011000 aus grouped_parameters)
-            elif isinstance(first, (int, float)):
-                return int(first)
-        return float('inf')  # Nicht-numerische ans Ende
-
-    return sorted(items, key=sort_key)
+# Wafer Configuration (from WCR record)
+current_wafer_config = {
+    'notch_orientation': None,  # 'U', 'D', 'L', 'R' or None
+    'wafer_size': None,         # Wafer diameter in mm
+    'die_width': None,
+    'die_height': None,
+    'pos_x': None,              # Positive X direction
+    'pos_y': None               # Positive Y direction
+}
 
 
-def simplify_param_name(param_name):
-    """
-    Simplify parameter name by removing group/subgroup prefix and test number suffix.
-    Also strips CSV '<>' duplicate name and converts coded values to readable format.
+def select_stdf_file():
+    stdf_path = filedialog.askopenfilename(
+        title="Select an STDF file",
+        filetypes=[("STDF files", "*.stdf"), ("All files", "*.*")],
+    )
 
-    Conversions (dynamisch, nicht hardcodiert):
-    - FV0P1 → 0.1V (Force Voltage)
-    - FC0P2, FCn0P2 → 0.2mA, -0.2mA (Force Current)
-    - AVEEn1p8 → -1.80V
-    - DACI3p0 → 3.00uA
-    - DC4p59 → 4.59%
-    """
-    import re
-
-    if not param_name or param_name == "Bin":
-        return param_name
-
-    name = str(param_name)
-
-    # Remove test_XXXXX: prefix if present
-    if ":" in name:
-        name = name.split(":", 1)[-1].strip()
-
-    # ============================================================
-    # HANDLE CSV "<>" FORMAT - Use the long name after "<>"
-    # ============================================================
-    if '<>' in name:
-        parts = name.split('<>')
-        if len(parts) == 2:
-            name = parts[1].strip()  # Use the long name (after <>)
-
-    # Whitespace bereinigen - LEERZEICHEN ENTFERNEN
-    name = re.sub(r'\s+', '', name)
-
-    # ============================================================
-    # GRUPPEN-PRÄFIX DYNAMISCH ENTFERNEN
-    # Nur bekannte Gruppen-Typen am Anfang entfernen (OPTIC_, DC_, ANLG_, FUNC_, etc.)
-    # NICHT beliebige XXXX_YYYY_ Patterns - die könnten Testnamen sein!
-    # ============================================================
-    # KNOWN_GROUP_TYPES is imported from src.stdf_analyzer.core.config
-
-    # Pattern: GRUPPE_SUBGRUPPE- oder GRUPPE_SUBGRUPPE_ am Anfang
-    # z.B. OPTIC_ANSI-, DC_SHORT_, ANLG_DISPLAYI-
-    prefix_match = re.match(r'^([A-Z]+)_([A-Z0-9]+[-_])', name, re.IGNORECASE)
-    if prefix_match:
-        group_type = prefix_match.group(1).upper()
-        if group_type in KNOWN_GROUP_TYPES:
-            # Nur entfernen wenn es eine bekannte Gruppe ist
-            name = name[len(prefix_match.group(0)):]
-
-    # ============================================================
-    # KODIERTE WERTE DYNAMISCH KONVERTIEREN
-    # ============================================================
-
-    # FV (Force Voltage): FV0P1 → 0.1V, FV1P8 → 1.8V
-    def convert_fv(match):
-        integer = match.group(1)
-        decimal = match.group(2)
-        return f"{integer}.{decimal}V"
-    name = re.sub(r'FV(\d+)P(\d+)', convert_fv, name, flags=re.IGNORECASE)
-
-    # FC (Force Current): FC0P2 → 0.2mA, FCn0P2 → -0.2mA
-    def convert_fc(match):
-        sign = '-' if match.group(1).lower() == 'n' else ''
-        integer = match.group(2)
-        decimal = match.group(3)
-        return f"{sign}{integer}.{decimal}mA"
-    name = re.sub(r'FC([np]?)(\d+)P(\d+)', convert_fc, name, flags=re.IGNORECASE)
-
-    # AVEE (Voltage): AVEEn1p8 → -1.80V, AVEE1p8 → 1.80V
-    def convert_avee(match):
-        sign = '-' if match.group(1).lower() == 'n' else ''
-        integer = match.group(2)
-        decimal = match.group(3).ljust(2, '0')
-        return f"{sign}{integer}.{decimal}V"
-    name = re.sub(r'AVEE([np]?)(\d+)p(\d+)', convert_avee, name, flags=re.IGNORECASE)
-
-    # DACI (Current): DACI3p0 → 3.00uA, DACIn0p6 → -0.60uA
-    def convert_daci(match):
-        sign = '-' if match.group(1).lower() == 'n' else ''
-        integer = match.group(2)
-        decimal = match.group(3).ljust(2, '0')
-        return f"{sign}{integer}.{decimal}uA"
-    name = re.sub(r'DACI([np]?)(\d+)p(\d+)', convert_daci, name, flags=re.IGNORECASE)
-
-    # DC (Duty Cycle): DC4p59 → 4.59%
-    def convert_dc(match):
-        integer = match.group(1)
-        decimal = match.group(2)
-        return f"{integer}.{decimal}%"
-    name = re.sub(r'(?<![A-Z])DC(\d+)p(\d+)', convert_dc, name, flags=re.IGNORECASE)
-
-    # ============================================================
-    # CLEANUP
-    # ============================================================
-
-    # Remove trailing test number (5+ digits at the end after underscore)
-    name = re.sub(r'_\d{5,}$', '', name)
-
-    # Remove trailing _X_X_X patterns and other noise
-    name = re.sub(r'(_X)+(_|$)', '_', name)
-    name = re.sub(r'_?(FREERUN|INTFRAME)_X_', '_', name, flags=re.IGNORECASE)
-    name = re.sub(r'_NV_', '_', name)
-    name = re.sub(r'_PEQA_', '_', name)
-    name = re.sub(r'_+', '_', name)  # Doppelte _ entfernen
-    name = name.strip('_')
-
-    return name if name else param_name
-
-    # Remove trailing _X_X_X patterns and other noise
-    name = re.sub(r'(_X)+(_|$)', '_', name)
-    name = re.sub(r'_NV_', '_', name)
-    name = re.sub(r'_PEQA_', '_', name)
-    name = name.strip('_')
-
-    # No truncation - show full name
-    return name if name else param_name
+    if stdf_path:
+        load_stdf_data(stdf_path)
 
 
-def extract_group_from_column(col_name):
-    """Extract group name from column prefix with detailed subgroups.
-    This is a global function used by both Wafermap and Multi-Wafermap tabs."""
-    col_str = str(col_name).upper()
+def update_source_buttons():
+    """Update button visibility based on selected file source (STDF, CSV, or MC-300)"""
+    source = file_source_var.get()
 
-    # Use imported DETAILED_GROUP_PATTERNS from config.py
-    # First, check for detailed patterns (longer patterns first = more specific)
-    for pattern, group in sorted(DETAILED_GROUP_PATTERNS, key=lambda x: -len(x[0])):
-        if pattern in col_str:
-            return group
+    # Hide all buttons first
+    select_multiple_stdf_button.pack_forget()
+    select_csv_button.pack_forget()
+    try:
+        select_mc300_button.pack_forget()
+    except:
+        pass
 
-    # Fallback: Check for underscore-separated prefix with second level
-    if '_' in col_str:
-        parts = col_str.split('_')
-        if len(parts) >= 2:
-            # Try to create a two-level group name
-            first_part = parts[0]
-            second_part = parts[1]
-
-            # Use imported MAIN_GROUPS from config.py
-            if first_part in MAIN_GROUPS:
-                # Normalize main group name using imported GROUP_NORMALIZATION
-                normalized_main = GROUP_NORMALIZATION.get(first_part, first_part)
-
-                # Create subgroup if second part is meaningful (not just numbers)
-                if len(second_part) >= 2 and not second_part.isdigit():
-                    # Truncate very long subgroup names
-                    subgroup = second_part[:10] if len(second_part) > 10 else second_part
-                    return f"{normalized_main}_{subgroup}".title()
-                else:
-                    return normalized_main.title()
-
-            # If first part is short enough, use it as group
-            if len(first_part) >= 2 and len(first_part) <= 10:
-                return first_part.title()
-
-    # Fallback: Check for known prefixes at start (using imported GROUP_PREFIXES)
-    for prefix in GROUP_PREFIXES:
-        if col_str.startswith(prefix):
-            return prefix.title()
-
-    return "Other"  # Default group
+    if source == "STDF":
+        select_multiple_stdf_button.pack(side=tk.LEFT, padx=3)
+    elif source == "CSV":
+        select_csv_button.pack(side=tk.LEFT, padx=3)
+    elif source == "MC-300":
+        try:
+            select_mc300_button.pack(side=tk.LEFT, padx=3)
+        except:
+            pass
 
 
-def convert_am_data_column_name(col_name):
-    """
-    Konvertiert AM DATA Spaltennamen zum lesbaren Format - DYNAMISCH, nicht hardcodiert!
-
-    Funktionen:
-    1. Gruppen-Präfix DYNAMISCH erkennen und entfernen (Pattern: XXXX_YYYY- am Anfang)
-    2. ALLE kodierten Werte automatisch konvertieren:
-       - FV0P1 → 0.1V (Force Voltage)
-       - FC0P2, FCn0P2 → 0.2mA, -0.2mA (Force Current)
-       - AVEEn1p8 → -1.80V
-       - DACI3p0, DACIn0p6 → 3.00uA, -0.60uA
-       - DC4p59 → 4.59%
-       - XpY Pattern → X.Y (generisch für alle Werte)
-    """
-    import re
-
-    # Wenn kein <> Trenner, original zurückgeben
-    if ' <> ' not in col_name:
-        return col_name
-
-    # Teil nach <> extrahieren (enthält die echten Werte)
-    parts = col_name.split(' <> ')
-    if len(parts) != 2:
-        return col_name
-
-    long_name = parts[1].strip()
-
-    # Whitespace bereinigen - LEERZEICHEN ENTFERNEN (nicht durch _ ersetzen!)
-    long_name = re.sub(r'\s+', '', long_name)
-
-    # ============================================================
-    # 1. GRUPPEN-PRÄFIX DYNAMISCH ENTFERNEN
-    # ============================================================
-    # Pattern: Alles am Anfang bis zum ersten Subtest-Indikator
-    # Typische Subtest-Start-Wörter: LOW, HIGH, STATIC, SINK, SOURCE, PREWARMUP, POSTWARMUP, etc.
-    # Oder: GRUPPE_SUBGRUPPE- (z.B. OPTIC_ANSI-, ANLG_DISPLAYI-)
-
-    # Pattern 1: XXXX_YYYY- oder XXXX_YYYY_ am Anfang (z.B. OPTIC_ANSI-, DC_SHORT_)
-    prefix_match = re.match(r'^([A-Z]+_[A-Z0-9]+[-_])', long_name, re.IGNORECASE)
-    if prefix_match:
-        long_name = long_name[len(prefix_match.group(1)):]
-
-    # ============================================================
-    # 2. KODIERTE WERTE DYNAMISCH KONVERTIEREN
-    # ============================================================
-
-    # FV (Force Voltage): FV0P1 → 0.1V, FV1P8 → 1.8V
-    def convert_fv(match):
-        integer = match.group(1)
-        decimal = match.group(2)
-        return f"{integer}.{decimal}V"
-    long_name = re.sub(r'FV(\d+)P(\d+)', convert_fv, long_name, flags=re.IGNORECASE)
-
-    # FC (Force Current): FC0P2 → 0.2mA, FCn0P2 → -0.2mA
-    def convert_fc(match):
-        sign = '-' if match.group(1).lower() == 'n' else ''
-        integer = match.group(2)
-        decimal = match.group(3)
-        return f"{sign}{integer}.{decimal}mA"
-    long_name = re.sub(r'FC([np]?)(\d+)P(\d+)', convert_fc, long_name, flags=re.IGNORECASE)
-
-    # AVEE (Voltage): AVEEn1p8 → -1.80V, AVEE1p8 → 1.80V
-    def convert_avee(match):
-        sign = '-' if match.group(1).lower() == 'n' else ''
-        integer = match.group(2)
-        decimal = match.group(3).ljust(2, '0')  # Mindestens 2 Dezimalstellen
-        return f"{sign}{integer}.{decimal}V"
-    long_name = re.sub(r'AVEE([np]?)(\d+)p(\d+)', convert_avee, long_name, flags=re.IGNORECASE)
-
-    # DACI (Current): DACI3p0 → 3.00uA, DACIn0p6 → -0.60uA
-    def convert_daci(match):
-        sign = '-' if match.group(1).lower() == 'n' else ''
-        integer = match.group(2)
-        decimal = match.group(3).ljust(2, '0')  # Mindestens 2 Dezimalstellen
-        return f"{sign}{integer}.{decimal}uA"
-    long_name = re.sub(r'DACI([np]?)(\d+)p(\d+)', convert_daci, long_name, flags=re.IGNORECASE)
-
-    # DC (Duty Cycle): DC4p59 → 4.59%
-    def convert_dc(match):
-        integer = match.group(1)
-        decimal = match.group(2)
-        return f"{integer}.{decimal}%"
-    long_name = re.sub(r'(?<![A-Z])DC(\d+)p(\d+)', convert_dc, long_name, flags=re.IGNORECASE)
-
-    # ============================================================
-    # 3. CLEANUP
-    # ============================================================
-
-    # Entferne FREERUN_X_, INTFRAME_X_, etc. (Test-Modi die nicht wichtig sind)
-    long_name = re.sub(r'_?(FREERUN|INTFRAME)_X_', '_', long_name, flags=re.IGNORECASE)
-
-    # Doppelte Unterstriche entfernen
-    long_name = re.sub(r'_+', '_', long_name)
-
-    # Führende/trailing Unterstriche entfernen
-    long_name = long_name.strip('_')
-
-    return long_name
+# NOTE: sort_test_params_numerically, simplify_param_name, extract_group_from_column,
+# and convert_am_data_column_name are now imported from src.stdf_analyzer.core.parameter_utils
 
 
 # ============================================================================
