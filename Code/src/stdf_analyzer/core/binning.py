@@ -7,6 +7,9 @@ to map test numbers to bin numbers, bin names, and descriptions.
 
 from typing import Optional, Dict, List, Tuple
 import pandas as pd
+import numpy as np
+from matplotlib.colors import ListedColormap, BoundaryNorm
+import matplotlib.pyplot as plt
 
 
 # Predefined bin colors: Bin 1 = Green (good bin), others = distinct colors for fail bins
@@ -45,6 +48,7 @@ class BinningLookup:
     def __init__(self):
         self.bin_ranges: List[Tuple[int, int, int, str, str]] = []
         self.bin_definitions: Dict[int, Tuple[str, str]] = {}
+        self.test_definitions: List[dict] = []  # List of test definitions with all columns
         self.loaded: bool = False
         self.file_path: Optional[str] = None
 
@@ -62,54 +66,104 @@ class BinningLookup:
         try:
             df = pd.read_excel(excel_path, sheet_name=sheet_name)
 
-            # The BinTable has columns: hbin, hbinName, Description, and test number ranges
-            # Based on the structure we saw, columns are:
-            # hbin, hbinName, Description, (unnamed), (unnamed), (unnamed),
-            # test_start, test_end, ...
-
             self.bin_ranges = []
             self.bin_definitions = {}
+            self.test_definitions = []
 
+            # First pass: Load bin definitions (rows 0-15 with hbin numbers)
             for idx, row in df.iterrows():
                 hbin = row.iloc[0] if pd.notna(row.iloc[0]) else None
                 hbin_name = row.iloc[1] if pd.notna(row.iloc[1]) else ""
                 description = row.iloc[2] if pd.notna(row.iloc[2]) else ""
 
-                # Get test number range (columns 5 and 6 seem to be start/end based on data)
-                test_start = row.iloc[5] if len(row) > 5 and pd.notna(row.iloc[5]) else None
-                test_end = row.iloc[6] if len(row) > 6 and pd.notna(row.iloc[6]) else None
-
-                # Also check column 4 for the hbin if it appears there
-                hbin_col4 = row.iloc[4] if len(row) > 4 and pd.notna(row.iloc[4]) else None
-
-                # Store bin definition
+                # Store bin definition (only for rows with integer hbin in first column)
                 if hbin is not None and not pd.isna(hbin):
                     try:
                         hbin_int = int(hbin)
-                        self.bin_definitions[hbin_int] = (str(hbin_name), str(description))
+                        if hbin_int >= 1 and hbin_int <= 15:
+                            self.bin_definitions[hbin_int] = (str(hbin_name), str(description))
                     except (ValueError, TypeError):
                         pass
 
-                # Store test range to bin mapping
-                if test_start is not None and test_end is not None:
+            # Second pass: Load test definitions (rows with TestInstance in column B)
+            # These start after the header row that contains "TestInstance"
+            header_found = False
+            for idx, row in df.iterrows():
+                # Check if this is the header row
+                col1_val = str(row.iloc[1]) if pd.notna(row.iloc[1]) else ""
+                if col1_val == "TestInstance":
+                    header_found = True
+                    continue
+
+                # Skip rows before header or empty rows
+                if not header_found:
+                    continue
+
+                # Get test definition data
+                test_instance = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ""
+                test_name = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else ""
+                comment = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
+
+                # Skip empty rows
+                if not test_instance and not test_name:
+                    continue
+
+                # Get Hbin (column 4)
+                hbin = None
+                if len(row) > 4 and pd.notna(row.iloc[4]):
                     try:
-                        start_int = int(test_start)
-                        end_int = int(test_end)
-                        # Use hbin from column 4 if available, otherwise from column 0
-                        bin_num = hbin_col4 if hbin_col4 is not None else hbin
-                        if bin_num is not None:
-                            bin_int = int(bin_num)
-                            self.bin_ranges.append((start_int, end_int, bin_int, str(hbin_name), str(description)))
+                        hbin = int(row.iloc[4])
                     except (ValueError, TypeError):
                         pass
+
+                # Get Fail Sbin (column 5)
+                fail_sbin = None
+                if len(row) > 5 and pd.notna(row.iloc[5]):
+                    try:
+                        fail_sbin = int(row.iloc[5])
+                    except (ValueError, TypeError):
+                        pass
+
+                # Get Start Test Number (column 6)
+                start_test_num = None
+                if len(row) > 6 and pd.notna(row.iloc[6]):
+                    try:
+                        start_test_num = int(row.iloc[6])
+                    except (ValueError, TypeError):
+                        pass
+
+                # Get Max Test Number (column 7)
+                max_test_num = None
+                if len(row) > 7 and pd.notna(row.iloc[7]):
+                    try:
+                        max_test_num = int(row.iloc[7])
+                    except (ValueError, TypeError):
+                        pass
+
+                # Store test definition
+                self.test_definitions.append({
+                    'test_instance': test_instance,
+                    'test_name': test_name,
+                    'comment': comment,
+                    'hbin': hbin,
+                    'fail_sbin': fail_sbin,
+                    'start_test_num': start_test_num,
+                    'max_test_num': max_test_num
+                })
+
+                # Also store in bin_ranges for lookup
+                if start_test_num is not None and max_test_num is not None and hbin is not None:
+                    self.bin_ranges.append((start_test_num, max_test_num, hbin, test_instance, comment))
 
             self.loaded = True
             self.file_path = excel_path
-            print(f"BinningLookup: Loaded {len(self.bin_definitions)} bin definitions and {len(self.bin_ranges)} test ranges from {excel_path}")
+            print(f"BinningLookup: Loaded {len(self.bin_definitions)} bin definitions and {len(self.test_definitions)} test definitions from {excel_path}")
             return True
 
         except Exception as e:
             print(f"BinningLookup: Failed to load {excel_path}: {e}")
+            import traceback
+            traceback.print_exc()
             self.loaded = False
             return False
 
@@ -218,10 +272,6 @@ def get_bin_colormap(unique_bins):
         cmap: ListedColormap with Bin 1 as green
         norm: BoundaryNorm for proper bin value mapping
     """
-    import numpy as np
-    from matplotlib.colors import ListedColormap, BoundaryNorm
-    import matplotlib.pyplot as plt
-
     # Default color for bins > 16
     default_colors = plt.cm.tab20.colors
 
