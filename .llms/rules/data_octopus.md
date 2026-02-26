@@ -39,15 +39,15 @@ Tool zur **Analyse von Halbleiter-Testdaten** aus STDF-Dateien:
 ## 3. STARTEN DER ANWENDUNG
 
 ```bash
-# Desktop-GUI (Standard) - WICHTIG: main_v3.py ist die AKTUELLE Version!
-& "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\python.exe" "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\code\main_v3.py"
+# Desktop-GUI (Standard) - WICHTIG: main.py ist die AKTUELLE Version (v4.0+)
+& "C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\python.exe" "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\code\main.py"
 
 # Web-App (Streamlit)
 streamlit run "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\code\src\stdf_analyzer\web\app.py"
 ```
 
 ⚠️ **IMMER Python 3.13 lokal verwenden** (nicht fb-python) – wegen tkinter!
-⚠️ **IMMER main_v3.py verwenden** (nicht main.py) – main.py ist veraltet!
+⚠️ **IMMER main.py verwenden** (ab v4.0.0, früher main_v3.py)
 ⚠️ **DEVMATE: IMMER vom Terminal starten** – NIEMALS anders! Befehl oben kopieren und ausführen!
 ⚠️ **DEVMATE: execute_command mit `interactive: true`** – damit die Ausgabe im VS Code Terminal sichtbar ist!
 
@@ -58,15 +58,17 @@ streamlit run "c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\code\src\stdf_a
 ```
 Data Octopus/
 ├── code/                      # 🆕 ALLE CODE-DATEIEN (ab 26.02.2026)
-│   ├── main_v3.py             # Haupt-Desktop-Anwendung (~35k Zeilen) ← AKTUELLE VERSION!
-│   ├── main.py                # Legacy (veraltet)
+│   ├── main.py                # Haupt-Desktop-Anwendung (~34.5k Zeilen) ← AKTUELLE VERSION v4.0+
 │   ├── src/
 │   │   └── stdf_analyzer/
 │   │       ├── core/          # Business-Logik (UI-unabhängig)
-│   │       │   ├── binning.py
+│   │       │   ├── app_state.py    # 🆕 AppState-Klasse (zentrale State-Verwaltung)
+│   │       │   ├── binning.py      # BinningLookup, get_bin_colormap, BIN_COLORS
+│   │       │   ├── config.py       # 🆕 Konstanten (KNOWN_GROUP_TYPES, PATTERNS, etc.)
+│   │       │   ├── parameter_utils.py # 🆕 simplify_param_name, extract_group_from_column
 │   │       │   ├── stdf_parser.py
 │   │       │   └── wafermap.py
-│   │       ├── gui/           # (Placeholder)
+│   │       ├── gui/           # (Placeholder für Tab-Module Phase 5)
 │   │       ├── services/      # Externe Dienste
 │   │       └── web/           # Streamlit Web-App
 │   ├── tests/                 # Unit Tests (pytest)
@@ -89,10 +91,19 @@ Data Octopus/
 
 ### 4.1 Hinweis zur Struktur
 - **`code/` Ordner** enthält ALLE Python-Dateien und Konfiguration (ab 26.02.2026 aufgeräumt)
-- `main_v3.py` ist **monolithisch** (~35.000 Zeilen) – enthält die komplette Desktop-GUI
-- `src/stdf_analyzer/core/` enthält extrahierte Module (Binning, Parser, Wafermap)
-- Viele `main - Kopie*.py` und `main *.py` Dateien = **Backups** verschiedener Versionen (in .gitignore)
+- **`main.py`** ist die Hauptdatei (umbenannt von `main_v3.py` in v4.0.0)
+- **`src/stdf_analyzer/core/`** enthält extrahierte Module (ab v3.2.21-v3.2.24 refaktoriert)
 - **Daten-Ordner bleiben im Root** für einfachen Zugriff
+
+### 4.2 Refactoring-Status (v4.0.0)
+
+| Modul | Status | Beschreibung |
+|-------|--------|--------------|
+| `core/binning.py` | ✅ | BinningLookup, get_bin_colormap (~260 Zeilen aus main.py) |
+| `core/config.py` | ✅ | KNOWN_GROUP_TYPES, PATTERNS (~100 Zeilen aus main.py) |
+| `core/parameter_utils.py` | ✅ | simplify_param_name, extract_group_from_column (~230 Zeilen) |
+| `core/app_state.py` | ✅ | AppState-Klasse (Infrastruktur für globale Variablen) |
+| `gui/*.py` | 🔄 TODO | Tab-Module (Phase 5 - geplant) |
 
 ---
 
@@ -493,7 +504,7 @@ PLM-Types auf Manifold: **Bridged, Bridged-Pixels, Stitched, UniformitySyn** und
 Projekt:     c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\
 Code:        c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\code\
 Python 3.13: C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\python.exe
-Main GUI:    Data Octopus\code\main_v3.py  ← AKTUELLE VERSION
+Main GUI:    Data Octopus\code\main.py  ← AKTUELLE VERSION (v4.0+)
 Core Module: Data Octopus\code\src\stdf_analyzer\core\
 Web App:     Data Octopus\code\src\stdf_analyzer\web\app.py
 Tests:       Data Octopus\code\tests\
