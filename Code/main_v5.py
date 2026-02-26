@@ -145,8 +145,9 @@ from stdf_analyzer.gui.diffmap_tab import DiffmapTab
 from stdf_analyzer.gui.grr_tab import GRRTab
 from stdf_analyzer.gui.pixel_analysis_tab import PixelAnalysisTab
 from stdf_analyzer.gui.report_tab import ReportTab
+from stdf_analyzer.gui.datalog_tab import DatalogTab  # NEW v5.0.1
 
-print("✓ All 8 GUI modules loaded")
+print("✓ All 9 GUI modules loaded")
 
 # ============================================================================
 # GLOBAL INSTANCES
@@ -198,7 +199,16 @@ class DataOctopusApp:
         self.notebook.add(self.tab_config, text="⚙ Config")
         self._create_config_tab()
 
-        # Tab 2: Wafer (using WaferTab class)
+        # Tab 2: Datalog (NEW v5.0.1!)
+        self.tab_datalog_frame = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab_datalog_frame, text="📋 Datalog")
+        self.datalog_tab = DatalogTab(
+            self.notebook,
+            self.tab_datalog_frame,
+            on_datalog_loaded=self._on_datalog_loaded
+        )
+
+        # Tab 3: Wafer (using WaferTab class)
         self.tab_wafer_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.tab_wafer_frame, text="🗺 Wafer")
         self.wafer_tab = WaferTab(
@@ -422,6 +432,10 @@ class DataOctopusApp:
         """Callback when wafer tab loads data."""
         self.status_var.set("Wafer data updated")
 
+    def _on_datalog_loaded(self):
+        """Callback when datalog is loaded."""
+        self.status_var.set("Datalog loaded")
+
     def _on_wafer_selected(self, wafer_id: str):
         """Callback when a wafer is selected in multi-wafer tab."""
         self.status_var.set(f"Wafer selected: {wafer_id}")
@@ -476,7 +490,7 @@ if __name__ == "__main__":
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "5.0.0"  # MODULARE ARCHITEKTUR - GUI-Tabs als Klassen
+APP_VERSION = "5.0.1"  # NEW: Datalog Tab hinzugefügt
 
 import sys
 
