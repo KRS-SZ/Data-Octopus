@@ -5581,16 +5581,18 @@ def _draw_multi_param_boxplot(params_to_plot, data_sources, wafer_labels, parent
             short_label = param_label.split(":")[-1].strip()[:15] if ":" in param_label else param_label[:15]
             labels.append(short_label)
 
-            # Calculate statistics
+            # Calculate statistics using imported function
+            basic_stats = calculate_basic_stats(data_arr)
+            percentiles = calculate_percentiles(data_arr, [25, 75])
             stats = {
-                'n': len(data_arr),
-                'mean': np.mean(data_arr),
-                'median': np.median(data_arr),
-                'std': np.std(data_arr),
-                'min': np.min(data_arr),
-                'max': np.max(data_arr),
-                'q1': np.percentile(data_arr, 25),
-                'q3': np.percentile(data_arr, 75),
+                'n': basic_stats['count'],
+                'mean': basic_stats['mean'],
+                'median': basic_stats['median'],
+                'std': basic_stats['std'],
+                'min': basic_stats['min'],
+                'max': basic_stats['max'],
+                'q1': percentiles['p25'],
+                'q3': percentiles['p75'],
             }
             stats_list.append(stats)
 
@@ -5697,14 +5699,15 @@ def _draw_multi_param_distribution(params_to_plot, data_sources, wafer_labels, p
             short_label = param_label.split(":")[-1].strip()[:15] if ":" in param_label else param_label[:15]
             labels.append(short_label)
 
-            # Calculate statistics
+            # Calculate statistics using imported function
+            basic_stats = calculate_basic_stats(data_arr)
             stats = {
-                'n': len(data_arr),
-                'mean': np.mean(data_arr),
-                'median': np.median(data_arr),
-                'std': np.std(data_arr),
-                'min': np.min(data_arr),
-                'max': np.max(data_arr),
+                'n': basic_stats['count'],
+                'mean': basic_stats['mean'],
+                'median': basic_stats['median'],
+                'std': basic_stats['std'],
+                'min': basic_stats['min'],
+                'max': basic_stats['max'],
             }
             stats_list.append(stats)
 
@@ -10770,13 +10773,15 @@ def show_zoomed_plm(file_path, plm_data):
         patch.set_alpha(0.75)
         patch.set_edgecolor('#2C3E50')
 
-    # Calculate statistics
-    stats_max = np.max(valid_data)
-    stats_min = np.min(valid_data)
-    stats_q1 = np.percentile(valid_data, 25)
-    stats_q3 = np.percentile(valid_data, 75)
-    stats_mean = np.mean(valid_data)
-    stats_median = np.median(valid_data)
+    # Calculate statistics using imported function
+    basic_stats = calculate_basic_stats(valid_data)
+    percentiles = calculate_percentiles(valid_data, [25, 75])
+    stats_max = basic_stats['max']
+    stats_min = basic_stats['min']
+    stats_q1 = percentiles['p25']
+    stats_q3 = percentiles['p75']
+    stats_mean = basic_stats['mean']
+    stats_median = basic_stats['median']
 
     # Add statistics box in top left corner
     stats_text = (
