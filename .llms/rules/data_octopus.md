@@ -110,8 +110,10 @@ Data Octopus/
 | `gui/wafer_tab.py` | ✅ | WaferTab Klasse (~550 Zeilen) |
 | `gui/grr_tab.py` | ✅ | GRRTab Klasse (~470 Zeilen) |
 | `gui/multi_wafer_tab.py` | ✅ | MultiWaferTab Klasse (~450 Zeilen) |
+| `gui/statistics_tab.py` | ✅ | StatisticsTab Klasse (~450 Zeilen) |
+| `gui/charac_curve_tab.py` | ✅ | CharacCurveTab Klasse (~480 Zeilen) |
 | `services/ppt_export.py` | ✅ | PPTExporter Klasse (~520 Zeilen) |
-| **GESAMT extrahiert** | ✅ | **~3990 Zeilen in neuen Modulen** |
+| **GESAMT extrahiert** | ✅ | **~4920 Zeilen in neuen Modulen** |
 
 ---
 
