@@ -48,7 +48,7 @@ class DiffmapTab:
     """
 
     def __init__(self, parent_notebook: ttk.Notebook, tab_frame: tk.Frame,
-                 load_stdf_func, load_csv_func):
+                 load_stdf_func=None, load_csv_func=None, on_diffmap_updated=None):
         """
         Initialize the Diffmap Tab.
 
@@ -57,11 +57,13 @@ class DiffmapTab:
             tab_frame: The frame for this tab (tab_diffmap)
             load_stdf_func: Function to load STDF files (from main)
             load_csv_func: Function to load CSV files (from main)
+            on_diffmap_updated: Optional callback when diffmap is updated
         """
         self.parent = parent_notebook
         self.frame = tab_frame
         self.load_stdf_func = load_stdf_func
         self.load_csv_func = load_csv_func
+        self.on_diffmap_updated = on_diffmap_updated
 
         # ============================================================
         # STATE VARIABLES

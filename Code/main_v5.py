@@ -213,7 +213,7 @@ class DataOctopusApp:
         self.multi_wafer_tab = MultiWaferTab(
             self.notebook,
             self.tab_multi_frame,
-            on_comparison_ready=self._on_comparison_ready
+            on_wafer_selected=self._on_wafer_selected
         )
 
         # Tab 4: Diffmap (using DiffmapTab class)
@@ -222,7 +222,7 @@ class DataOctopusApp:
         self.diffmap_tab = DiffmapTab(
             self.notebook,
             self.tab_diffmap_frame,
-            on_diffmap_calculated=self._on_diffmap_calculated
+            on_diffmap_updated=self._on_diffmap_calculated
         )
 
         # Tab 5: Statistics (using StatisticsTab class)
@@ -421,6 +421,10 @@ class DataOctopusApp:
     def _on_wafer_data_loaded(self):
         """Callback when wafer tab loads data."""
         self.status_var.set("Wafer data updated")
+
+    def _on_wafer_selected(self, wafer_id: str):
+        """Callback when a wafer is selected in multi-wafer tab."""
+        self.status_var.set(f"Wafer selected: {wafer_id}")
 
     def _on_param_selected(self, param_name: str):
         """Callback when parameter is selected."""
