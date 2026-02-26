@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "3.2.23"
+APP_VERSION = "3.2.24"
 
 import sys
 
@@ -143,6 +143,9 @@ from src.stdf_analyzer.core.parameter_utils import (
     sort_test_params_numerically,
     convert_am_data_column_name,
 )
+# AppState class is available for future migration of global variables
+# Usage: from src.stdf_analyzer.core.app_state import app_state
+# See app_state.py for documentation on migrating global variables
 
 # Global binning lookup instance
 binning_lookup = BinningLookup()
