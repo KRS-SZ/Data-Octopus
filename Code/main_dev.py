@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "4.1.0-dev"  # Development version for Phase 5 refactoring
+APP_VERSION = "4.1.1-dev"  # Integration der neuen Module
 
 import sys
 
@@ -144,6 +144,26 @@ from src.stdf_analyzer.core.parameter_utils import (
     convert_am_data_column_name,
 )
 from src.stdf_analyzer.core.data_loader import load_csv_file
+from src.stdf_analyzer.core.statistics_utils import (
+    calculate_basic_stats,
+    calculate_percentiles,
+    calculate_cpk,
+    calculate_yield,
+    calculate_bin_summary,
+    calculate_grr,
+    format_stat_value,
+)
+from src.stdf_analyzer.core.wafermap_utils import (
+    WaferConfig,
+    calculate_wafer_center,
+    calculate_die_dimensions,
+    get_wafer_bounds,
+    find_die_at_position,
+    transform_coordinates,
+    get_edge_dies,
+    get_center_dies,
+    calculate_radial_position,
+)
 # AppState class is available for future migration of global variables
 # Usage: from src.stdf_analyzer.core.app_state import app_state
 # See app_state.py for documentation on migrating global variables
