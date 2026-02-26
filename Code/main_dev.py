@@ -9765,8 +9765,9 @@ def show_multi_wafer_plm_window(x_coord, y_coord):
                                 label=f"Wafer {wafer_idx + 1}: {short_id}{label_suffix}", edgecolor='white')
 
                     # Add sigma lines for PDF
-                    mean_val = np.mean(valid_data)
-                    std_val = np.std(valid_data)
+                    basic_stats = calculate_basic_stats(valid_data)
+                    mean_val = basic_stats['mean']
+                    std_val = basic_stats['std']
 
                     # Get y-axis max for line heights
                     y_max = ax_dist.get_ylim()[1]
@@ -10049,10 +10050,11 @@ def show_multi_wafer_plm_window(x_coord, y_coord):
 
                 # Add statistics text for each boxplot
                 for i, (data, label) in enumerate(zip(boxplot_data, labels)):
-                    mean_val = np.mean(data)
-                    median_val = np.median(data)
-                    min_val = np.min(data)
-                    max_val = np.max(data)
+                    basic_stats = calculate_basic_stats(np.array(data))
+                    mean_val = basic_stats['mean']
+                    median_val = basic_stats['median']
+                    min_val = basic_stats['min']
+                    max_val = basic_stats['max']
 
                     # Position text above each box
                     x_pos = i + 1
@@ -13766,8 +13768,9 @@ def update_multi_wafer_stats_table():
                 vals = df[col].dropna().values
                 all_vals.extend(vals)
         if len(all_vals) > 1:
-            m = np.mean(all_vals)
-            s = np.std(all_vals, ddof=1)
+            basic_stats = calculate_basic_stats(np.array(all_vals))
+            m = basic_stats['mean']
+            s = basic_stats['std']
             if m != 0:
                 param_cv_values[col] = (s / abs(m)) * 100
             else:
