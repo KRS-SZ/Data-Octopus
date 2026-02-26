@@ -95,19 +95,22 @@ Data Octopus/
 - **`src/stdf_analyzer/core/`** enthält extrahierte Module (ab v3.2.21-v3.2.24 refaktoriert)
 - **Daten-Ordner bleiben im Root** für einfachen Zugriff
 
-### 4.2 Refactoring-Status (v4.0.0)
+### 4.2 Refactoring-Status (v4.0.0+)
 
 | Modul | Status | Beschreibung |
 |-------|--------|--------------|
-| `core/binning.py` | ✅ | BinningLookup, get_bin_colormap (~260 Zeilen aus main.py) |
-| `core/config.py` | ✅ | KNOWN_GROUP_TYPES, PATTERNS (~100 Zeilen aus main.py) |
+| `core/binning.py` | ✅ | BinningLookup, get_bin_colormap (~260 Zeilen) |
+| `core/config.py` | ✅ | KNOWN_GROUP_TYPES, PATTERNS (~100 Zeilen) |
 | `core/parameter_utils.py` | ✅ | simplify_param_name, extract_group_from_column (~230 Zeilen) |
 | `core/app_state.py` | ✅ | AppState-Klasse (Infrastruktur für globale Variablen) |
 | `core/data_loader.py` | ✅ | CSV/STDF Loader Funktionen (~180 Zeilen) |
 | `core/statistics_utils.py` | ✅ | Statistische Berechnungen (Cpk, Yield, GRR) (~300 Zeilen) |
 | `core/wafermap_utils.py` | ✅ | Wafer-Koordinaten, Die-Positionierung (~330 Zeilen) |
 | `gui/diffmap_tab.py` | ✅ | DiffmapTab Klasse (~600 Zeilen) |
-| `gui/*.py` | 🔄 TODO | Weitere Tab-Module (Phase 5 - in Arbeit) |
+| `gui/wafer_tab.py` | ✅ | WaferTab Klasse (~550 Zeilen) |
+| `gui/grr_tab.py` | ✅ | GRRTab Klasse (~470 Zeilen) |
+| `gui/multi_wafer_tab.py` | ✅ | MultiWaferTab Klasse (~450 Zeilen) |
+| **GESAMT extrahiert** | ✅ | **~3470 Zeilen in neuen Modulen** |
 
 ---
 
