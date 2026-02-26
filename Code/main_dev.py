@@ -13911,42 +13911,47 @@ def calculate_statistic(values, measure_key):
         if len(values) == 0:
             return "-"
 
+        # Use imported statistics functions
+        basic_stats = calculate_basic_stats(values)
+
         if measure_key == "count":
-            return f"{len(values)}"
+            return f"{basic_stats['count']}"
         elif measure_key == "mean":
-            return f"{np.mean(values):.4g}"
+            return f"{basic_stats['mean']:.4g}"
         elif measure_key == "median":
-            return f"{np.median(values):.4g}"
+            return f"{basic_stats['median']:.4g}"
         elif measure_key == "std":
-            return f"{np.std(values, ddof=1):.4g}"
+            return f"{basic_stats['std']:.4g}"
         elif measure_key == "min":
-            return f"{np.min(values):.4g}"
+            return f"{basic_stats['min']:.4g}"
         elif measure_key == "max":
-            return f"{np.max(values):.4g}"
+            return f"{basic_stats['max']:.4g}"
         elif measure_key == "range":
-            return f"{np.max(values) - np.min(values):.4g}"
+            return f"{basic_stats['range']:.4g}"
         elif measure_key == "cv":
-            mean_val = np.mean(values)
+            mean_val = basic_stats['mean']
             if mean_val != 0:
-                cv = (np.std(values, ddof=1) / abs(mean_val)) * 100
+                cv = (basic_stats['std'] / abs(mean_val)) * 100
                 return f"{cv:.2f}%"
             return "-"
         elif measure_key == "sigma1":
-            mean = np.mean(values)
-            std = np.std(values, ddof=1)
+            mean = basic_stats['mean']
+            std = basic_stats['std']
             return f"{mean-std:.4g} - {mean+std:.4g}"
         elif measure_key == "sigma2":
-            mean = np.mean(values)
-            std = np.std(values, ddof=1)
+            mean = basic_stats['mean']
+            std = basic_stats['std']
             return f"{mean-2*std:.4g} - {mean+2*std:.4g}"
         elif measure_key == "sigma3":
-            mean = np.mean(values)
-            std = np.std(values, ddof=1)
+            mean = basic_stats['mean']
+            std = basic_stats['std']
             return f"{mean-3*std:.4g} - {mean+3*std:.4g}"
         elif measure_key == "p25":
-            return f"{np.percentile(values, 25):.4g}"
+            percentiles = calculate_percentiles(values, [25])
+            return f"{percentiles['p25']:.4g}"
         elif measure_key == "p75":
-            return f"{np.percentile(values, 75):.4g}"
+            percentiles = calculate_percentiles(values, [75])
+            return f"{percentiles['p75']:.4g}"
         elif measure_key == "p95":
             return f"{np.percentile(values, 95):.4g}"
         elif measure_key == "iqr":
