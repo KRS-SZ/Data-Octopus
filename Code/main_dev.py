@@ -21192,7 +21192,7 @@ def plot_grr_graph():
         if valid_values:
             ax1.plot(valid_idx, valid_values, 'o-', label=f"Die ({die_coord[0]},{die_coord[1]})",
                     color=colors[i], linewidth=2, markersize=8)
-            ax1.axhline(y=np.mean(valid_values), color=colors[i], linestyle='--', alpha=0.5)
+            ax1.axhline(y=calculate_basic_stats(np.array(valid_values))['mean'], color=colors[i], linestyle='--', alpha=0.5)
 
     ax1.set_xticks(x_pos)
     ax1.set_xticklabels([f"Run {i+1}" for i in range(len(file_names))], fontsize=8, rotation=45, ha='right')
@@ -21206,8 +21206,9 @@ def plot_grr_graph():
     # Calculate overall stats for reference lines
     all_flat = [v for values in all_values for v in values if not np.isnan(v)]
     if all_flat:
-        overall_mean = np.mean(all_flat)
-        overall_std = np.std(all_flat)
+        all_flat_stats = calculate_basic_stats(np.array(all_flat))
+        overall_mean = all_flat_stats['mean']
+        overall_std = all_flat_stats['std']
 
         # Add reference lines (limits)
         ax1.axhline(y=overall_mean, color='green', linestyle='-', linewidth=2, alpha=0.7, label='Mean')
@@ -21239,8 +21240,9 @@ def plot_grr_graph():
     # Add Mean, Std, LSL/USL reference lines to boxplot
     all_flat_bp = [v for values in all_values for v in values if not np.isnan(v)]
     if all_flat_bp:
-        bp_mean = np.mean(all_flat_bp)
-        bp_std = np.std(all_flat_bp)
+        bp_stats = calculate_basic_stats(np.array(all_flat_bp))
+        bp_mean = bp_stats['mean']
+        bp_std = bp_stats['std']
 
         # Get LSL/USL from the limits configuration (auto or manual)
         bp_lsl, bp_usl = get_grr_limits(bp_mean, bp_std)
@@ -22385,10 +22387,10 @@ def run_plm_pixel_grr():
             if not region_results:
                 continue
 
-            avg_grr = np.mean([r['grr_pct'] for r in region_results])
-            avg_ndc = np.mean([r['ndc'] for r in region_results])
-            avg_rpt = np.mean([r['repeatability_pct'] for r in region_results])
-            avg_rpd = np.mean([r['reproducibility_pct'] for r in region_results])
+            avg_grr = float(np.mean([r['grr_pct'] for r in region_results]))
+            avg_ndc = float(np.mean([r['ndc'] for r in region_results]))
+            avg_rpt = float(np.mean([r['repeatability_pct'] for r in region_results]))
+            avg_rpd = float(np.mean([r['reproducibility_pct'] for r in region_results]))
 
             die_result = {
                 'die_coord': die_coord, 'plm_type': plm_type,
@@ -22419,7 +22421,7 @@ def run_plm_pixel_grr():
     all_grr = [r['grr_pct'] for r in all_die_results.values()]
     best_grr = min(all_grr)
     worst_grr = max(all_grr)
-    avg_grr = np.mean(all_grr)
+    avg_grr = float(np.mean(all_grr))
     types_analyzed = sorted(all_plm_types)
 
     if avg_grr < 10:
