@@ -1,0 +1,1121 @@
+{
+  "_meta": {
+    "saved_at": "2026-02-26 13:46:48",
+    "app": "Wafer Analysis Tool",
+    "version": "2.0",
+    "jobs_included": [
+      "gage_rr",
+      "report",
+      "general",
+      "statistics"
+    ],
+    "job_name": "Job_20260226_1321"
+  },
+  "general": {
+    "language": "English",
+    "show_grid": false
+  },
+  "grr_analysis": {
+    "file_type": "CSV",
+    "num_files": "3",
+    "num_dies": "5",
+    "limit_mode": "auto_3sigma",
+    "sigma_factor": "3",
+    "manual_lsl": "-10",
+    "manual_usl": "+10",
+    "calc_mode": "total_variation",
+    "ndc_use_total_variation": false,
+    "loaded_files": [
+      "C:/Users/szenklarz/Desktop/VS_Folder/Data Octopus/Data/AM Data/Correlation Measurement/V223/Green/Green 2/AM_P03004_CP2_V201_PROD_UNAV11111_2_Slot2_BatchID-123456_X_0_20260211-142346",
+      "C:/Users/szenklarz/Desktop/VS_Folder/Data Octopus/Data/AM Data/Correlation Measurement/V223/Green/Green 4/AM_P03004_CP2_V201_PROD_UNAV11111_4_Slot4_BatchID-123456_X_0_20260211-175333",
+      "C:/Users/szenklarz/Desktop/VS_Folder/Data Octopus/Data/AM Data/Correlation Measurement/V223/Green/Green 6/AM_P03004_CP2_V201_PROD_UNAV11111_6_Slot6_BatchID-123456_X_0_20260211-215806"
+    ],
+    "selected_dies": [
+      [
+        41,
+        24
+      ],
+      [
+        48,
+        50
+      ],
+      [
+        31,
+        24
+      ],
+      [
+        56,
+        58
+      ],
+      [
+        57,
+        45
+      ],
+      [
+        57,
+        35
+      ],
+      [
+        22,
+        61
+      ],
+      [
+        26,
+        70
+      ],
+      [
+        28,
+        53
+      ],
+      [
+        33,
+        33
+      ]
+    ],
+    "selected_params": [
+      "ANLG_DACCAL_CURRENT_ANODETPAD_X_X_X_NV_PEQA_GREEN ANODE_TPAD 20.g402 <> ANLG_DA CCAL_CURRENT_ANODETPAD_X_X_X_NV_PEQA_GREEN_11504201",
+      "ANLG_DACCAL_CALLOOPSTEP_ANODETPAD_X_X_X_NV_PEQA_GREEN CALloopExit -1 <> ANLG_DA CCAL_CALLOOPSTEP_ANODETPAD_X_X_X_NV_PEQA_GREEN_11504202",
+      "ANLG_DAC2PTS_CURRENTAT1QFS_ANODETPAD_X_X_X_NV_PEQA_GREEN ANODE_TPAD 20.g402 <>  ANLG_DAC2PTS_CURRENTAT1QFS_ANODETPAD_X_X_X_NV_PEQA_GREEN_11504611",
+      "ANLG_DAC2PTS_CURRENTAT3QFS_ANODETPAD_X_X_X_NV_PEQA_GREEN ANODE_TPAD 20.g402 <>  ANLG_DAC2PTS_CURRENTAT3QFS_ANODETPAD_X_X_X_NV_PEQA_GREEN_11504612"
+    ],
+    "viz_group": "OPTIC_ANSI",
+    "viz_param": "test_12025002: ALLON_NORM1PCT_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+    "plm_selected_areas": [
+      {
+        "x": 141,
+        "y": 158,
+        "w": 25,
+        "h": 25
+      },
+      {
+        "x": 329,
+        "y": 286,
+        "w": 25,
+        "h": 25
+      },
+      {
+        "x": 212,
+        "y": 400,
+        "w": 25,
+        "h": 25
+      },
+      {
+        "x": 342,
+        "y": 502,
+        "w": 25,
+        "h": 25
+      },
+      {
+        "x": 460,
+        "y": 484,
+        "w": 25,
+        "h": 25
+      }
+    ]
+  },
+  "grr_report_groups": {
+    "ANLG_ADC": {
+      "selected": false,
+      "params": [
+        "test_11620201: I3CSDA-AT-VBG10DIV3BY4",
+        "test_11620202: GPIO90-AT-VBG10DIV3BY4",
+        "test_11620203: I3CSDA-AT-VBG10DIV4",
+        "test_11620204: GPIO90-AT-VBG10DIV4"
+      ]
+    },
+    "ANLG_BANDGAP": {
+      "selected": false,
+      "params": [
+        "test_11500001: VBG10_TEMPTPAD",
+        "test_11500003: TRIMCODE_TEMPTPAD"
+      ]
+    },
+    "ANLG_DAC": {
+      "selected": false,
+      "params": [
+        "test_11504201: CURRENT_ANODETPAD_GREEN",
+        "test_11504202: CALLOOPSTEP_ANODETPAD_GREEN",
+        "test_11504611: CURRENTAT1QFS_ANODETPAD_GREEN",
+        "test_11504612: CURRENTAT3QFS_ANODETPAD_GREEN"
+      ]
+    },
+    "ANLG_DISPLAYI": {
+      "selected": false,
+      "params": [
+        "test_11701000: IDLE-CATHODE-ON_AVEE_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_11701001: IDLE-CATHODE-OFF_AVEE_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_11701002: IDLE-CATHODE-DELTA_AVEE_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_11701003: ALLOFF_AVEE_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_11701004: ALLON-INIT_AVEE_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_11701005: PIXELCURRENT-INIT_AVEE_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_11701006: DACWORD-INIT_AVEE_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_11701007: ALLON-TRIM_AVEE_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_11701008: PIXELCURRENT-TRIM_AVEE_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_11701009: DACWORD-TRIM_AVEE_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_11701010: LOOPSTEPCNT_AVEE_-3.00V-0.70uA-4.59%_FREERUN_GREEN"
+      ]
+    },
+    "Anlg_Debug": {
+      "selected": false,
+      "params": [
+        "test_30025003: TESTTIME_TIMESTAMP"
+      ]
+    },
+    "Anlg_Di-Trim": {
+      "selected": false,
+      "params": [
+        "test_30025005: TRIM_TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_FREERUN_GREEN"
+      ]
+    },
+    "Anlg_Tempsensor": {
+      "selected": false,
+      "params": [
+        "test_11610001: THERM0_TEMPTPADVOLTAGE_TEMPTPAD",
+        "test_11610002: THERM0_EXPECTEDVOLTAGE_TEMPTPAD",
+        "test_11610003: THERM0_TEMPINTADC_TEMPTPAD",
+        "test_11610004: THERM0_GPIOOUTPUT_TEMPTPAD",
+        "test_11610005: THERM1_TEMPTPADVOLTAGE_TEMPTPAD",
+        "test_11610006: THERM1_EXPECTEDVOLTAGE_TEMPTPAD",
+        "test_11610007: THERM1_TEMPINTADC_TEMPTPAD",
+        "test_11610008: THERM1_GPIOOUTPUT_TEMPTPAD"
+      ]
+    },
+    "BIN": {
+      "selected": false,
+      "params": [
+        "BIN"
+      ]
+    },
+    "DC_CONT": {
+      "selected": false,
+      "params": [
+        "test_10014000: SINK_ARSTN_-0.2mA",
+        "test_10014001: SINK_CLKREF_-0.2mA",
+        "test_10014002: SINK_OSCEN_-0.2mA",
+        "test_10014003: SINK_I3CSCL_-0.2mA",
+        "test_10014004: SINK_I3CSDA_-0.2mA",
+        "test_10014005: SINK_JTAGTRSTN_-0.2mA",
+        "test_10014006: SINK_JTAGTCK_-0.2mA",
+        "test_10014007: SINK_JTAGTMS_-0.2mA",
+        "test_10014008: SINK_JTAGTDI_-0.2mA",
+        "test_10014009: SINK_JTAGTDO_-0.2mA",
+        "test_10014010: SINK_MIPICLKP_-0.2mA",
+        "test_10014011: SINK_MIPICLKN_-0.2mA",
+        "test_10014012: SINK_MIPIDATAP_-0.2mA",
+        "test_10014013: SINK_MIPIDATAN_-0.2mA",
+        "test_10014014: SINK_IRQOUT_-0.2mA",
+        "test_10014015: SINK_GPIO32_-0.2mA",
+        "test_10014016: SINK_GPIO31_-0.2mA",
+        "test_10014017: SINK_GPIO30_-0.2mA",
+        "test_10014018: SINK_GPIO29_-0.2mA",
+        "test_10014019: SINK_GPIO28_-0.2mA",
+        "test_10014020: SINK_GPIO27_-0.2mA",
+        "test_10014021: SINK_GPIO26_-0.2mA",
+        "test_10014022: SINK_GPIO25_-0.2mA",
+        "test_10014023: SINK_GPIO24_-0.2mA",
+        "test_10014024: SINK_GPIO23_-0.2mA",
+        "test_10014025: SINK_GPIO22_-0.2mA",
+        "test_10014026: SINK_GPIO21_-0.2mA",
+        "test_10014027: SINK_GPIO20_-0.2mA",
+        "test_10014028: SINK_GPIO19_-0.2mA",
+        "test_10014029: SINK_GPIO18_-0.2mA",
+        "test_10014030: SINK_GPIO17_-0.2mA",
+        "test_10014031: SINK_GPIO16_-0.2mA",
+        "test_10014032: SINK_GPIO15_-0.2mA",
+        "test_10014033: SINK_GPIO14_-0.2mA",
+        "test_10014034: SINK_GPIO13_-0.2mA",
+        "test_10014035: SINK_GPIO12_-0.2mA",
+        "test_10014036: SINK_GPIO11_-0.2mA",
+        "test_10014037: SINK_GPIO10_-0.2mA",
+        "test_10014038: SINK_GPIO9_-0.2mA",
+        "test_10014039: SINK_GPIO8_-0.2mA",
+        "test_10014040: SINK_GPIO7_-0.2mA",
+        "test_10014041: SINK_GPIO6_-0.2mA",
+        "test_10014042: SINK_GPIO5_-0.2mA",
+        "test_10014043: SINK_GPIO4_-0.2mA",
+        "test_10014044: SINK_GPIO3_-0.2mA",
+        "test_10014045: SINK_GPIO2_-0.2mA",
+        "test_10014046: SINK_GPIO1_-0.2mA",
+        "test_10014047: SINK_GPIO0_-0.2mA",
+        "test_10014048: SINK_MANTEST0_-0.2mA",
+        "test_10014049: SINK_MANTEST1_-0.2mA",
+        "test_10013000: SINK_ARSTN_-0.2mA",
+        "test_10013001: SINK_CLKREF_-0.2mA",
+        "test_10013002: SINK_OSCEN_-0.2mA",
+        "test_10013003: SINK_I3CSCL_-0.2mA",
+        "test_10013004: SINK_I3CSDA_-0.2mA",
+        "test_10013005: SINK_JTAGTRSTN_-0.2mA",
+        "test_10013006: SINK_JTAGTCK_-0.2mA",
+        "test_10013007: SINK_JTAGTMS_-0.2mA",
+        "test_10013008: SINK_JTAGTDI_-0.2mA",
+        "test_10013009: SINK_JTAGTDO_-0.2mA",
+        "test_10013010: SINK_MIPICLKP_-0.2mA",
+        "test_10013011: SINK_MIPICLKN_-0.2mA",
+        "test_10013012: SINK_MIPIDATAP_-0.2mA",
+        "test_10013013: SINK_MIPIDATAN_-0.2mA",
+        "test_10013014: SINK_IRQOUT_-0.2mA",
+        "test_10013015: SINK_GPIO32_-0.2mA",
+        "test_10013016: SINK_GPIO31_-0.2mA",
+        "test_10013017: SINK_GPIO30_-0.2mA",
+        "test_10013018: SINK_GPIO29_-0.2mA",
+        "test_10013019: SINK_GPIO28_-0.2mA",
+        "test_10013020: SINK_GPIO27_-0.2mA",
+        "test_10013021: SINK_GPIO26_-0.2mA",
+        "test_10013022: SINK_GPIO25_-0.2mA",
+        "test_10013023: SINK_GPIO24_-0.2mA",
+        "test_10013024: SINK_GPIO23_-0.2mA",
+        "test_10013025: SINK_GPIO22_-0.2mA",
+        "test_10013026: SINK_GPIO21_-0.2mA",
+        "test_10013027: SINK_GPIO20_-0.2mA",
+        "test_10013028: SINK_GPIO19_-0.2mA",
+        "test_10013029: SINK_GPIO18_-0.2mA",
+        "test_10013030: SINK_GPIO17_-0.2mA",
+        "test_10013031: SINK_GPIO16_-0.2mA",
+        "test_10013032: SINK_GPIO15_-0.2mA",
+        "test_10013033: SINK_GPIO14_-0.2mA",
+        "test_10013034: SINK_GPIO13_-0.2mA",
+        "test_10013035: SINK_GPIO12_-0.2mA",
+        "test_10013036: SINK_GPIO11_-0.2mA",
+        "test_10013037: SINK_GPIO10_-0.2mA",
+        "test_10013038: SINK_GPIO9_-0.2mA",
+        "test_10013039: SINK_GPIO8_-0.2mA",
+        "test_10013040: SINK_GPIO7_-0.2mA",
+        "test_10013041: SINK_GPIO6_-0.2mA",
+        "test_10013042: SINK_GPIO5_-0.2mA",
+        "test_10013043: SINK_GPIO4_-0.2mA",
+        "test_10013044: SINK_GPIO3_-0.2mA",
+        "test_10013045: SINK_GPIO2_-0.2mA",
+        "test_10013046: SINK_GPIO1_-0.2mA",
+        "test_10013047: SINK_GPIO0_-0.2mA",
+        "test_10013048: SINK_MANTEST0_-0.2mA",
+        "test_10013049: SINK_MANTEST1_-0.2mA",
+        "test_10012000: SRC_ARSTN_0.2mA",
+        "test_10012001: SRC_CLKREF_0.2mA",
+        "test_10012002: SRC_OSCEN_0.2mA",
+        "test_10012003: SRC_I3CSCL_0.2mA",
+        "test_10012004: SRC_I3CSDA_0.2mA",
+        "test_10012005: SRC_JTAGTRSTN_0.2mA",
+        "test_10012006: SRC_JTAGTCK_0.2mA",
+        "test_10012007: SRC_JTAGTMS_0.2mA",
+        "test_10012008: SRC_JTAGTDI_0.2mA",
+        "test_10012009: SRC_JTAGTDO_0.2mA",
+        "test_10012010: SRC_MIPICLKP_0.2mA",
+        "test_10012011: SRC_MIPICLKN_0.2mA",
+        "test_10012012: SRC_MIPIDATAP_0.2mA",
+        "test_10012013: SRC_MIPIDATAN_0.2mA",
+        "test_10012014: SRC_IRQOUT_0.2mA",
+        "test_10012015: SRC_GPIO32_0.2mA",
+        "test_10012016: SRC_GPIO31_0.2mA",
+        "test_10012017: SRC_GPIO30_0.2mA",
+        "test_10012018: SRC_GPIO29_0.2mA",
+        "test_10012019: SRC_GPIO28_0.2mA",
+        "test_10012020: SRC_GPIO27_0.2mA",
+        "test_10012021: SRC_GPIO26_0.2mA",
+        "test_10012022: SRC_GPIO25_0.2mA",
+        "test_10012023: SRC_GPIO24_0.2mA",
+        "test_10012024: SRC_GPIO23_0.2mA",
+        "test_10012025: SRC_GPIO22_0.2mA",
+        "test_10012026: SRC_GPIO21_0.2mA",
+        "test_10012027: SRC_GPIO20_0.2mA",
+        "test_10012028: SRC_GPIO19_0.2mA",
+        "test_10012029: SRC_GPIO18_0.2mA",
+        "test_10012030: SRC_GPIO17_0.2mA",
+        "test_10012031: SRC_GPIO16_0.2mA",
+        "test_10012032: SRC_GPIO15_0.2mA",
+        "test_10012033: SRC_GPIO14_0.2mA",
+        "test_10012034: SRC_GPIO13_0.2mA",
+        "test_10012035: SRC_GPIO12_0.2mA",
+        "test_10012036: SRC_GPIO11_0.2mA",
+        "test_10012037: SRC_GPIO10_0.2mA",
+        "test_10012038: SRC_GPIO9_0.2mA",
+        "test_10012039: SRC_GPIO8_0.2mA",
+        "test_10012040: SRC_GPIO7_0.2mA",
+        "test_10012041: SRC_GPIO6_0.2mA",
+        "test_10012042: SRC_GPIO5_0.2mA",
+        "test_10012043: SRC_GPIO4_0.2mA",
+        "test_10012044: SRC_GPIO3_0.2mA",
+        "test_10012045: SRC_GPIO2_0.2mA",
+        "test_10012046: SRC_GPIO1_0.2mA",
+        "test_10012047: SRC_GPIO0_0.2mA",
+        "test_10012048: SRC_MANTEST0_0.2mA",
+        "test_10012049: SRC_MANTEST1_0.2mA",
+        "test_10011000: SRC_ARSTN_0.2mA",
+        "test_10011001: SRC_CLKREF_0.2mA",
+        "test_10011002: SRC_OSCEN_0.2mA",
+        "test_10011003: SRC_I3CSCL_0.2mA",
+        "test_10011004: SRC_I3CSDA_0.2mA",
+        "test_10011005: SRC_JTAGTRSTN_0.2mA",
+        "test_10011006: SRC_JTAGTCK_0.2mA",
+        "test_10011007: SRC_JTAGTMS_0.2mA",
+        "test_10011008: SRC_JTAGTDI_0.2mA",
+        "test_10011009: SRC_JTAGTDO_0.2mA",
+        "test_10011010: SRC_MIPICLKP_0.2mA",
+        "test_10011011: SRC_MIPICLKN_0.2mA",
+        "test_10011012: SRC_MIPIDATAP_0.2mA",
+        "test_10011013: SRC_MIPIDATAN_0.2mA",
+        "test_10011014: SRC_IRQOUT_0.2mA",
+        "test_10011015: SRC_GPIO32_0.2mA",
+        "test_10011016: SRC_GPIO31_0.2mA",
+        "test_10011017: SRC_GPIO30_0.2mA",
+        "test_10011018: SRC_GPIO29_0.2mA",
+        "test_10011019: SRC_GPIO28_0.2mA",
+        "test_10011020: SRC_GPIO27_0.2mA",
+        "test_10011021: SRC_GPIO26_0.2mA",
+        "test_10011022: SRC_GPIO25_0.2mA",
+        "test_10011023: SRC_GPIO24_0.2mA",
+        "test_10011024: SRC_GPIO23_0.2mA",
+        "test_10011025: SRC_GPIO22_0.2mA",
+        "test_10011026: SRC_GPIO21_0.2mA",
+        "test_10011027: SRC_GPIO20_0.2mA",
+        "test_10011028: SRC_GPIO19_0.2mA",
+        "test_10011029: SRC_GPIO18_0.2mA",
+        "test_10011030: SRC_GPIO17_0.2mA",
+        "test_10011031: SRC_GPIO16_0.2mA",
+        "test_10011032: SRC_GPIO15_0.2mA",
+        "test_10011033: SRC_GPIO14_0.2mA",
+        "test_10011034: SRC_GPIO13_0.2mA",
+        "test_10011035: SRC_GPIO12_0.2mA",
+        "test_10011036: SRC_GPIO11_0.2mA",
+        "test_10011037: SRC_GPIO10_0.2mA",
+        "test_10011038: SRC_GPIO9_0.2mA",
+        "test_10011039: SRC_GPIO8_0.2mA",
+        "test_10011040: SRC_GPIO7_0.2mA",
+        "test_10011041: SRC_GPIO6_0.2mA",
+        "test_10011042: SRC_GPIO5_0.2mA",
+        "test_10011043: SRC_GPIO4_0.2mA",
+        "test_10011044: SRC_GPIO3_0.2mA",
+        "test_10011045: SRC_GPIO2_0.2mA",
+        "test_10011046: SRC_GPIO1_0.2mA",
+        "test_10011047: SRC_GPIO0_0.2mA",
+        "test_10011048: SRC_MANTEST0_0.2mA",
+        "test_10011049: SRC_MANTEST1_0.2mA"
+      ]
+    },
+    "DC_LKG": {
+      "selected": false,
+      "params": [
+        "test_10021000: LOW_CLKREF_FV0",
+        "test_10021001: LOW_OSCEN_FV0",
+        "test_10021002: LOW_I3CSCL_FV0",
+        "test_10021003: LOW_JTAGTRSTN_FV0",
+        "test_10021004: LOW_JTAGTCK_FV0",
+        "test_10021005: LOW_JTAGTMS_FV0",
+        "test_10021006: LOW_JTAGTDI_FV0",
+        "test_10021007: LOW_MANTEST0_FV0",
+        "test_10021008: LOW_MANTEST1_FV0",
+        "test_10021009: LOW_MIPICLKN_0.15V",
+        "test_10021010: LOW_MIPICLKP_0.15V",
+        "test_10021011: LOW_MIPIDATAN_0.15V",
+        "test_10021012: LOW_MIPIDATAP_0.15V",
+        "test_10021013: LOW_I3CSDA_FV0",
+        "test_10021014: LOW_GPIO32_FV0",
+        "test_10021015: LOW_GPIO31_FV0",
+        "test_10021016: LOW_GPIO30_FV0",
+        "test_10021017: LOW_GPIO29_FV0",
+        "test_10021018: LOW_GPIO28_FV0",
+        "test_10021019: LOW_GPIO27_FV0",
+        "test_10021020: LOW_GPIO26_FV0",
+        "test_10021021: LOW_GPIO25_FV0",
+        "test_10021022: LOW_GPIO24_FV0",
+        "test_10021023: LOW_GPIO23_FV0",
+        "test_10021024: LOW_GPIO22_FV0",
+        "test_10021025: LOW_GPIO21_FV0",
+        "test_10021026: LOW_GPIO20_FV0",
+        "test_10021027: LOW_GPIO19_FV0",
+        "test_10021028: LOW_GPIO18_FV0",
+        "test_10021029: LOW_GPIO17_FV0",
+        "test_10021030: LOW_GPIO16_FV0",
+        "test_10021031: LOW_GPIO15_FV0",
+        "test_10021032: LOW_GPIO14_FV0",
+        "test_10021033: LOW_GPIO13_FV0",
+        "test_10021034: LOW_GPIO12_FV0",
+        "test_10021035: LOW_GPIO11_FV0",
+        "test_10021036: LOW_GPIO10_FV0",
+        "test_10021037: LOW_GPIO9_FV0",
+        "test_10021038: LOW_GPIO8_FV0",
+        "test_10021039: LOW_GPIO7_FV0",
+        "test_10021040: LOW_GPIO6_FV0",
+        "test_10021041: LOW_GPIO5_FV0",
+        "test_10021042: LOW_GPIO4_FV0",
+        "test_10021043: LOW_GPIO3_FV0",
+        "test_10021044: LOW_GPIO2_FV0",
+        "test_10021045: LOW_GPIO1_FV0",
+        "test_10021046: LOW_GPIO0_FV0",
+        "test_10021500: HIGH_CLKREF_1.8V",
+        "test_10021501: HIGH_OSCEN_1.8V",
+        "test_10021502: HIGH_I3CSCL_1.8V",
+        "test_10021503: HIGH_JTAGTRSTN_1.8V",
+        "test_10021504: HIGH_JTAGTCK_1.8V",
+        "test_10021505: HIGH_JTAGTMS_1.8V",
+        "test_10021506: HIGH_JTAGTDI_1.8V",
+        "test_10021507: HIGH_MANTEST0_1.8V",
+        "test_10021508: HIGH_MANTEST1_1.8V",
+        "test_10021509: HIGH_MIPICLKN_0.25V",
+        "test_10021510: HIGH_MIPICLKP_0.25V",
+        "test_10021511: HIGH_MIPIDATAN_0.25V",
+        "test_10021512: HIGH_MIPIDATAP_0.25V",
+        "test_10021513: HIGH_I3CSDA_1.8V",
+        "test_10021514: HIGH_GPIO32_1.8V",
+        "test_10021515: HIGH_GPIO31_1.8V",
+        "test_10021516: HIGH_GPIO30_1.8V",
+        "test_10021517: HIGH_GPIO29_1.8V",
+        "test_10021518: HIGH_GPIO28_1.8V",
+        "test_10021519: HIGH_GPIO27_1.8V",
+        "test_10021520: HIGH_GPIO26_1.8V",
+        "test_10021521: HIGH_GPIO25_1.8V",
+        "test_10021522: HIGH_GPIO24_1.8V",
+        "test_10021523: HIGH_GPIO23_1.8V",
+        "test_10021524: HIGH_GPIO22_1.8V",
+        "test_10021525: HIGH_GPIO21_1.8V",
+        "test_10021526: HIGH_GPIO20_1.8V",
+        "test_10021527: HIGH_GPIO19_1.8V",
+        "test_10021528: HIGH_GPIO18_1.8V",
+        "test_10021529: HIGH_GPIO17_1.8V",
+        "test_10021530: HIGH_GPIO16_1.8V",
+        "test_10021531: HIGH_GPIO15_1.8V",
+        "test_10021532: HIGH_GPIO14_1.8V",
+        "test_10021533: HIGH_GPIO13_1.8V",
+        "test_10021534: HIGH_GPIO12_1.8V",
+        "test_10021535: HIGH_GPIO11_1.8V",
+        "test_10021536: HIGH_GPIO10_1.8V",
+        "test_10021537: HIGH_GPIO9_1.8V",
+        "test_10021538: HIGH_GPIO8_1.8V",
+        "test_10021539: HIGH_GPIO7_1.8V",
+        "test_10021540: HIGH_GPIO6_1.8V",
+        "test_10021541: HIGH_GPIO5_1.8V",
+        "test_10021542: HIGH_GPIO4_1.8V",
+        "test_10021543: HIGH_GPIO3_1.8V",
+        "test_10021544: HIGH_GPIO2_1.8V",
+        "test_10021545: HIGH_GPIO1_1.8V",
+        "test_10021546: HIGH_GPIO0_1.8V",
+        "test_10022000: IOZH_GPIO32",
+        "test_10022001: IOZH_GPIO31",
+        "test_10022002: IOZH_GPIO30",
+        "test_10022003: IOZH_GPIO29",
+        "test_10022004: IOZH_GPIO28",
+        "test_10022005: IOZH_GPIO27",
+        "test_10022006: IOZH_GPIO26",
+        "test_10022007: IOZH_GPIO25",
+        "test_10022008: IOZH_GPIO24",
+        "test_10022009: IOZH_GPIO23",
+        "test_10022010: IOZH_GPIO22",
+        "test_10022011: IOZH_GPIO21",
+        "test_10022012: IOZH_GPIO20",
+        "test_10022013: IOZH_GPIO19",
+        "test_10022014: IOZH_GPIO18",
+        "test_10022015: IOZH_GPIO17",
+        "test_10022016: IOZH_GPIO16",
+        "test_10022017: IOZH_GPIO15",
+        "test_10022018: IOZH_GPIO14",
+        "test_10022019: IOZH_GPIO13",
+        "test_10022020: IOZH_GPIO12",
+        "test_10022021: IOZH_GPIO11",
+        "test_10022022: IOZH_GPIO10",
+        "test_10022023: IOZH_GPIO9",
+        "test_10022024: IOZH_GPIO8",
+        "test_10022025: IOZH_GPIO7",
+        "test_10022026: IOZH_GPIO6",
+        "test_10022027: IOZH_GPIO5",
+        "test_10022028: IOZH_GPIO4",
+        "test_10022029: IOZH_GPIO3",
+        "test_10022030: IOZH_GPIO2",
+        "test_10022031: IOZH_GPIO1",
+        "test_10022032: IOZH_GPIO0",
+        "test_10022033: IOZH_I3CSDA",
+        "test_10022034: IOZH_JTAGTDO",
+        "test_10022100: IOZL_GPIO32",
+        "test_10022101: IOZL_GPIO31",
+        "test_10022102: IOZL_GPIO30",
+        "test_10022103: IOZL_GPIO29",
+        "test_10022104: IOZL_GPIO28",
+        "test_10022105: IOZL_GPIO27",
+        "test_10022106: IOZL_GPIO26",
+        "test_10022107: IOZL_GPIO25",
+        "test_10022108: IOZL_GPIO24",
+        "test_10022109: IOZL_GPIO23",
+        "test_10022110: IOZL_GPIO22",
+        "test_10022111: IOZL_GPIO21",
+        "test_10022112: IOZL_GPIO20",
+        "test_10022113: IOZL_GPIO19",
+        "test_10022114: IOZL_GPIO18",
+        "test_10022115: IOZL_GPIO17",
+        "test_10022116: IOZL_GPIO16",
+        "test_10022117: IOZL_GPIO15",
+        "test_10022118: IOZL_GPIO14",
+        "test_10022119: IOZL_GPIO13",
+        "test_10022120: IOZL_GPIO12",
+        "test_10022121: IOZL_GPIO11",
+        "test_10022122: IOZL_GPIO10",
+        "test_10022123: IOZL_GPIO9",
+        "test_10022124: IOZL_GPIO8",
+        "test_10022125: IOZL_GPIO7",
+        "test_10022126: IOZL_GPIO6",
+        "test_10022127: IOZL_GPIO5",
+        "test_10022128: IOZL_GPIO4",
+        "test_10022129: IOZL_GPIO3",
+        "test_10022130: IOZL_GPIO2",
+        "test_10022131: IOZL_GPIO1",
+        "test_10022132: IOZL_GPIO0",
+        "test_10022133: IOZL_I3CSDA",
+        "test_10022134: IOZL_JTAGTDO"
+      ]
+    },
+    "DC_SHORT": {
+      "selected": false,
+      "params": [
+        "test_10020001: LOW_VDD10_0.1V",
+        "test_10020002: LOW_VDD18IO_0.1V",
+        "test_10020003: LOW_AVDD18_0.1V",
+        "test_10020004: LOW_VQPSEFUSE_0.1V",
+        "test_10020005: LOW_AVEE_0.1V"
+      ]
+    },
+    "Dc_Debug": {
+      "selected": false,
+      "params": [
+        "test_30025001: TESTTIME_TIMESTAMP"
+      ]
+    },
+    "Dc_Pwr": {
+      "selected": true,
+      "params": [
+        "test_11405006: STATIC_VDD10_VNOM",
+        "test_11405007: STATIC_VDD18IO_VNOM",
+        "test_11405008: STATIC_AVDD18_VNOM",
+        "test_11405009: STATIC_AVEE_VNOM",
+        "test_11405010: STATIC_TotalPower_VNOM",
+        "test_11405011: STATIC_VDD10_VMIN",
+        "test_11405012: STATIC_VDD18IO_VMIN",
+        "test_11405013: STATIC_AVDD18_VMIN",
+        "test_11405014: STATIC_AVEE_VMIN",
+        "test_11405015: STATIC_TotalPower_VMIN"
+      ]
+    },
+    "Efuse_Efuse-Post": {
+      "selected": false,
+      "params": [
+        "test_30025200: POST_TESTTIME_TIMESTAMP"
+      ]
+    },
+    "Func_Comm": {
+      "selected": false,
+      "params": [
+        "test_10030001: JTAG_JTAGID"
+      ]
+    },
+    "Func_Debug": {
+      "selected": false,
+      "params": [
+        "test_30025002: TESTTIME_TIMESTAMP"
+      ]
+    },
+    "Init_Flowvars E": {
+      "selected": false,
+      "params": [
+        "Initialize_FlowVars eFuseTrialOnly -1_1003"
+      ]
+    },
+    "Init_Flowvars S": {
+      "selected": false,
+      "params": [
+        "Initialize_FlowVars Site -1_1004"
+      ]
+    },
+    "OPTIC_ANSI": {
+      "selected": false,
+      "params": [
+        "test_12097400: PREWARMUP_VTHERM0_TEMPTPAD_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097401: PREWARMUP_VTHERM1_TEMPTPAD_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097402: PREWARMUP_THERM0ADC_I3CSDA_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097403: PREWARMUP_THERM1ADC_I3CSDA_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097408: PREWARMUP_DOMWLTH_CENTER_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097409: PREWARMUP_PKWLTH_CENTER_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097410: PREWARMUP_CETLTH_CENTER_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097411: PREWARMUP_FWHM_CENTER_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097404: POSTWARMUP_VTHERM0_TEMPTPAD_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097405: POSTWARMUP_VTHERM1_TEMPTPAD_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097406: POSTWARMUP_THERM0ADC_I3CSDA_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097407: POSTWARMUP_THERM1ADC_I3CSDA_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097412: POSTWARMUP_DOMWLTH_CENTER_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097413: POSTWARMUP_PKWLTH_CENTER_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097414: POSTWARMUP_CETLTH_CENTER_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097415: POSTWARMUP_FWHM_CENTER_AVEE*-DACI*-DC*_FREERUN_GREEN-1<>OPTIC_ANSI-POSTWARMUP_FWHM_CENTER_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097100: PREWARMUP_ALLON_RAW_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097101: PREWARMUP_ALLON_SCALED_AVEE*-DACI*-DC*_FREERUN_GREEN-1<>OPTIC_ANSI-PREWARMUP_ALLON_SCALED_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097102: PREWARMUP_ALLON_NORM1PCT_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097103: PREWARMUP_ALLON_UNIFORMITYPCT_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_30010034: PREWARMUP_FLAG_OVEREXP_AVEE*-DACI*-DC*_FREERUN_GREEN-1<>OPTIC_ANSI-PREWARMUP_FLAG_OVEREXP_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097110: POSTWARMUP_ALLON_RAW_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097111: POSTWARMUP_ALLON_SCALED_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097112: POSTWARMUP_ALLON_NORM1PCT_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12097113: POSTWARMUP_ALLON_UNIFORMITYPCT_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_30010035: POSTWARMUP_FLAG_OVEREXP_-3.00V-3.00uA-4.59%_FREERUN_GREEN",
+        "test_12025000: ALLON_RAW_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12025001: ALLON_SCALED_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12025002: ALLON_NORM1PCT_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12025003: ALLON_UNIFORMITYPCT_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_30010003: FLAG_OVEREXP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_30025101: ALLON_TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12025010: ALLOFF_RAW_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12025011: ALLOFF_SCALED_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12025012: ALLOFF_NORM1PCT_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12025013: ALLOFF_UNIFORMITYPCT_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_30010006: FLAG_OVEREXP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_30025106: ALLOFF_TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12026000: UNIFORMITY_5THPERCENTILE_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12026001: UNIFORMITY_MAXANSI_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12026002: UNIFORMITY_GRID_-3.00V-0.70uA-4.59%_INTFRAME_GREEN"
+      ]
+    },
+    "OPTIC_SPEC": {
+      "selected": false,
+      "params": [
+        "test_12027000: DOMWLTH_CENTER_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12027001: PKWLTH_CENTER_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12027002: CETLTH_CENTER_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12028000: FWHM_CENTER_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12027003: SIGNAL_CENTER_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12027004: COLORX_CENTER_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12027005: COLORY_CENTER_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_30015002: NDFILTER_CENTER_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_30015003: EXPTIME_CENTER_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_30025021: TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_FREERUN_GREEN"
+      ]
+    },
+    "OPTIC_WARMUP": {
+      "selected": false,
+      "params": [
+        "test_30025041: TESTTIME_TIMESTAMP_-3.00V-3.00uA-4.59%_FREERUN_GREEN"
+      ]
+    },
+    "Optic_Auto-Focus": {
+      "selected": false,
+      "params": [
+        "test_30025081: FOCUS_TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_FREERUN_GREEN"
+      ]
+    },
+    "Optic_Fgr4X3": {
+      "selected": false,
+      "params": [
+        "test_30025161: TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN"
+      ]
+    },
+    "Optic_Img": {
+      "selected": false,
+      "params": [
+        "test_30010013: ALLON_OVEREXP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12098020: CHKBRD32X32_INITZ_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12098021: CHKBRD32X32_ENDFOCUS_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12098022: CHKBRD32X32_ENDZ_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_30010041: FLAG_OVEREXP_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_30010010: CHKBRD54X54_OVEREXP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_30010011: INVCHKBRD54X54_OVEREXP_AVEE*-DACI*-DC*_INTFRAME_GREEN-1<>OPTIC_IMG_INVCHKBRD54X54_OVEREXP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_30010012: XHAIR_OVEREXP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12098080: CHKBRD32X32_INITFOCUS_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12098081: CHKBRD32X32_INITZ_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12098082: CHKBRD32X32_ENDFOCUS_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12098083: CHKBRD32X32_ENDZ_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_30010044: FLAG_OVEREXP_-3.00V-0.70uA-4.59%_FREERUN_GREEN"
+      ]
+    },
+    "Optic_Plm": {
+      "selected": false,
+      "params": [
+        "test_12050100: MISREGISTRATION_FLAG_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_30010102: FLAG_OVEREXP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_12032000: BRIDGEDPIXELCOUNT_FLAG_AVEE*-DACI*-DC*_INTFRAME_GREEN-1<>OPTIC_PLM_BRIDGEDPIXELCOUNT_FLAG_-3.00V-0.70uA-4.59%_INTFRAME_GREEN"
+      ]
+    },
+    "Optic_Poly-Focus": {
+      "selected": false,
+      "params": [
+        "test_30025084: FOCUS_TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_FREERUN_GREEN"
+      ]
+    },
+    "Optic_Saveimg-Al": {
+      "selected": false,
+      "params": [
+        "test_30025071: ALLON_TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN"
+      ]
+    },
+    "Optic_Saveimg-Ch": {
+      "selected": false,
+      "params": [
+        "test_30025121: CHKBRD_TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN"
+      ]
+    },
+    "Optic_Saveimg-In": {
+      "selected": false,
+      "params": [
+        "test_30025126: INVCHKBRD_TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN"
+      ]
+    },
+    "Optic_Saveimg-Xh": {
+      "selected": false,
+      "params": [
+        "test_30025131: XHAIR_TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN"
+      ]
+    },
+    "Optic_Stuckpixel": {
+      "selected": false,
+      "params": [
+        "test_12031000: ALLOFF_STUCKPIXELCOUNT_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12031001: ALLOFF_MEDIANLV_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12031002: ALLOFF_MAXLV_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_12031003: DI-ALLOFF_AVEE_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_30010056: FLAG_OVEREXP_-3.00V-0.70uA-4.59%_FREERUN_GREEN",
+        "test_30025091: TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_FREERUN_GREEN"
+      ]
+    },
+    "Optic_Uniformity": {
+      "selected": false,
+      "params": [
+        "test_30010030: FLAG_OVEREXP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN",
+        "test_30025111: TESTTIME_TIMESTAMP_-3.00V-0.70uA-4.59%_INTFRAME_GREEN"
+      ]
+    },
+    "Other": {
+      "selected": false,
+      "params": [
+        "Device",
+        "HardBin",
+        "SoftBin",
+        "WaferID",
+        "Temperature",
+        "EEpromCheck  -1 <> PIB Valid_9000",
+        "EEpromCheck  -1 <> Probecard Valid_9001",
+        "EEpromCheck  -1 <> PIB Not Same_9002",
+        "EEpromCheck  -1 <> Probecard Not Same_9003",
+        "STDNameCheck  -1 <> STD_FILENAME_OK_9500",
+        "STDNameCheck  -1 <> STD_ALREADYEXIST_CHECK_9501",
+        "GetOpticalVersion  -1 <> TrueTest_LOOKUP_VER_9550",
+        "GetOpticalVersion  -1 <> OpticalLib_LOOKUP_VER_9551",
+        "ProdVersion  -1 <> PRODUCT_VERSION_9570",
+        "LogIris100sHW_ID  -1 <> CAMERA_SERIAL_NUM_9590",
+        "LogIris100sHW_ID  -1 <> CAMERA_ND_9591",
+        "LogIris100sHW_ID  -1 <> SPECTROMETER_SERIAL_NUM_9592"
+      ]
+    },
+    "Sot": {
+      "selected": false,
+      "params": [
+        "test_30025000: TESTTIME_TIMESTAMP"
+      ]
+    },
+    "📊 PLM-GAGE": {
+      "selected": true,
+      "params": [
+        "📍 Stitched - Position based (eine Folie/Region)"
+      ]
+    }
+  },
+  "report_includes": {
+    "wafermap": false,
+    "multi_wafer": false,
+    "grr": true,
+    "stats_table": false
+  },
+  "report_wafermap": {
+    "binmap": true,
+    "heatmap": true,
+    "stats": true,
+    "boxplot": true,
+    "histogram": true
+  },
+  "report_multi_wafer": {
+    "overview": false,
+    "comparison": false,
+    "yield": false,
+    "individual": false,
+    "selected_params": []
+  },
+  "report_diffmap": {
+    "heatmap": true,
+    "histogram": true,
+    "stats": true,
+    "sidebyside": true,
+    "selected_params": []
+  },
+  "report_grr": {
+    "summary": true,
+    "variance": true,
+    "charts": true,
+    "anova": true,
+    "calcparam": true
+  },
+  "report_template": {
+    "use_template": false,
+    "template_path": ""
+  },
+  "slide_layouts": {
+    "wafermap": {
+      "title": {
+        "x": 0.3,
+        "y": 0.15,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#1976D2",
+        "fill": "#E3F2FD",
+        "enabled": true,
+        "label": "Title"
+      },
+      "wafermap": {
+        "x": 0.3,
+        "y": 0.7,
+        "width": 6.0,
+        "height": 6.0,
+        "color": "#4CAF50",
+        "fill": "#E8F5E9",
+        "enabled": true,
+        "label": "Wafermap"
+      },
+      "boxplot": {
+        "x": 6.5,
+        "y": 0.7,
+        "width": 6.5,
+        "height": 3.0,
+        "color": "#FF9800",
+        "fill": "#FFF3E0",
+        "enabled": true,
+        "label": "Boxplot"
+      },
+      "histogram": {
+        "x": 6.5,
+        "y": 3.8,
+        "width": 6.5,
+        "height": 2.9,
+        "color": "#9C27B0",
+        "fill": "#F3E5F5",
+        "enabled": true,
+        "label": "Histogram"
+      },
+      "stats": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#607D8B",
+        "fill": "#ECEFF1",
+        "enabled": false,
+        "label": "Statistics"
+      },
+      "summary": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 6.0,
+        "height": 0.5,
+        "color": "#E91E63",
+        "fill": "#FCE4EC",
+        "enabled": false,
+        "label": "Summary"
+      }
+    },
+    "multi_wafer": {
+      "title": {
+        "x": 0.3,
+        "y": 0.15,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#1976D2",
+        "fill": "#E3F2FD",
+        "enabled": true,
+        "label": "Title"
+      },
+      "wafermap": {
+        "x": 0.3,
+        "y": 0.7,
+        "width": 6.0,
+        "height": 6.0,
+        "color": "#4CAF50",
+        "fill": "#E8F5E9",
+        "enabled": true,
+        "label": "Wafermap"
+      },
+      "boxplot": {
+        "x": 6.5,
+        "y": 0.7,
+        "width": 6.5,
+        "height": 3.0,
+        "color": "#FF9800",
+        "fill": "#FFF3E0",
+        "enabled": true,
+        "label": "Boxplot"
+      },
+      "histogram": {
+        "x": 6.5,
+        "y": 3.8,
+        "width": 6.5,
+        "height": 2.9,
+        "color": "#9C27B0",
+        "fill": "#F3E5F5",
+        "enabled": true,
+        "label": "Histogram"
+      },
+      "stats": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#607D8B",
+        "fill": "#ECEFF1",
+        "enabled": false,
+        "label": "Statistics"
+      },
+      "summary": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 6.0,
+        "height": 0.5,
+        "color": "#E91E63",
+        "fill": "#FCE4EC",
+        "enabled": false,
+        "label": "Summary"
+      }
+    },
+    "diffmap": {
+      "title": {
+        "x": 0.3,
+        "y": 0.15,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#1976D2",
+        "fill": "#E3F2FD",
+        "enabled": true,
+        "label": "Title"
+      },
+      "diffmap": {
+        "x": 0.3,
+        "y": 0.7,
+        "width": 6.0,
+        "height": 6.0,
+        "color": "#FF5722",
+        "fill": "#FBE9E7",
+        "enabled": true,
+        "label": "Diffmap"
+      },
+      "histogram": {
+        "x": 6.5,
+        "y": 0.7,
+        "width": 6.5,
+        "height": 3.0,
+        "color": "#9C27B0",
+        "fill": "#F3E5F5",
+        "enabled": true,
+        "label": "Histogram"
+      },
+      "reference": {
+        "x": 6.5,
+        "y": 3.8,
+        "width": 6.5,
+        "height": 2.9,
+        "color": "#2196F3",
+        "fill": "#E3F2FD",
+        "enabled": true,
+        "label": "Reference"
+      },
+      "stats": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#607D8B",
+        "fill": "#ECEFF1",
+        "enabled": false,
+        "label": "Statistics"
+      },
+      "summary": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 6.0,
+        "height": 0.5,
+        "color": "#E91E63",
+        "fill": "#FCE4EC",
+        "enabled": false,
+        "label": "Summary"
+      }
+    }
+  },
+  "grr_slide_layouts": {
+    "0": {
+      "title": {
+        "x": 0.3,
+        "y": 0.15,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#1976D2",
+        "fill": "#E3F2FD",
+        "enabled": true,
+        "label": "Title"
+      },
+      "grr_summary": {
+        "x": 0.3,
+        "y": 0.7,
+        "width": 6.0,
+        "height": 3.0,
+        "color": "#4CAF50",
+        "fill": "#E8F5E9",
+        "enabled": true,
+        "label": "GRR Summary"
+      },
+      "variance": {
+        "x": 6.5,
+        "y": 0.7,
+        "width": 6.5,
+        "height": 3.0,
+        "color": "#FF9800",
+        "fill": "#FFF3E0",
+        "enabled": true,
+        "label": "Variance"
+      },
+      "charts": {
+        "x": 0.3,
+        "y": 3.8,
+        "width": 6.0,
+        "height": 3.0,
+        "color": "#9C27B0",
+        "fill": "#F3E5F5",
+        "enabled": true,
+        "label": "Charts"
+      },
+      "anova": {
+        "x": 6.5,
+        "y": 3.8,
+        "width": 6.5,
+        "height": 3.0,
+        "color": "#2196F3",
+        "fill": "#E3F2FD",
+        "enabled": true,
+        "label": "ANOVA"
+      },
+      "stats": {
+        "x": 0.3,
+        "y": 6.8,
+        "width": 12.733,
+        "height": 0.5,
+        "color": "#607D8B",
+        "fill": "#ECEFF1",
+        "enabled": false,
+        "label": "Statistics"
+      }
+    }
+  },
+  "statistics_measures": {
+    "count": true,
+    "mean": true,
+    "median": true,
+    "std": true,
+    "min": true,
+    "max": true,
+    "range": true,
+    "cv": true,
+    "sigma1": true,
+    "sigma2": true,
+    "sigma3": true,
+    "p25": false,
+    "p75": false,
+    "p95": false,
+    "iqr": false,
+    "skewness": false,
+    "kurtosis": false
+  }
+}
