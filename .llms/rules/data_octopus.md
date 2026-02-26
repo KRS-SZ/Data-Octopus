@@ -103,7 +103,11 @@ Data Octopus/
 | `core/config.py` | ✅ | KNOWN_GROUP_TYPES, PATTERNS (~100 Zeilen aus main.py) |
 | `core/parameter_utils.py` | ✅ | simplify_param_name, extract_group_from_column (~230 Zeilen) |
 | `core/app_state.py` | ✅ | AppState-Klasse (Infrastruktur für globale Variablen) |
-| `gui/*.py` | 🔄 TODO | Tab-Module (Phase 5 - geplant) |
+| `core/data_loader.py` | ✅ | CSV/STDF Loader Funktionen (~180 Zeilen) |
+| `core/statistics_utils.py` | ✅ | Statistische Berechnungen (Cpk, Yield, GRR) (~300 Zeilen) |
+| `core/wafermap_utils.py` | ✅ | Wafer-Koordinaten, Die-Positionierung (~330 Zeilen) |
+| `gui/diffmap_tab.py` | ✅ | DiffmapTab Klasse (~600 Zeilen) |
+| `gui/*.py` | 🔄 TODO | Weitere Tab-Module (Phase 5 - in Arbeit) |
 
 ---
 
