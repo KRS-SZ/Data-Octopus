@@ -19148,8 +19148,10 @@ def update_correlation_plot_display():
     # Linear regression fit using numpy (no scipy needed)
     # Calculate slope and intercept using least squares
     n = len(ref_values)
-    mean_x = np.mean(ref_values)
-    mean_y = np.mean(comp_values)
+    ref_stats = calculate_basic_stats(ref_values)
+    comp_stats = calculate_basic_stats(comp_values)
+    mean_x = ref_stats['mean']
+    mean_y = comp_stats['mean']
 
     # Calculate slope and intercept
     numerator = np.sum((ref_values - mean_x) * (comp_values - mean_y))
@@ -19291,7 +19293,7 @@ def update_correlation_stats(ref_values, comp_values, param_label):
             patch.set_facecolor('#E74C3C')
 
     ax_hist.axvline(x=0, color='#2C3E50', linewidth=1.5, linestyle='-')
-    ax_hist.axvline(x=np.mean(residuals), color='#E74C3C', linewidth=1.5, linestyle='--')
+    ax_hist.axvline(x=calculate_basic_stats(residuals)['mean'], color='#E74C3C', linewidth=1.5, linestyle='--')
 
     ax_hist.set_title("Residuals", fontsize=8, fontweight="bold", color='#2C3E50')
     ax_hist.set_xlabel("Comp - Ref", fontsize=7)
@@ -19636,8 +19638,9 @@ def update_diffmap_heatmap_display():
                 ax_hist.text(count + max_count * 0.02, bin_center, f'{int(count)}',
                            va='center', ha='left', fontsize=6, color='#333')
 
-        ax_hist.axhline(y=np.mean(all_values), color='red', linestyle='--', linewidth=1.5, label=f'Mean: {np.mean(all_values):.3f}')
-        ax_hist.axhline(y=np.median(all_values), color='green', linestyle='-', linewidth=1.5, label=f'Median: {np.median(all_values):.3f}')
+        hist_stats = calculate_basic_stats(all_values)
+        ax_hist.axhline(y=hist_stats['mean'], color='red', linestyle='--', linewidth=1.5, label=f'Mean: {hist_stats["mean"]:.3f}')
+        ax_hist.axhline(y=hist_stats['median'], color='green', linestyle='-', linewidth=1.5, label=f'Median: {hist_stats["median"]:.3f}')
         ax_hist.set_xlabel('Count', fontsize=9)
         ax_hist.set_ylabel(param_label, fontsize=9)
         ax_hist.legend(fontsize=7, loc='upper right')
@@ -19770,8 +19773,9 @@ def update_diffmap_stats(diff_values, param_label):
     )
 
     # Color based on mean (green if near zero, red/blue if positive/negative)
-    mean_val = np.mean(diff_values)
-    if abs(mean_val) < np.std(diff_values) * 0.1:
+    diff_stats = calculate_basic_stats(diff_values)
+    mean_val = diff_stats['mean']
+    if abs(mean_val) < diff_stats['std'] * 0.1:
         box_color = '#2ECC71'  # Green - near zero
     elif mean_val > 0:
         box_color = '#E74C3C'  # Red - positive diff
