@@ -67,6 +67,8 @@ def calculate_percentiles(values: np.ndarray,
 
 
 def calculate_cpk(values: np.ndarray,
+                  lsl: Optional[float] = None,
+                  usl: Optional[float] = None,
                   lower_limit: Optional[float] = None,
                   upper_limit: Optional[float] = None) -> Dict[str, float]:
     """
@@ -74,16 +76,22 @@ def calculate_cpk(values: np.ndarray,
 
     Args:
         values: NumPy array of numeric values
+        lsl: Lower specification limit (LSL) - alias for lower_limit
+        usl: Upper specification limit (USL) - alias for upper_limit
         lower_limit: Lower specification limit (LSL)
         upper_limit: Upper specification limit (USL)
 
     Returns:
         Dict with keys: cp, cpk, cpl, cpu
     """
+    # Support both naming conventions
+    ll = lsl if lsl is not None else lower_limit
+    ul = usl if usl is not None else upper_limit
+
     valid = values[~np.isnan(values)]
 
     if len(valid) < 2:
-        return {'cp': np.nan, 'cpk': np.nan, 'cpl': np.nan, 'cpu': np.nan}
+        return {'cp': None, 'cpk': None, 'cpl': None, 'cpu': None}
 
     mean = np.mean(valid)
     std = np.std(valid, ddof=1)  # Sample standard deviation
@@ -91,22 +99,22 @@ def calculate_cpk(values: np.ndarray,
     if std == 0:
         return {'cp': np.inf, 'cpk': np.inf, 'cpl': np.inf, 'cpu': np.inf}
 
-    cp = np.nan
-    cpl = np.nan
-    cpu = np.nan
-    cpk = np.nan
+    cp = None
+    cpl = None
+    cpu = None
+    cpk = None
 
-    if lower_limit is not None and upper_limit is not None:
-        cp = (upper_limit - lower_limit) / (6 * std)
+    if ll is not None and ul is not None:
+        cp = (ul - ll) / (6 * std)
 
-    if lower_limit is not None:
-        cpl = (mean - lower_limit) / (3 * std)
+    if ll is not None:
+        cpl = (mean - ll) / (3 * std)
 
-    if upper_limit is not None:
-        cpu = (upper_limit - mean) / (3 * std)
+    if ul is not None:
+        cpu = (ul - mean) / (3 * std)
 
     # Cpk is the minimum of Cpl and Cpu
-    cpk_values = [v for v in [cpl, cpu] if not np.isnan(v)]
+    cpk_values = [v for v in [cpl, cpu] if v is not None]
     if cpk_values:
         cpk = min(cpk_values)
 
@@ -114,6 +122,8 @@ def calculate_cpk(values: np.ndarray,
 
 
 def calculate_yield(values: np.ndarray,
+                    lsl: Optional[float] = None,
+                    usl: Optional[float] = None,
                     lower_limit: Optional[float] = None,
                     upper_limit: Optional[float] = None) -> Dict[str, Any]:
     """
@@ -121,6 +131,8 @@ def calculate_yield(values: np.ndarray,
 
     Args:
         values: NumPy array of numeric values
+        lsl: Lower specification limit - alias for lower_limit
+        usl: Upper specification limit - alias for upper_limit
         lower_limit: Lower specification limit
         upper_limit: Upper specification limit
 
@@ -128,6 +140,10 @@ def calculate_yield(values: np.ndarray,
         Dict with: total, pass_count, fail_count, pass_pct, fail_pct,
                    fail_low_count, fail_high_count
     """
+    # Support both naming conventions
+    ll = lsl if lsl is not None else lower_limit
+    ul = usl if usl is not None else upper_limit
+
     valid = values[~np.isnan(values)]
     total = len(valid)
 
@@ -147,12 +163,12 @@ def calculate_yield(values: np.ndarray,
     fail_low = np.zeros(total, dtype=bool)
     fail_high = np.zeros(total, dtype=bool)
 
-    if lower_limit is not None:
-        fail_low = valid < lower_limit
+    if ll is not None:
+        fail_low = valid < ll
         pass_mask &= ~fail_low
 
-    if upper_limit is not None:
-        fail_high = valid > upper_limit
+    if ul is not None:
+        fail_high = valid > ul
         pass_mask &= ~fail_high
 
     pass_count = np.sum(pass_mask)
@@ -291,6 +307,8 @@ def format_stat_value(value: float, precision: int = 4) -> str:
     Returns:
         Formatted string
     """
+    if value is None:
+        return "N/A"
     if np.isnan(value):
         return "N/A"
     elif np.isinf(value):

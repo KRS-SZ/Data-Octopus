@@ -83,7 +83,7 @@ def load_csv_file(file_path: str) -> Tuple[Optional[pd.DataFrame], Optional[str]
 
     # Load the CSV
     try:
-        df = pd.read_csv(file_path, delimiter=delimiter, encoding='utf-8', errors='ignore')
+        df = pd.read_csv(file_path, delimiter=delimiter, encoding='utf-8', on_bad_lines='skip')
     except Exception as e:
         raise ValueError(f"Failed to parse CSV: {e}")
 
