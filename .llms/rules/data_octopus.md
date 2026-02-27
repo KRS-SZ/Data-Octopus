@@ -19,7 +19,7 @@
 | **Python**          | 3.13 → `C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\python.exe` |
 | **GUI-Framework**   | tkinter + matplotlib (NICHT customtkinter!)                   |
 | **Projektpfad**     | `c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\`         |
-| **Aktuelle Version**| **v5.0.0** - Vollständig modulare Architektur                |
+| **Aktuelle Version**| **v5.0.1** - Modulare Architektur mit Datalog Tab            |
 
 ---
 
@@ -115,6 +115,8 @@ Data Octopus/
 | `gui/charac_curve_tab.py` | ✅ | CharacCurveTab Klasse (~480 Zeilen) |
 | `gui/pixel_analysis_tab.py` | ✅ | PixelAnalysisTab Klasse (~500 Zeilen) |
 | `gui/report_tab.py` | ✅ | ReportTab Klasse (~500 Zeilen) |
+| `gui/datalog_tab.py` | ✅ | DatalogTab Klasse (~420 Zeilen) - NEU v5.0.1 |
+| `core/datalog_parser.py` | ✅ | TXT Datalog Parser (~380 Zeilen) - NEU v5.0.1 |
 | `services/ppt_export.py` | ✅ | PPTExporter Klasse (~520 Zeilen) |
 | **GESAMT extrahiert** | ✅ | **~5920 Zeilen in neuen Modulen** |
 
@@ -378,6 +380,9 @@ name = re.sub(r'XYZ(\d+)', convert_xyz, name, flags=re.IGNORECASE)
 - **"Mach einfach"** = implementieren, nicht diskutieren
 - Bei Fehlern: **sofort fixen**, nicht lang erklären warum
 - **⚠️ WICHTIG: Wenn etwas unklar ist → NACHFRAGEN wie es umzusetzen ist, BEVOR Code geschrieben wird!**
+- **🚨 KEINE RÜCKFRAGEN WIE "Willst du Option A oder B?"** - Einfach die beste Option umsetzen!
+- **🚨 KEINE "Zusammenfassung" oder "Akzeptieren" verlangen** - Einfach machen und fertig!
+- **🚨 EXISTIERENDEN CODE 1:1 ÜBERNEHMEN** - Wenn main.py funktioniert, den Code KOPIEREN, nicht "verbessern"!
 
 ---
 
