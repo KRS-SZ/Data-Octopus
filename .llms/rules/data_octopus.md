@@ -19,7 +19,7 @@
 | **Python**          | 3.13 → `C:\Users\szenklarz\AppData\Local\Programs\Python\Python313\python.exe` |
 | **GUI-Framework**   | tkinter + matplotlib (NICHT customtkinter!)                   |
 | **Projektpfad**     | `c:\Users\szenklarz\Desktop\VS_Folder\Data Octopus\`         |
-| **Aktuelle Version**| **v5.0.1** - Modulare Architektur mit Datalog Tab            |
+| **Aktuelle Version**| **v5.1.0** - Vollständige monolithische App (Desktop-Standard) |
 
 ---
 
