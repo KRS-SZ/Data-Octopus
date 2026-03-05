@@ -35302,7 +35302,20 @@ tk.Entry(plm_mod_stuck_frame, textvariable=plm_stuck_off_var, width=4, font=("Se
 
 # === Row 2: NEW modules ===
 
-# Module 4: Gradient (NEW)
+# Module 4: Ring Contours (NEW - Edge Detection für kreisförmige Strukturen)
+plm_mod_ring_frame = tk.Frame(plm_modules_row2, bd=1, relief=tk.GROOVE)
+plm_mod_ring_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_ring_var = tk.BooleanVar(value=False)
+tk.Checkbutton(plm_mod_ring_frame, text="Ring/Contour", variable=plm_mod_ring_var,
+               font=("Segoe UI", 9, "bold"), fg="#FF5722").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_ring_frame, text="blur:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_ring_blur_var = tk.StringVar(value="3.0")
+tk.Entry(plm_mod_ring_frame, textvariable=plm_ring_blur_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_ring_frame, text="edge%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_ring_edge_var = tk.StringVar(value="2")
+tk.Entry(plm_mod_ring_frame, textvariable=plm_ring_edge_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# Module 5: Gradient (NEW)
 plm_mod_gradient_frame = tk.Frame(plm_modules_row2, bd=1, relief=tk.GROOVE)
 plm_mod_gradient_frame.pack(side=tk.LEFT, padx=3, pady=2)
 plm_mod_gradient_var = tk.BooleanVar(value=False)
@@ -35396,6 +35409,7 @@ def plm_run_analysis():
         'uniformity': plm_mod_uniformity_var.get(),
         'bridged': plm_mod_bridged_var.get(),
         'stuck': plm_mod_stuck_var.get(),
+        'ring': plm_mod_ring_var.get(),
         'gradient': plm_mod_gradient_var.get(),
         'mura': plm_mod_mura_var.get(),
         'linecol': plm_mod_linecol_var.get(),
@@ -35444,7 +35458,8 @@ def plm_run_analysis():
         if result.raw_image is not None:
             from src.stdf_analyzer.core.plm_analyzer import (
                 GradientAnalyzer, MuraDetector, LineColumnAnalyzer,
-                HotColdSpotAnalyzer, HomogenityCalculator, DefectType
+                HotColdSpotAnalyzer, HomogenityCalculator, DefectType,
+                RingContourDetector
             )
 
             # Additional metrics storage
@@ -35520,6 +35535,25 @@ def plm_run_analysis():
             # Always calculate Homogenity
             homogenity = HomogenityCalculator.calculate(result.raw_image)
             result.additional_metrics['homogenity'] = homogenity
+
+            # Ring Contour Detection (NEW - Edge-based ring detection)
+            if enabled_modules.get('ring', False):
+                try:
+                    ring_detector = RingContourDetector(
+                        blur_sigma=float(plm_ring_blur_var.get()),
+                        edge_threshold_low=float(plm_ring_edge_var.get()) / 100.0,
+                        edge_threshold_high=float(plm_ring_edge_var.get()) / 100.0 * 2.5,
+                        min_contour_length=30
+                    )
+                    contour_mask, contours, ring_metrics = ring_detector.analyze(result.raw_image)
+                    result.additional_metrics['ring_contours'] = {
+                        'contour_mask': contour_mask,
+                        'contours': contours,
+                        'metrics': ring_metrics
+                    }
+                    print(f"Ring Contour Detection: Found {ring_metrics.get('num_contours', 0)} contours")
+                except Exception as e:
+                    print(f"Ring Contour analysis error: {e}")
 
         plm_analysis_results[(die_x, die_y)] = result
 
@@ -35642,6 +35676,24 @@ def plm_update_single_die_display(result):
         cbar1 = fig.colorbar(im1, cax=ax1_cbar)
         cbar1.set_label("nits", fontsize=7)
         cbar1.ax.tick_params(labelsize=6)
+
+        # OVERLAY: Ring Contours (red dashed lines) if available
+        if hasattr(result, 'additional_metrics') and result.additional_metrics:
+            if 'ring_contours' in result.additional_metrics:
+                ring_data = result.additional_metrics['ring_contours']
+                contour_mask = ring_data.get('contour_mask', None)
+                contours = ring_data.get('contours', [])
+
+                if contour_mask is not None and len(contours) > 0:
+                    # Draw contour pixels as red overlay on PLM image
+                    # Create RGBA overlay
+                    overlay_y, overlay_x = np.where(contour_mask > 0)
+                    if len(overlay_y) > 0:
+                        ax1.scatter(overlay_x, overlay_y, c='red', s=0.3, alpha=0.8, marker='.')
+
+                    # Add contour count to title
+                    num_contours = ring_data.get('metrics', {}).get('num_contours', 0)
+                    ax1.set_title(f"Original PLM ({result.die_x}, {result.die_y}) - {num_contours} Ring Contours", fontsize=9)
     else:
         ax1.text(0.5, 0.5, "No image data", ha='center', va='center', transform=ax1.transAxes)
         ax1.set_title("Original PLM", fontsize=9)

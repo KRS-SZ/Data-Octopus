@@ -985,6 +985,129 @@ class CircularPatternDetector:
         return defect_map, metrics
 
 
+class RingContourDetector:
+    """
+    Detect ring/circular structures and return CONTOUR LINES (not filled areas).
+    Uses edge detection to find the boundaries of brightness variations.
+    """
+
+    def __init__(self, blur_sigma: float = 3.0, edge_threshold_low: float = 0.02,
+                 edge_threshold_high: float = 0.05, min_contour_length: int = 50):
+        self.blur_sigma = blur_sigma
+        self.edge_threshold_low = edge_threshold_low  # Percentage of max gradient
+        self.edge_threshold_high = edge_threshold_high
+        self.min_contour_length = min_contour_length
+
+    def analyze(self, image: np.ndarray) -> Tuple[np.ndarray, List[np.ndarray], Dict]:
+        """
+        Detect ring contours using edge detection.
+
+        Returns:
+            - contour_mask: Binary mask where contour pixels = 1
+            - contours: List of contour coordinates [(y1,x1), (y2,x2), ...]
+            - metrics: Dictionary with detection statistics
+        """
+        if image is None or image.size == 0:
+            return np.zeros((1, 1), dtype=np.uint8), [], {}
+
+        height, width = image.shape
+
+        # Step 1: Normalize image to 0-1 range
+        img_norm = (image - np.min(image)) / (np.max(image) - np.min(image) + 1e-10)
+
+        # Step 2: Apply Gaussian blur to reduce noise
+        try:
+            from scipy.ndimage import gaussian_filter
+            img_smooth = gaussian_filter(img_norm, sigma=self.blur_sigma)
+        except ImportError:
+            img_smooth = img_norm  # Fallback: no smoothing
+
+        # Step 3: Calculate gradients using Sobel-like operators
+        # Gradient in X direction
+        grad_x = np.zeros_like(img_smooth)
+        grad_x[:, 1:-1] = (img_smooth[:, 2:] - img_smooth[:, :-2]) / 2
+
+        # Gradient in Y direction
+        grad_y = np.zeros_like(img_smooth)
+        grad_y[1:-1, :] = (img_smooth[2:, :] - img_smooth[:-2, :]) / 2
+
+        # Gradient magnitude
+        gradient_mag = np.sqrt(grad_x**2 + grad_y**2)
+
+        # Step 4: Normalize gradient and apply threshold
+        grad_max = np.max(gradient_mag)
+        if grad_max > 0:
+            gradient_norm = gradient_mag / grad_max
+        else:
+            gradient_norm = gradient_mag
+
+        # Double threshold (like Canny edge detection)
+        edge_strong = gradient_norm > self.edge_threshold_high
+        edge_weak = (gradient_norm > self.edge_threshold_low) & ~edge_strong
+
+        # Step 5: Edge linking - connect weak edges that are adjacent to strong edges
+        contour_mask = edge_strong.copy().astype(np.uint8)
+
+        # Simple edge linking: add weak edges adjacent to strong edges
+        for _ in range(3):  # Iterate a few times
+            dilated = np.zeros_like(contour_mask)
+            dilated[1:, :] |= contour_mask[:-1, :]
+            dilated[:-1, :] |= contour_mask[1:, :]
+            dilated[:, 1:] |= contour_mask[:, :-1]
+            dilated[:, :-1] |= contour_mask[:, 1:]
+            contour_mask = contour_mask | (edge_weak.astype(np.uint8) & dilated)
+
+        # Step 6: Extract contour coordinates
+        contours = self._extract_contours(contour_mask)
+
+        # Step 7: Filter by minimum length
+        contours = [c for c in contours if len(c) >= self.min_contour_length]
+
+        metrics = {
+            'num_contours': len(contours),
+            'total_contour_pixels': int(np.sum(contour_mask)),
+            'gradient_max': float(grad_max),
+            'contour_lengths': [len(c) for c in contours]
+        }
+
+        return contour_mask, contours, metrics
+
+    def _extract_contours(self, binary_mask: np.ndarray) -> List[List[Tuple[int, int]]]:
+        """Extract connected contour segments from binary mask"""
+        height, width = binary_mask.shape
+        visited = np.zeros((height, width), dtype=bool)
+        contours = []
+
+        for y in range(height):
+            for x in range(width):
+                if binary_mask[y, x] and not visited[y, x]:
+                    # Start new contour
+                    contour = []
+                    stack = [(y, x)]
+
+                    while stack:
+                        cy, cx = stack.pop()
+                        if cy < 0 or cy >= height or cx < 0 or cx >= width:
+                            continue
+                        if visited[cy, cx] or not binary_mask[cy, cx]:
+                            continue
+
+                        visited[cy, cx] = True
+                        contour.append((cy, cx))
+
+                        # 8-connectivity for contour following
+                        for dy in [-1, 0, 1]:
+                            for dx in [-1, 0, 1]:
+                                if dy == 0 and dx == 0:
+                                    continue
+                                stack.append((cy + dy, cx + dx))
+
+                    if contour:
+                        contours.append(contour)
+
+        return contours
+
+
 class MuraDetector:
     """Detect Mura (large-area brightness variations / "clouds")"""
 
@@ -1308,4 +1431,6 @@ __all__ = [
     'LineColumnAnalyzer',
     'HotColdSpotAnalyzer',
     'HomogenityCalculator',
+    'CircularPatternDetector',
+    'RingContourDetector',
 ]
