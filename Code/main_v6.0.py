@@ -35241,15 +35241,6 @@ plm_source_combo = ttk.Combobox(plm_control_row1, textvariable=plm_source_var,
 plm_source_combo.pack(side=tk.LEFT, padx=2)
 plm_source_combo.current(0)
 
-# Analysis type
-tk.Label(plm_control_row1, text="Analysis:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(10, 5))
-plm_analysis_type_var = tk.StringVar(value="all")
-plm_analysis_combo = ttk.Combobox(plm_control_row1, textvariable=plm_analysis_type_var,
-                                   values=["All Defects", "Uniformity Only", "Bridged Only", "Stuck Only"],
-                                   state="readonly", width=15)
-plm_analysis_combo.pack(side=tk.LEFT, padx=2)
-plm_analysis_combo.current(0)
-
 # Separator
 ttk.Separator(plm_control_row1, orient='vertical').pack(side=tk.LEFT, fill='y', padx=10)
 
@@ -35260,30 +35251,114 @@ plm_show_die_image_cb = tk.Checkbutton(plm_control_row1, text="Show Die Image",
                                         font=("Segoe UI", 9))
 plm_show_die_image_cb.pack(side=tk.LEFT, padx=5)
 
-# Control row 2 - Thresholds
-plm_control_row2 = tk.Frame(plm_control_frame)
-plm_control_row2.pack(fill=tk.X, padx=5, pady=5)
+# === ANALYSIS MODULES PANEL (replaces old "Analysis type" dropdown) ===
+plm_modules_frame = tk.LabelFrame(plm_main_frame, text="📊 Analysis Modules", font=("Segoe UI", 10, "bold"))
+plm_modules_frame.pack(fill=tk.X, padx=5, pady=5)
 
-tk.Label(plm_control_row2, text="Thresholds:", font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=(0, 10))
+# Create 2 rows for modules
+plm_modules_row1 = tk.Frame(plm_modules_frame)
+plm_modules_row1.pack(fill=tk.X, padx=5, pady=2)
 
-tk.Label(plm_control_row2, text="Uniformity σ:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(0, 2))
+plm_modules_row2 = tk.Frame(plm_modules_frame)
+plm_modules_row2.pack(fill=tk.X, padx=5, pady=2)
+
+# === Row 1: Original modules ===
+
+# Module 1: Uniformity
+plm_mod_uniformity_frame = tk.Frame(plm_modules_row1, bd=1, relief=tk.GROOVE)
+plm_mod_uniformity_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_uniformity_var = tk.BooleanVar(value=True)
+tk.Checkbutton(plm_mod_uniformity_frame, text="Uniformity", variable=plm_mod_uniformity_var,
+               font=("Segoe UI", 9, "bold"), fg="#FF8F00").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_uniformity_frame, text="σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
 plm_uniformity_sigma_var = tk.StringVar(value="2.0")
-plm_uniformity_sigma_entry = tk.Entry(plm_control_row2, textvariable=plm_uniformity_sigma_var, width=5)
-plm_uniformity_sigma_entry.pack(side=tk.LEFT, padx=2)
+tk.Entry(plm_mod_uniformity_frame, textvariable=plm_uniformity_sigma_var, width=4, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
 
-tk.Label(plm_control_row2, text="Bridged min:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(10, 2))
+# Module 2: Bridged
+plm_mod_bridged_frame = tk.Frame(plm_modules_row1, bd=1, relief=tk.GROOVE)
+plm_mod_bridged_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_bridged_var = tk.BooleanVar(value=True)
+tk.Checkbutton(plm_mod_bridged_frame, text="Bridged", variable=plm_mod_bridged_var,
+               font=("Segoe UI", 9, "bold"), fg="#D32F2F").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_bridged_frame, text="min:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
 plm_bridged_min_var = tk.StringVar(value="3")
-plm_bridged_min_entry = tk.Entry(plm_control_row2, textvariable=plm_bridged_min_var, width=5)
-plm_bridged_min_entry.pack(side=tk.LEFT, padx=2)
+tk.Entry(plm_mod_bridged_frame, textvariable=plm_bridged_min_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_bridged_frame, text="bright%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_bridged_bright_var = tk.StringVar(value="80")
+tk.Entry(plm_mod_bridged_frame, textvariable=plm_bridged_bright_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
 
-tk.Label(plm_control_row2, text="Stuck thresh:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(10, 2))
-plm_stuck_var = tk.StringVar(value="250")
-plm_stuck_entry = tk.Entry(plm_control_row2, textvariable=plm_stuck_var, width=5)
-plm_stuck_entry.pack(side=tk.LEFT, padx=2)
+# Module 3: Stuck
+plm_mod_stuck_frame = tk.Frame(plm_modules_row1, bd=1, relief=tk.GROOVE)
+plm_mod_stuck_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_stuck_var = tk.BooleanVar(value=True)
+tk.Checkbutton(plm_mod_stuck_frame, text="Stuck", variable=plm_mod_stuck_var,
+               font=("Segoe UI", 9, "bold"), fg="#42A5F5").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_stuck_frame, text="ON%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_stuck_on_var = tk.StringVar(value="99.5")
+tk.Entry(plm_mod_stuck_frame, textvariable=plm_stuck_on_var, width=4, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_stuck_frame, text="OFF%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_stuck_off_var = tk.StringVar(value="0.5")
+tk.Entry(plm_mod_stuck_frame, textvariable=plm_stuck_off_var, width=4, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# === Row 2: NEW modules ===
+
+# Module 4: Gradient (NEW)
+plm_mod_gradient_frame = tk.Frame(plm_modules_row2, bd=1, relief=tk.GROOVE)
+plm_mod_gradient_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_gradient_var = tk.BooleanVar(value=False)
+tk.Checkbutton(plm_mod_gradient_frame, text="Gradient", variable=plm_mod_gradient_var,
+               font=("Segoe UI", 9, "bold"), fg="#00BCD4").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_gradient_frame, text="zone:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_gradient_zone_var = tk.StringVar(value="quadrants")
+ttk.Combobox(plm_mod_gradient_frame, textvariable=plm_gradient_zone_var,
+             values=["quadrants", "rings"], state="readonly", width=8, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_gradient_frame, text="thresh%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_gradient_thresh_var = tk.StringVar(value="5.0")
+tk.Entry(plm_mod_gradient_frame, textvariable=plm_gradient_thresh_var, width=4, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# Module 5: Mura (NEW)
+plm_mod_mura_frame = tk.Frame(plm_modules_row2, bd=1, relief=tk.GROOVE)
+plm_mod_mura_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_mura_var = tk.BooleanVar(value=False)
+tk.Checkbutton(plm_mod_mura_frame, text="Mura", variable=plm_mod_mura_var,
+               font=("Segoe UI", 9, "bold"), fg="#E91E63").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_mura_frame, text="blur σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_mura_blur_var = tk.StringVar(value="15")
+tk.Entry(plm_mod_mura_frame, textvariable=plm_mura_blur_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_mura_frame, text="thresh%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_mura_thresh_var = tk.StringVar(value="10")
+tk.Entry(plm_mod_mura_frame, textvariable=plm_mura_thresh_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# Module 6: Line/Column (NEW)
+plm_mod_linecol_frame = tk.Frame(plm_modules_row2, bd=1, relief=tk.GROOVE)
+plm_mod_linecol_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_linecol_var = tk.BooleanVar(value=False)
+tk.Checkbutton(plm_mod_linecol_frame, text="Line/Column", variable=plm_mod_linecol_var,
+               font=("Segoe UI", 9, "bold"), fg="#795548").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_linecol_frame, text="σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_linecol_sigma_var = tk.StringVar(value="3.0")
+tk.Entry(plm_mod_linecol_frame, textvariable=plm_linecol_sigma_var, width=4, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# Module 7: Hot/Cold Spots (NEW)
+plm_mod_hotcold_frame = tk.Frame(plm_modules_row2, bd=1, relief=tk.GROOVE)
+plm_mod_hotcold_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_hotcold_var = tk.BooleanVar(value=False)
+tk.Checkbutton(plm_mod_hotcold_frame, text="Hot/Cold Spots", variable=plm_mod_hotcold_var,
+               font=("Segoe UI", 9, "bold"), fg="#FF5722").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_hotcold_frame, text="min size:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_hotcold_size_var = tk.StringVar(value="10")
+tk.Entry(plm_mod_hotcold_frame, textvariable=plm_hotcold_size_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_hotcold_frame, text="σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_hotcold_sigma_var = tk.StringVar(value="2.5")
+tk.Entry(plm_mod_hotcold_frame, textvariable=plm_hotcold_sigma_var, width=4, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# === BUTTONS ROW ===
+plm_buttons_row = tk.Frame(plm_main_frame)
+plm_buttons_row.pack(fill=tk.X, padx=5, pady=5)
 
 # Buttons
-plm_btn_frame = tk.Frame(plm_control_row2)
-plm_btn_frame.pack(side=tk.RIGHT, padx=5)
+plm_btn_frame = tk.Frame(plm_buttons_row)
+plm_btn_frame.pack(side=tk.LEFT, padx=5)
 
 def plm_run_analysis():
     """Run PLM analysis based on current settings"""
@@ -35297,24 +35372,40 @@ def plm_run_analysis():
         messagebox.showwarning("Warning", "No PLM folder selected. Load a wafer with PLM files first.")
         return
 
-    # Update thresholds
+    # Update thresholds from module checkboxes
     try:
         plm_analysis_thresholds.uniformity_sigma_minor = float(plm_uniformity_sigma_var.get())
         plm_analysis_thresholds.uniformity_sigma_major = float(plm_uniformity_sigma_var.get()) + 1.0
         plm_analysis_thresholds.bridged_min_count = int(plm_bridged_min_var.get())
-        plm_analysis_thresholds.stuck_on_threshold = float(plm_stuck_var.get())
+        plm_analysis_thresholds.bridged_brightness_threshold = float(plm_bridged_bright_var.get()) / 100.0
+        plm_analysis_thresholds.stuck_on_percentile = float(plm_stuck_on_var.get())
+        plm_analysis_thresholds.stuck_off_percentile = float(plm_stuck_off_var.get())
     except ValueError:
         messagebox.showerror("Error", "Invalid threshold values")
         return
 
-    # Get analysis type
-    analysis_type_map = {
-        "All Defects": "all",
-        "Uniformity Only": "uniformity",
-        "Bridged Only": "bridged",
-        "Stuck Only": "stuck"
+    # Get enabled modules from checkboxes
+    enabled_modules = {
+        'uniformity': plm_mod_uniformity_var.get(),
+        'bridged': plm_mod_bridged_var.get(),
+        'stuck': plm_mod_stuck_var.get(),
+        'gradient': plm_mod_gradient_var.get(),
+        'mura': plm_mod_mura_var.get(),
+        'linecol': plm_mod_linecol_var.get(),
+        'hotcold': plm_mod_hotcold_var.get(),
     }
-    analysis_type = analysis_type_map.get(plm_analysis_type_var.get(), "all")
+
+    # Determine analysis type based on enabled modules
+    if all(enabled_modules[k] for k in ['uniformity', 'bridged', 'stuck']):
+        analysis_type = "all"
+    elif enabled_modules['uniformity'] and not enabled_modules['bridged'] and not enabled_modules['stuck']:
+        analysis_type = "uniformity"
+    elif enabled_modules['bridged'] and not enabled_modules['uniformity'] and not enabled_modules['stuck']:
+        analysis_type = "bridged"
+    elif enabled_modules['stuck'] and not enabled_modules['uniformity'] and not enabled_modules['bridged']:
+        analysis_type = "stuck"
+    else:
+        analysis_type = "all"  # Mixed selection = run all base analyzers
 
     # Use pre-calculated or raw
     use_precalculated = "Pre-calculated" in plm_source_var.get()
@@ -35341,6 +35432,85 @@ def plm_run_analysis():
         tab_plm_analysis.update()
 
         result = plm_analyzer_instance.analyze_die(plm_files, die_x, die_y, analysis_type, use_precalculated)
+
+        # Run additional analysis modules if enabled
+        if result.raw_image is not None:
+            from src.stdf_analyzer.core.plm_analyzer import (
+                GradientAnalyzer, MuraDetector, LineColumnAnalyzer,
+                HotColdSpotAnalyzer, HomogenityCalculator, DefectType
+            )
+
+            # Additional metrics storage
+            result.additional_metrics = {}
+
+            # Gradient Analysis
+            if enabled_modules.get('gradient', False):
+                try:
+                    gradient_analyzer = GradientAnalyzer(
+                        zone_type=plm_gradient_zone_var.get(),
+                        threshold_percent=float(plm_gradient_thresh_var.get())
+                    )
+                    gradient_map, gradient_metrics = gradient_analyzer.analyze(result.raw_image)
+                    # Merge into defect map
+                    result.defect_map = np.where(
+                        (gradient_map > 0) & (result.defect_map == 0),
+                        gradient_map, result.defect_map
+                    )
+                    result.additional_metrics['gradient'] = gradient_metrics
+                except Exception as e:
+                    print(f"Gradient analysis error: {e}")
+
+            # Mura Detection
+            if enabled_modules.get('mura', False):
+                try:
+                    mura_detector = MuraDetector(
+                        blur_sigma=float(plm_mura_blur_var.get()),
+                        threshold_percent=float(plm_mura_thresh_var.get())
+                    )
+                    mura_map, mura_spots = mura_detector.analyze(result.raw_image)
+                    result.defect_map = np.where(
+                        (mura_map > 0) & (result.defect_map == 0),
+                        mura_map, result.defect_map
+                    )
+                    result.additional_metrics['mura'] = {'spots': mura_spots, 'count': len(mura_spots)}
+                except Exception as e:
+                    print(f"Mura analysis error: {e}")
+
+            # Line/Column Analysis
+            if enabled_modules.get('linecol', False):
+                try:
+                    linecol_analyzer = LineColumnAnalyzer(
+                        sigma_threshold=float(plm_linecol_sigma_var.get())
+                    )
+                    linecol_map, linecol_results = linecol_analyzer.analyze(result.raw_image)
+                    result.defect_map = np.where(
+                        (linecol_map > 0) & (result.defect_map == 0),
+                        linecol_map, result.defect_map
+                    )
+                    result.additional_metrics['linecol'] = linecol_results
+                except Exception as e:
+                    print(f"Line/Column analysis error: {e}")
+
+            # Hot/Cold Spot Analysis
+            if enabled_modules.get('hotcold', False):
+                try:
+                    hotcold_analyzer = HotColdSpotAnalyzer(
+                        min_spot_size=int(plm_hotcold_size_var.get()),
+                        threshold_sigma=float(plm_hotcold_sigma_var.get())
+                    )
+                    hotcold_map, hotcold_results = hotcold_analyzer.analyze(result.raw_image)
+                    result.defect_map = np.where(
+                        (hotcold_map > 0) & (result.defect_map == 0),
+                        hotcold_map, result.defect_map
+                    )
+                    result.additional_metrics['hotcold'] = hotcold_results
+                except Exception as e:
+                    print(f"Hot/Cold analysis error: {e}")
+
+            # Always calculate Homogenity
+            homogenity = HomogenityCalculator.calculate(result.raw_image)
+            result.additional_metrics['homogenity'] = homogenity
+
         plm_analysis_results[(die_x, die_y)] = result
 
         # Update display
@@ -35579,6 +35749,10 @@ def plm_update_statistics(result):
     plm_stats_text.tag_configure('uniformity', foreground='#FF8F00', font=('Consolas', 9, 'bold'))
     plm_stats_text.tag_configure('stuck', foreground='#42A5F5', font=('Consolas', 9, 'bold'))
     plm_stats_text.tag_configure('cluster', foreground='#AB47BC', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('gradient', foreground='#00BCD4', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('mura', foreground='#E91E63', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('linecol', foreground='#795548', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('hotcold', foreground='#FF5722', font=('Consolas', 9, 'bold'))
     plm_stats_text.tag_configure('normal', font=('Consolas', 9))
 
     if result is None:
@@ -35600,6 +35774,12 @@ def plm_update_statistics(result):
 
     if not result.passed:
         plm_stats_text.insert(tk.END, f"|  Reason: {result.fail_reason}\n", 'fail')
+
+    # Homogenity Score (if available)
+    if hasattr(result, 'additional_metrics') and result.additional_metrics:
+        if 'homogenity' in result.additional_metrics:
+            h = result.additional_metrics['homogenity']
+            plm_stats_text.insert(tk.END, f"|  Homogenity: {h.get('homogenity_percent', 0):.1f}%  (CV: {h.get('cv_percent', 0):.2f}%)\n", 'header')
 
     # Image Statistics
     plm_stats_text.insert(tk.END, "+--------------------------------------------------------------+\n", 'normal')
@@ -35632,9 +35812,52 @@ def plm_update_statistics(result):
     plm_stats_text.insert(tk.END, "[PUR] Clusters:", 'cluster')
     plm_stats_text.insert(tk.END, f"     {result.cluster_count}\n", 'normal')
 
+    # NEW: Additional analysis results
+    if hasattr(result, 'additional_metrics') and result.additional_metrics:
+        plm_stats_text.insert(tk.END, "+--------------------------------------------------------------+\n", 'normal')
+        plm_stats_text.insert(tk.END, "|  ADDITIONAL ANALYSIS:\n", 'header')
+
+        # Gradient
+        if 'gradient' in result.additional_metrics:
+            g = result.additional_metrics['gradient']
+            plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+            plm_stats_text.insert(tk.END, "[CYN] Gradient:", 'gradient')
+            has_grad = g.get('has_gradient', False)
+            if has_grad:
+                plm_stats_text.insert(tk.END, f"     DETECTED ({g.get('max_deviation_percent', 0):.1f}%)\n", 'fail')
+            else:
+                plm_stats_text.insert(tk.END, f"     OK ({g.get('max_deviation_percent', 0):.1f}%)\n", 'normal')
+
+        # Mura
+        if 'mura' in result.additional_metrics:
+            m = result.additional_metrics['mura']
+            plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+            plm_stats_text.insert(tk.END, "[PNK] Mura:", 'mura')
+            mura_count = m.get('count', 0)
+            plm_stats_text.insert(tk.END, f"          {mura_count} spots\n", 'normal')
+
+        # Line/Column
+        if 'linecol' in result.additional_metrics:
+            lc = result.additional_metrics['linecol']
+            plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+            plm_stats_text.insert(tk.END, "[BRN] Line/Col:", 'linecol')
+            row_count = lc.get('row_count', 0)
+            col_count = lc.get('col_count', 0)
+            plm_stats_text.insert(tk.END, f"     {row_count} rows, {col_count} cols\n", 'normal')
+
+        # Hot/Cold Spots
+        if 'hotcold' in result.additional_metrics:
+            hc = result.additional_metrics['hotcold']
+            hot_count = len(hc.get('hot_spots', []))
+            cold_count = len(hc.get('cold_spots', []))
+            plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+            plm_stats_text.insert(tk.END, "[ORG] Hot/Cold:", 'hotcold')
+            plm_stats_text.insert(tk.END, f"     {hot_count} hot, {cold_count} cold\n", 'normal')
+
     # Total
     total_defects = result.bridged_count + result.uniformity_count + result.stuck_count
-    plm_stats_text.insert(tk.END, f"|  +- Total Defects:      {total_defects:,} ({result.get_defect_percentage():.4f}%)\n", 'normal')
+    plm_stats_text.insert(tk.END, "+--------------------------------------------------------------+\n", 'normal')
+    plm_stats_text.insert(tk.END, f"|  Total Defects:      {total_defects:,} ({result.get_defect_percentage():.4f}%)\n", 'normal')
     plm_stats_text.insert(tk.END, "+==============================================================+\n", 'header')
 
 def plm_update_wafer_statistics():

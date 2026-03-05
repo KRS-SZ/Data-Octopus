@@ -33,6 +33,13 @@ class DefectType(Enum):
     STUCK_OFF = 31
     DEAD_PIXEL = 40
     CLUSTER = 50
+    # NEW defect types
+    GRADIENT = 60
+    MURA = 70
+    LINE_DEFECT = 80
+    COLUMN_DEFECT = 81
+    HOT_SPOT = 90
+    COLD_SPOT = 91
 
 
 # Default color mapping for defect types
@@ -46,6 +53,13 @@ DEFECT_COLORS = {
     DefectType.STUCK_OFF: '#1565C0',       # Dark Blue
     DefectType.DEAD_PIXEL: '#424242',      # Dark Gray
     DefectType.CLUSTER: '#AB47BC',         # Purple
+    # NEW colors
+    DefectType.GRADIENT: '#00BCD4',        # Cyan
+    DefectType.MURA: '#E91E63',            # Pink
+    DefectType.LINE_DEFECT: '#795548',     # Brown
+    DefectType.COLUMN_DEFECT: '#8D6E63',   # Light Brown
+    DefectType.HOT_SPOT: '#FF5722',        # Deep Orange
+    DefectType.COLD_SPOT: '#3F51B5',       # Indigo
 }
 
 DEFECT_NAMES = {
@@ -58,6 +72,13 @@ DEFECT_NAMES = {
     DefectType.STUCK_OFF: 'Stuck OFF',
     DefectType.DEAD_PIXEL: 'Dead Pixel',
     DefectType.CLUSTER: 'Cluster',
+    # NEW names
+    DefectType.GRADIENT: 'Gradient',
+    DefectType.MURA: 'Mura',
+    DefectType.LINE_DEFECT: 'Line Defect',
+    DefectType.COLUMN_DEFECT: 'Column Defect',
+    DefectType.HOT_SPOT: 'Hot Spot',
+    DefectType.COLD_SPOT: 'Cold Spot',
 }
 
 
@@ -796,6 +817,364 @@ class PLMAnalyzer:
         return binning
 
 
+class GradientAnalyzer:
+    """Analyze systematic brightness gradients across the image"""
+
+    def __init__(self, zone_type: str = "quadrants", threshold_percent: float = 5.0):
+        self.zone_type = zone_type  # "quadrants", "rings", "grid"
+        self.threshold_percent = threshold_percent
+
+    def analyze(self, image: np.ndarray) -> Tuple[np.ndarray, Dict[str, float]]:
+        """
+        Analyze image for systematic brightness gradients.
+
+        Returns:
+            - defect_map: Pixels marked as gradient issues
+            - metrics: Dictionary with gradient measurements
+        """
+        if image is None or image.size == 0:
+            return np.zeros((1, 1), dtype=np.int32), {}
+
+        height, width = image.shape
+        defect_map = np.zeros((height, width), dtype=np.int32)
+        metrics = {}
+
+        global_mean = np.mean(image)
+
+        if self.zone_type == "quadrants":
+            # Divide into 4 quadrants
+            mid_y, mid_x = height // 2, width // 2
+
+            zones = {
+                'top_left': image[:mid_y, :mid_x],
+                'top_right': image[:mid_y, mid_x:],
+                'bottom_left': image[mid_y:, :mid_x],
+                'bottom_right': image[mid_y:, mid_x:],
+            }
+
+            zone_means = {k: np.mean(v) for k, v in zones.items()}
+            metrics['zone_means'] = zone_means
+
+            # Calculate gradient metrics
+            metrics['left_right'] = ((zone_means['top_right'] + zone_means['bottom_right']) / 2 -
+                                     (zone_means['top_left'] + zone_means['bottom_left']) / 2) / global_mean * 100
+            metrics['top_bottom'] = ((zone_means['bottom_left'] + zone_means['bottom_right']) / 2 -
+                                     (zone_means['top_left'] + zone_means['top_right']) / 2) / global_mean * 100
+
+            max_dev = max(abs(m - global_mean) / global_mean * 100 for m in zone_means.values())
+            metrics['max_deviation_percent'] = max_dev
+            metrics['has_gradient'] = max_dev > self.threshold_percent
+
+            # Mark affected zones
+            if metrics['has_gradient']:
+                for zone_name, zone_mean in zone_means.items():
+                    if abs(zone_mean - global_mean) / global_mean * 100 > self.threshold_percent:
+                        if zone_name == 'top_left':
+                            defect_map[:mid_y, :mid_x] = DefectType.GRADIENT.value
+                        elif zone_name == 'top_right':
+                            defect_map[:mid_y, mid_x:] = DefectType.GRADIENT.value
+                        elif zone_name == 'bottom_left':
+                            defect_map[mid_y:, :mid_x] = DefectType.GRADIENT.value
+                        elif zone_name == 'bottom_right':
+                            defect_map[mid_y:, mid_x:] = DefectType.GRADIENT.value
+
+        elif self.zone_type == "rings":
+            # Concentric rings from center
+            center_y, center_x = height // 2, width // 2
+            max_radius = min(center_y, center_x)
+
+            ring_means = []
+            for i, r in enumerate([0.25, 0.5, 0.75, 1.0]):
+                radius = int(max_radius * r)
+                y, x = np.ogrid[:height, :width]
+                dist = np.sqrt((x - center_x)**2 + (y - center_y)**2)
+
+                inner_r = int(max_radius * (r - 0.25)) if r > 0.25 else 0
+                mask = (dist >= inner_r) & (dist < radius)
+
+                if np.any(mask):
+                    ring_means.append(np.mean(image[mask]))
+
+            if ring_means:
+                metrics['center_to_edge'] = (ring_means[-1] - ring_means[0]) / global_mean * 100
+                metrics['has_gradient'] = abs(metrics['center_to_edge']) > self.threshold_percent
+
+        return defect_map, metrics
+
+
+class MuraDetector:
+    """Detect Mura (large-area brightness variations / "clouds")"""
+
+    def __init__(self, blur_sigma: float = 15.0, threshold_percent: float = 10.0):
+        self.blur_sigma = blur_sigma
+        self.threshold_percent = threshold_percent
+
+    def analyze(self, image: np.ndarray) -> Tuple[np.ndarray, List[Dict]]:
+        """
+        Detect Mura defects using low-pass filtering.
+
+        Returns:
+            - defect_map: Pixels marked as mura
+            - spots: List of detected mura spots with position and size
+        """
+        if image is None or image.size == 0:
+            return np.zeros((1, 1), dtype=np.int32), []
+
+        height, width = image.shape
+        defect_map = np.zeros((height, width), dtype=np.int32)
+        spots = []
+
+        # Apply Gaussian blur (low-pass filter)
+        try:
+            from scipy.ndimage import gaussian_filter
+            blurred = gaussian_filter(image.astype(np.float64), sigma=self.blur_sigma)
+        except ImportError:
+            # Fallback: simple box filter
+            kernel_size = int(self.blur_sigma * 3)
+            if kernel_size % 2 == 0:
+                kernel_size += 1
+            blurred = np.zeros_like(image, dtype=np.float64)
+            for y in range(height):
+                for x in range(width):
+                    y_start = max(0, y - kernel_size // 2)
+                    y_end = min(height, y + kernel_size // 2 + 1)
+                    x_start = max(0, x - kernel_size // 2)
+                    x_end = min(width, x + kernel_size // 2 + 1)
+                    blurred[y, x] = np.mean(image[y_start:y_end, x_start:x_end])
+
+        # Difference from smoothed image
+        global_mean = np.mean(image)
+        deviation = np.abs(blurred - global_mean) / global_mean * 100
+
+        # Mark mura regions
+        mura_mask = deviation > self.threshold_percent
+        defect_map[mura_mask] = DefectType.MURA.value
+
+        # Find connected mura regions
+        visited = np.zeros((height, width), dtype=bool)
+
+        for y in range(height):
+            for x in range(width):
+                if mura_mask[y, x] and not visited[y, x]:
+                    # Flood fill to find connected region
+                    region_pixels = []
+                    stack = [(y, x)]
+
+                    while stack:
+                        cy, cx = stack.pop()
+                        if cy < 0 or cy >= height or cx < 0 or cx >= width:
+                            continue
+                        if visited[cy, cx] or not mura_mask[cy, cx]:
+                            continue
+
+                        visited[cy, cx] = True
+                        region_pixels.append((cy, cx))
+
+                        stack.extend([(cy-1, cx), (cy+1, cx), (cy, cx-1), (cy, cx+1)])
+
+                    if len(region_pixels) > 100:  # Minimum size for mura
+                        ys = [p[0] for p in region_pixels]
+                        xs = [p[1] for p in region_pixels]
+                        spots.append({
+                            'center_y': int(np.mean(ys)),
+                            'center_x': int(np.mean(xs)),
+                            'size': len(region_pixels),
+                            'intensity': float(np.mean([deviation[p[0], p[1]] for p in region_pixels]))
+                        })
+
+        return defect_map, spots
+
+
+class LineColumnAnalyzer:
+    """Detect defective lines or columns (driver issues)"""
+
+    def __init__(self, sigma_threshold: float = 3.0):
+        self.sigma_threshold = sigma_threshold
+
+    def analyze(self, image: np.ndarray) -> Tuple[np.ndarray, Dict]:
+        """
+        Detect lines/columns that deviate systematically.
+
+        Returns:
+            - defect_map: Pixels on defective lines/columns marked
+            - results: Dictionary with defective line/column indices
+        """
+        if image is None or image.size == 0:
+            return np.zeros((1, 1), dtype=np.int32), {}
+
+        height, width = image.shape
+        defect_map = np.zeros((height, width), dtype=np.int32)
+
+        # Calculate mean brightness per row and column
+        row_means = np.mean(image, axis=1)
+        col_means = np.mean(image, axis=0)
+
+        global_mean = np.mean(image)
+        row_std = np.std(row_means)
+        col_std = np.std(col_means)
+
+        # Find defective rows (lines)
+        defective_rows = []
+        if row_std > 0:
+            row_z = np.abs(row_means - global_mean) / row_std
+            defective_rows = np.where(row_z > self.sigma_threshold)[0].tolist()
+
+            for row in defective_rows:
+                defect_map[row, :] = DefectType.LINE_DEFECT.value
+
+        # Find defective columns
+        defective_cols = []
+        if col_std > 0:
+            col_z = np.abs(col_means - global_mean) / col_std
+            defective_cols = np.where(col_z > self.sigma_threshold)[0].tolist()
+
+            for col in defective_cols:
+                defect_map[:, col] = DefectType.COLUMN_DEFECT.value
+
+        results = {
+            'defective_rows': defective_rows,
+            'defective_cols': defective_cols,
+            'row_count': len(defective_rows),
+            'col_count': len(defective_cols),
+        }
+
+        return defect_map, results
+
+
+class HotColdSpotAnalyzer:
+    """Detect hot spots (bright regions) and cold spots (dark regions)"""
+
+    def __init__(self, min_spot_size: int = 10, threshold_sigma: float = 2.5):
+        self.min_spot_size = min_spot_size
+        self.threshold_sigma = threshold_sigma
+
+    def analyze(self, image: np.ndarray) -> Tuple[np.ndarray, Dict]:
+        """
+        Detect hot and cold spots as regional extrema.
+
+        Returns:
+            - defect_map: Pixels marked as hot/cold spots
+            - results: Dictionary with spot counts and positions
+        """
+        if image is None or image.size == 0:
+            return np.zeros((1, 1), dtype=np.int32), {}
+
+        height, width = image.shape
+        defect_map = np.zeros((height, width), dtype=np.int32)
+
+        mean = np.mean(image)
+        std = np.std(image)
+
+        if std == 0:
+            return defect_map, {'hot_spots': [], 'cold_spots': []}
+
+        # Threshold for hot/cold
+        hot_threshold = mean + self.threshold_sigma * std
+        cold_threshold = mean - self.threshold_sigma * std
+
+        hot_mask = image > hot_threshold
+        cold_mask = image < cold_threshold
+
+        hot_spots = []
+        cold_spots = []
+
+        # Find connected hot regions
+        visited = np.zeros((height, width), dtype=bool)
+
+        for y in range(height):
+            for x in range(width):
+                if hot_mask[y, x] and not visited[y, x]:
+                    region = self._flood_fill(y, x, hot_mask, visited, height, width)
+                    if len(region) >= self.min_spot_size:
+                        for py, px in region:
+                            defect_map[py, px] = DefectType.HOT_SPOT.value
+                        ys = [p[0] for p in region]
+                        xs = [p[1] for p in region]
+                        hot_spots.append({
+                            'center_y': int(np.mean(ys)),
+                            'center_x': int(np.mean(xs)),
+                            'size': len(region),
+                            'mean_value': float(np.mean([image[p[0], p[1]] for p in region]))
+                        })
+
+        # Find connected cold regions
+        visited = np.zeros((height, width), dtype=bool)
+
+        for y in range(height):
+            for x in range(width):
+                if cold_mask[y, x] and not visited[y, x]:
+                    region = self._flood_fill(y, x, cold_mask, visited, height, width)
+                    if len(region) >= self.min_spot_size:
+                        for py, px in region:
+                            defect_map[py, px] = DefectType.COLD_SPOT.value
+                        ys = [p[0] for p in region]
+                        xs = [p[1] for p in region]
+                        cold_spots.append({
+                            'center_y': int(np.mean(ys)),
+                            'center_x': int(np.mean(xs)),
+                            'size': len(region),
+                            'mean_value': float(np.mean([image[p[0], p[1]] for p in region]))
+                        })
+
+        return defect_map, {'hot_spots': hot_spots, 'cold_spots': cold_spots}
+
+    def _flood_fill(self, start_y, start_x, mask, visited, height, width):
+        """Flood fill to find connected region"""
+        region = []
+        stack = [(start_y, start_x)]
+
+        while stack:
+            y, x = stack.pop()
+            if y < 0 or y >= height or x < 0 or x >= width:
+                continue
+            if visited[y, x] or not mask[y, x]:
+                continue
+
+            visited[y, x] = True
+            region.append((y, x))
+
+            stack.extend([(y-1, x), (y+1, x), (y, x-1), (y, x+1)])
+
+        return region
+
+
+class HomogenityCalculator:
+    """Calculate global homogenity score (Coefficient of Variation)"""
+
+    @staticmethod
+    def calculate(image: np.ndarray) -> Dict[str, float]:
+        """
+        Calculate homogenity metrics for the image.
+
+        Returns:
+            Dictionary with CV, homogenity percentage, and other metrics
+        """
+        if image is None or image.size == 0:
+            return {'homogenity_percent': 0, 'cv': 0, 'mean': 0, 'std': 0}
+
+        mean = np.mean(image)
+        std = np.std(image)
+
+        if mean == 0:
+            cv = 0
+        else:
+            cv = std / mean  # Coefficient of Variation
+
+        # Homogenity = 1 - CV (capped at 0-100%)
+        homogenity = max(0, min(100, (1 - cv) * 100))
+
+        return {
+            'homogenity_percent': homogenity,
+            'cv': cv,
+            'cv_percent': cv * 100,
+            'mean': float(mean),
+            'std': float(std),
+            'min': float(np.min(image)),
+            'max': float(np.max(image)),
+            'range': float(np.max(image) - np.min(image)),
+        }
+
+
 # Export public API
 __all__ = [
     'PLMAnalyzer',
@@ -810,4 +1189,10 @@ __all__ = [
     'BridgedPixelAnalyzer',
     'StuckPixelAnalyzer',
     'ClusterAnalyzer',
+    # NEW analyzers
+    'GradientAnalyzer',
+    'MuraDetector',
+    'LineColumnAnalyzer',
+    'HotColdSpotAnalyzer',
+    'HomogenityCalculator',
 ]
