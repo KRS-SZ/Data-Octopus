@@ -3636,26 +3636,35 @@ def detect_plm_types():
         import re
         for filename in os.listdir(plm_dir):
             if filename.lower().endswith(('.plm', '.txt', '.csv', '.dat')):
-                # Pattern 1: ..._TypeName_timestamp.txt (z.B. CheckerSyn, InvCheckerSyn)
+                plm_type = None
+
+                # Pattern 1: ..._TypeName_timestamp.txt (z.B. UniformitySyn, CheckerSyn, PLM-Bridged-Pixels)
                 match = re.search(r'_([A-Za-z][A-Za-z0-9\-]+)_\d{14}\.', filename)
                 if match:
                     plm_type = match.group(1)
-                    found_types.add(plm_type)
-                    continue
-                
-                # Pattern 2: OPTIC-PEQA-TYPENAME-... (z.B. GRIDUNIFORMITY, CHECKER, etc.)
-                match = re.search(r'OPTIC-PEQA-([A-Z0-9]+)-', filename, re.IGNORECASE)
-                if match:
-                    plm_type = match.group(1)
-                    found_types.add(plm_type)
-                    continue
-                
-                # Pattern 3: _TypeName_ anywhere in filename (fallback)
-                match = re.search(r'_(Uniformity|Checker|Bridged|Stitched|InvChecker)[A-Za-z]*_', filename, re.IGNORECASE)
-                if match:
-                    plm_type = match.group(1)
-                    found_types.add(plm_type)
-                    
+
+                # Pattern 2: OPTIC-PEQA-TYPENAME-... (z.B. GRIDUNIFORMITY, PLMFGR)
+                if not plm_type:
+                    match = re.search(r'OPTIC-PEQA-([A-Z]+)', filename, re.IGNORECASE)
+                    if match:
+                        plm_type = match.group(1)
+
+                # Normalisiere bekannte Typen
+                if plm_type:
+                    plm_type_lower = plm_type.lower()
+                    if 'uniformity' in plm_type_lower or 'griduniformity' in plm_type_lower:
+                        found_types.add('Uniformity')
+                    elif 'checker' in plm_type_lower and 'inv' not in plm_type_lower:
+                        found_types.add('Checker')
+                    elif 'invchecker' in plm_type_lower:
+                        found_types.add('InvChecker')
+                    elif 'bridged' in plm_type_lower:
+                        found_types.add('Bridged')
+                    elif 'stitched' in plm_type_lower:
+                        found_types.add('Stitched')
+                    elif plm_type_lower not in ['txt', 'csv', 'dat', 'plmfgr']:  # Datei-Formate ausschließen
+                        found_types.add(plm_type)
+
     except Exception as e:
         print(f"Error detecting PLM types: {e}")
 
