@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "5.2.0"  # NEW: Dashboard Tab als erstes, Config+Datalog nach hinten
+APP_VERSION = "5.2.4"  # Dashboard, 1-Zeilen-Toolbar, PLM Uniformity-Fix
 
 import sys
 
@@ -3627,14 +3627,20 @@ def detect_plm_types():
         except:
             pass
 
+    print(f"DEBUG detect_plm_types: plm_dir = {plm_dir}")
+
     if not plm_dir or not os.path.exists(plm_dir):
+        print(f"DEBUG detect_plm_types: Directory does not exist or is None")
         return plm_types
 
     found_types = set()
 
     try:
         import re
-        for filename in os.listdir(plm_dir):
+        files = os.listdir(plm_dir)
+        print(f"DEBUG detect_plm_types: {len(files)} files found")
+
+        for filename in files[:20]:  # Debug first 20 files
             if filename.lower().endswith(('.plm', '.txt', '.csv', '.dat')):
                 plm_type = None
 
@@ -3642,12 +3648,14 @@ def detect_plm_types():
                 match = re.search(r'_([A-Za-z][A-Za-z0-9\-]+)_\d{14}\.', filename)
                 if match:
                     plm_type = match.group(1)
+                    print(f"DEBUG Pattern1 matched: {plm_type} from {filename[:50]}...")
 
                 # Pattern 2: OPTIC-PEQA-TYPENAME-... (z.B. GRIDUNIFORMITY, PLMFGR)
                 if not plm_type:
                     match = re.search(r'OPTIC-PEQA-([A-Z]+)', filename, re.IGNORECASE)
                     if match:
                         plm_type = match.group(1)
+                        print(f"DEBUG Pattern2 matched: {plm_type} from {filename[:50]}...")
 
                 # Normalisiere bekannte Typen
                 if plm_type:
@@ -3665,13 +3673,45 @@ def detect_plm_types():
                     elif plm_type_lower not in ['txt', 'csv', 'dat', 'plmfgr']:  # Datei-Formate ausschließen
                         found_types.add(plm_type)
 
+        # Process all remaining files (without debug output)
+        for filename in files[20:]:
+            if filename.lower().endswith(('.plm', '.txt', '.csv', '.dat')):
+                plm_type = None
+                match = re.search(r'_([A-Za-z][A-Za-z0-9\-]+)_\d{14}\.', filename)
+                if match:
+                    plm_type = match.group(1)
+                if not plm_type:
+                    match = re.search(r'OPTIC-PEQA-([A-Z]+)', filename, re.IGNORECASE)
+                    if match:
+                        plm_type = match.group(1)
+                if plm_type:
+                    plm_type_lower = plm_type.lower()
+                    if 'uniformity' in plm_type_lower or 'griduniformity' in plm_type_lower:
+                        found_types.add('Uniformity')
+                    elif 'checker' in plm_type_lower and 'inv' not in plm_type_lower:
+                        found_types.add('Checker')
+                    elif 'invchecker' in plm_type_lower:
+                        found_types.add('InvChecker')
+                    elif 'bridged' in plm_type_lower:
+                        found_types.add('Bridged')
+                    elif 'stitched' in plm_type_lower:
+                        found_types.add('Stitched')
+                    elif plm_type_lower not in ['txt', 'csv', 'dat', 'plmfgr']:
+                        found_types.add(plm_type)
+
     except Exception as e:
         print(f"Error detecting PLM types: {e}")
+
+    print(f"DEBUG detect_plm_types: found_types = {found_types}")
 
     if found_types:
         # Sort and add to list
         plm_types.extend(sorted(found_types))
         print(f"Detected PLM types: {plm_types}")
+    else:
+        print(f"No PLM types detected in {plm_dir}")
+
+    return plm_types
 
     return plm_types
 
@@ -9482,23 +9522,57 @@ def find_plm_files(x_coord, y_coord, plm_type_filter=None):
 
             if match1 or match2 or match3:
 
-                # Extract PLM type from filename if present
-                type_match = re.search(r'PLM-([A-Z0-9]+)-', filename, re.IGNORECASE)
+                # Extract PLM type from filename
+                plm_type = None
+
+                # Pattern 1: PLM-TYPE- format (z.B. PLM-Bridged-Pixels, PLM-Stitched-Image)
+                type_match = re.search(r'PLM-([A-Za-z]+)', filename, re.IGNORECASE)
                 if type_match:
                     plm_type = type_match.group(1).upper()
+                    # Normalize: BRIDGED-PIXELS -> BRIDGED
+                    if 'BRIDGED' in plm_type:
+                        plm_type = 'BRIDGED'
+                    elif 'STITCHED' in plm_type:
+                        plm_type = 'STITCHED'
+
+                # Pattern 2: _UniformitySyn_ or _Uniformity_ format
+                if not plm_type:
+                    type_match = re.search(r'_(Uniformity[A-Za-z]*|CheckerSyn|InvCheckerSyn)_', filename, re.IGNORECASE)
+                    if type_match:
+                        raw_type = type_match.group(1).upper()
+                        if 'UNIFORMITY' in raw_type:
+                            plm_type = 'UNIFORMITY'
+                        elif 'INVCHECKER' in raw_type:
+                            plm_type = 'INVCHECKER'
+                        elif 'CHECKER' in raw_type:
+                            plm_type = 'CHECKER'
+
+                # Pattern 3: OPTIC-PEQA-GRIDUNIFORMITY format
+                if not plm_type:
+                    type_match = re.search(r'OPTIC-PEQA-([A-Z]+)', filename, re.IGNORECASE)
+                    if type_match:
+                        raw_type = type_match.group(1).upper()
+                        if 'UNIFORMITY' in raw_type or 'GRIDUNIFORMITY' in raw_type:
+                            plm_type = 'UNIFORMITY'
+                        elif raw_type not in ['TXT', 'CSV', 'DAT', 'PLMFGR']:
+                            plm_type = raw_type
+
+                # Add to found types
+                if plm_type:
                     found_types.add(plm_type)
 
                     if plm_type_filter and plm_type_filter != "All":
                         if plm_type != plm_type_filter.upper():
                             continue
                 else:
-                    # Try to extract type from file extension or other patterns
+                    # Fallback: use file extension (but exclude TXT/CSV/DAT)
                     ext = os.path.splitext(filename)[1].upper().replace('.', '')
-                    found_types.add(ext)
+                    if ext not in ['TXT', 'CSV', 'DAT']:
+                        found_types.add(ext)
 
-                    if plm_type_filter and plm_type_filter != "All":
-                        if ext != plm_type_filter.upper():
-                            continue
+                        if plm_type_filter and plm_type_filter != "All":
+                            if ext != plm_type_filter.upper():
+                                continue
 
                 full_path = os.path.join(plm_dir, filename)
                 matching_files.append(full_path)
