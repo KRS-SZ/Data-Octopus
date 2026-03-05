@@ -35322,10 +35322,14 @@ plm_mod_mura_frame.pack(side=tk.LEFT, padx=3, pady=2)
 plm_mod_mura_var = tk.BooleanVar(value=False)
 tk.Checkbutton(plm_mod_mura_frame, text="Mura", variable=plm_mod_mura_var,
                font=("Segoe UI", 9, "bold"), fg="#E91E63").pack(side=tk.LEFT, padx=2)
-tk.Label(plm_mod_mura_frame, text="blur σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+# AUTO checkbox for automatic parameter detection
+plm_mura_auto_var = tk.BooleanVar(value=False)
+tk.Checkbutton(plm_mod_mura_frame, text="Auto", variable=plm_mura_auto_var,
+               font=("Segoe UI", 8), fg="#666").pack(side=tk.LEFT)
+tk.Label(plm_mod_mura_frame, text="blur:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
 plm_mura_blur_var = tk.StringVar(value="10")
 tk.Entry(plm_mod_mura_frame, textvariable=plm_mura_blur_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
-tk.Label(plm_mod_mura_frame, text="thresh%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Label(plm_mod_mura_frame, text="th%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
 plm_mura_thresh_var = tk.StringVar(value="3")
 tk.Entry(plm_mod_mura_frame, textvariable=plm_mura_thresh_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
 
@@ -35463,9 +35467,12 @@ def plm_run_analysis():
             # Mura Detection
             if enabled_modules.get('mura', False):
                 try:
+                    # Check if AUTO mode is enabled
+                    auto_mode = plm_mura_auto_var.get()
                     mura_detector = MuraDetector(
                         blur_sigma=float(plm_mura_blur_var.get()),
-                        threshold_percent=float(plm_mura_thresh_var.get())
+                        threshold_percent=float(plm_mura_thresh_var.get()),
+                        auto_detect=auto_mode  # Use auto detection if checkbox is checked
                     )
                     mura_map, mura_spots = mura_detector.analyze(result.raw_image)
                     result.defect_map = np.where(
@@ -35639,10 +35646,20 @@ def plm_update_single_die_display(result):
 
     # Defect map
     if result.defect_map is not None:
-        colors = ['#00C853', '#FF6B6B', '#D32F2F', '#FFD54F', '#FF8F00',
-                  '#42A5F5', '#1565C0', '#424242', '#AB47BC']
-        bounds = [0, 5, 10, 15, 20, 25, 30, 35, 40, 55]
-        cmap = ListedColormap(colors)
+        # Extended color mapping for all defect types
+        colors = ['#00C853',  # 0: OK
+                  '#FF6B6B', '#FF6B6B',  # 5-10: placeholder
+                  '#D32F2F', '#D32F2F',  # 10-15: Bridged
+                  '#FFD54F', '#FF8F00',  # 15-25: Uniformity
+                  '#42A5F5', '#1565C0',  # 25-35: Stuck
+                  '#424242',             # 35-40: Dead
+                  '#AB47BC',             # 40-55: Cluster
+                  '#00BCD4',             # 55-65: Gradient
+                  '#E91E63',             # 65-75: Mura
+                  '#795548', '#8D6E63',  # 75-85: Line/Column
+                  '#FF5722', '#3F51B5']  # 85-100: Hot/Cold
+        bounds = [0, 5, 10, 15, 20, 25, 30, 35, 40, 55, 65, 75, 80, 85, 90, 95, 100]
+        cmap = ListedColormap(colors[:len(bounds)-1])
         norm = BoundaryNorm(bounds, cmap.N)
 
         im2 = ax2.imshow(result.defect_map, cmap=cmap, norm=norm, aspect='equal')
@@ -35650,17 +35667,62 @@ def plm_update_single_die_display(result):
         ax2.set_xlabel("Pixel X", fontsize=8)
         ax2.set_ylabel("Pixel Y", fontsize=8)
 
-        # Legend in separate panel (ax_legend) - OUTSIDE the image
+        # DYNAMIC Legend based on active modules and found defects
         ax_legend.axis('off')
         legend_elements = [
             mpatches.Patch(facecolor='#00C853', edgecolor='black', label='OK'),
-            mpatches.Patch(facecolor='#D32F2F', edgecolor='black', label=f'Bridged: {result.bridged_count}'),
-            mpatches.Patch(facecolor='#FF8F00', edgecolor='black', label=f'Uniform: {result.uniformity_count}'),
-            mpatches.Patch(facecolor='#42A5F5', edgecolor='black', label=f'Stuck: {result.stuck_count}'),
-            mpatches.Patch(facecolor='#AB47BC', edgecolor='black', label=f'Cluster: {result.cluster_count}'),
         ]
-        ax_legend.legend(handles=legend_elements, loc='upper left', fontsize=8,
-                         framealpha=0.9, handlelength=1.5, handleheight=1.0)
+
+        # Add base defects if module active and count > 0
+        if plm_mod_bridged_var.get():
+            legend_elements.append(
+                mpatches.Patch(facecolor='#D32F2F', edgecolor='black', label=f'Bridged: {result.bridged_count}'))
+        if plm_mod_uniformity_var.get():
+            legend_elements.append(
+                mpatches.Patch(facecolor='#FF8F00', edgecolor='black', label=f'Uniform: {result.uniformity_count}'))
+        if plm_mod_stuck_var.get():
+            legend_elements.append(
+                mpatches.Patch(facecolor='#42A5F5', edgecolor='black', label=f'Stuck: {result.stuck_count}'))
+
+        # Always show clusters if they exist
+        if result.cluster_count > 0:
+            legend_elements.append(
+                mpatches.Patch(facecolor='#AB47BC', edgecolor='black', label=f'Cluster: {result.cluster_count}'))
+
+        # NEW: Add additional analysis types if active
+        if hasattr(result, 'additional_metrics') and result.additional_metrics:
+            if plm_mod_gradient_var.get() and 'gradient' in result.additional_metrics:
+                g = result.additional_metrics['gradient']
+                if g.get('has_gradient', False):
+                    legend_elements.append(
+                        mpatches.Patch(facecolor='#00BCD4', edgecolor='black', label=f"Gradient: {g.get('max_deviation_percent', 0):.1f}%"))
+
+            if plm_mod_mura_var.get() and 'mura' in result.additional_metrics:
+                m = result.additional_metrics['mura']
+                mura_count = m.get('count', 0)
+                if mura_count > 0:
+                    legend_elements.append(
+                        mpatches.Patch(facecolor='#E91E63', edgecolor='black', label=f'Mura: {mura_count} spots'))
+
+            if plm_mod_linecol_var.get() and 'linecol' in result.additional_metrics:
+                lc = result.additional_metrics['linecol']
+                total_lc = lc.get('row_count', 0) + lc.get('col_count', 0)
+                if total_lc > 0:
+                    legend_elements.append(
+                        mpatches.Patch(facecolor='#795548', edgecolor='black', label=f"Line/Col: {lc.get('row_count', 0)}R/{lc.get('col_count', 0)}C"))
+
+            if plm_mod_hotcold_var.get() and 'hotcold' in result.additional_metrics:
+                hc = result.additional_metrics['hotcold']
+                hot_count = len(hc.get('hot_spots', []))
+                cold_count = len(hc.get('cold_spots', []))
+                if hot_count > 0 or cold_count > 0:
+                    legend_elements.append(
+                        mpatches.Patch(facecolor='#FF5722', edgecolor='black', label=f'Hot: {hot_count}'))
+                    legend_elements.append(
+                        mpatches.Patch(facecolor='#3F51B5', edgecolor='black', label=f'Cold: {cold_count}'))
+
+        ax_legend.legend(handles=legend_elements, loc='upper left', fontsize=7,
+                         framealpha=0.9, handlelength=1.2, handleheight=0.8)
     else:
         ax2.text(0.5, 0.5, "No defect data", ha='center', va='center', transform=ax2.transAxes)
         ax2.set_title("Defect Map", fontsize=9)

@@ -988,9 +988,10 @@ class CircularPatternDetector:
 class MuraDetector:
     """Detect Mura (large-area brightness variations / "clouds")"""
 
-    def __init__(self, blur_sigma: float = 15.0, threshold_percent: float = 10.0):
+    def __init__(self, blur_sigma: float = 15.0, threshold_percent: float = 10.0, auto_detect: bool = False):
         self.blur_sigma = blur_sigma
         self.threshold_percent = threshold_percent
+        self.auto_detect = auto_detect
 
     def analyze(self, image: np.ndarray) -> Tuple[np.ndarray, List[Dict]]:
         """
@@ -1007,13 +1008,42 @@ class MuraDetector:
         defect_map = np.zeros((height, width), dtype=np.int32)
         spots = []
 
+        # AUTO-DETECT MODE: Find optimal parameters automatically
+        if self.auto_detect:
+            # Try multiple blur scales
+            best_spots = []
+            best_params = {}
+
+            for blur_sigma in [5, 10, 15, 20]:
+                for thresh in [2, 3, 5, 7]:
+                    temp_map, temp_spots = self._analyze_with_params(image, blur_sigma, thresh)
+                    # Score: prefer finding 1-20 spots (not too few, not too many)
+                    spot_count = len(temp_spots)
+                    if 1 <= spot_count <= 20:
+                        if len(temp_spots) > len(best_spots):
+                            best_spots = temp_spots
+                            best_params = {'blur_sigma': blur_sigma, 'threshold': thresh}
+                            defect_map = temp_map
+
+            if best_params:
+                print(f"Mura AUTO-DETECT: Found {len(best_spots)} spots with blur={best_params['blur_sigma']}, thresh={best_params['threshold']}%")
+            return defect_map, best_spots
+
+        return self._analyze_with_params(image, self.blur_sigma, self.threshold_percent)
+
+    def _analyze_with_params(self, image: np.ndarray, blur_sigma: float, threshold_percent: float) -> Tuple[np.ndarray, List[Dict]]:
+        """Internal analysis with specific parameters"""
+        height, width = image.shape
+        defect_map = np.zeros((height, width), dtype=np.int32)
+        spots = []
+
         # Apply Gaussian blur (low-pass filter)
         try:
             from scipy.ndimage import gaussian_filter
-            blurred = gaussian_filter(image.astype(np.float64), sigma=self.blur_sigma)
+            blurred = gaussian_filter(image.astype(np.float64), sigma=blur_sigma)
         except ImportError:
             # Fallback: simple box filter
-            kernel_size = int(self.blur_sigma * 3)
+            kernel_size = int(blur_sigma * 3)
             if kernel_size % 2 == 0:
                 kernel_size += 1
             blurred = np.zeros_like(image, dtype=np.float64)
@@ -1030,7 +1060,7 @@ class MuraDetector:
         deviation = np.abs(blurred - global_mean) / global_mean * 100
 
         # Mark mura regions
-        mura_mask = deviation > self.threshold_percent
+        mura_mask = deviation > threshold_percent
         defect_map[mura_mask] = DefectType.MURA.value
 
         # Find connected mura regions
