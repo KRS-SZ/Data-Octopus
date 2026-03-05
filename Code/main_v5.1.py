@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "5.1.0"  # NEW: Datalog Tab hinzugefügt
+APP_VERSION = "5.2.0"  # NEW: Dashboard Tab als erstes, Config+Datalog nach hinten
 
 import sys
 
@@ -897,16 +897,17 @@ language_combobox.bind("<<ComboboxSelected>>", change_language)
 notebook = ttk.Notebook(main_win)
 notebook.pack(fill="both", expand=True)
 
-# Tab 1: Configuration (moved to first position)
-tab7 = ttk.Frame(notebook)
-notebook.add(tab7, text="⚙ Config")
+# Tab 1: Dashboard (NEW - als erstes!)
+tab_dashboard = ttk.Frame(notebook)
+notebook.add(tab_dashboard, text="📊 Dashboard")
+try:
+    from src.stdf_analyzer.gui.dashboard_tab import DashboardTab
+    dashboard_tab_instance = DashboardTab(notebook, tab_dashboard)
+except ImportError as e:
+    print(f"Warning: DashboardTab import failed: {e}")
+    tk.Label(tab_dashboard, text="Dashboard nicht verfügbar", font=("Segoe UI", 14)).pack(pady=50)
 
-# Tab 2: Datalog (NEW v5.0.1!)
-tab_datalog = ttk.Frame(notebook)
-notebook.add(tab_datalog, text="📋 Datalog")
-datalog_tab_instance = DatalogTab(notebook, tab_datalog)
-
-# Tab 3: Wafermap (renamed from STDF Heatmap)
+# Tab 2: Wafermap
 tab6 = ttk.Frame(notebook)
 notebook.add(tab6, text="🗺 Wafer")
 
@@ -926,13 +927,22 @@ notebook.add(tab_grr, text="📏 Gage R&R")
 tab_stdf_csv = ttk.Frame(notebook)
 notebook.add(tab_stdf_csv, text="🔄 STDF to CSV")
 
-# Tab 7: Report (at the end)
+# Tab 7: Report
 tab_presentation = ttk.Frame(notebook)
 notebook.add(tab_presentation, text="📑 Report")
 
 # Tab 8: Auto. Jobs Save/Load
 tab_settings = ttk.Frame(notebook)
 notebook.add(tab_settings, text="🔄 Auto. Jobs")
+
+# Tab 9: Datalog (nach hinten verschoben)
+tab_datalog = ttk.Frame(notebook)
+notebook.add(tab_datalog, text="📋 Datalog")
+datalog_tab_instance = DatalogTab(notebook, tab_datalog)
+
+# Tab 10: Configuration (ganz am Ende)
+tab7 = ttk.Frame(notebook)
+notebook.add(tab7, text="⚙ Config")
 
 # Global variables for plot canvases
 canvas1 = None
@@ -3917,6 +3927,411 @@ wafer_mode_label = tk.Label(
     font=("Helvetica", 8), fg="#1565C0"
 )
 wafer_mode_label.pack(fill=tk.X, padx=5)
+
+# ============== LOAD WAFER BUTTON + MANIFOLD INTEGRATION ==============
+def show_load_wafer_dialog():
+    """Show dialog to choose: Load lokal, Manifold (fast), Manifold (complete)"""
+    parent = wafer_left_panel.winfo_toplevel()
+    dialog = tk.Toplevel(parent)
+    dialog.title("Load Wafer")
+    dialog.geometry("520x480")
+    dialog.transient(parent)
+    dialog.grab_set()
+    dialog.resizable(False, False)
+
+    # Center on parent
+    dialog.update_idletasks()
+    x = parent.winfo_x() + (parent.winfo_width() - 520) // 2
+    y = parent.winfo_y() + (parent.winfo_height() - 480) // 2
+    dialog.geometry(f"+{x}+{y}")
+
+    # Title
+    tk.Label(dialog, text="📂 Load Wafer Data", font=("Segoe UI", 14, "bold")).pack(pady=(15, 10))
+    tk.Label(dialog, text="Choose data source:", font=("Segoe UI", 10)).pack(pady=(0, 15))
+
+    # Button frame
+    btn_frame = tk.Frame(dialog)
+    btn_frame.pack(fill=tk.BOTH, expand=True, padx=20)
+
+    # Option 1: Load lokal
+    local_frame = tk.Frame(btn_frame, bg="#E3F2FD", relief=tk.RIDGE, bd=1)
+    local_frame.pack(fill=tk.X, pady=5)
+    tk.Label(local_frame, text="💻 Load lokal", font=("Segoe UI", 11, "bold"), bg="#E3F2FD", fg="#1565C0").pack(anchor=tk.W, padx=10, pady=(8,2))
+    tk.Label(local_frame, text="Load STDF/CSV/MC-300 from local file system", font=("Segoe UI", 9), bg="#E3F2FD", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
+    local_btn = tk.Button(local_frame, text="Select File...", command=lambda: [dialog.destroy(), load_local_wafer()],
+                          bg="#1976D2", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2")
+    local_btn.pack(side=tk.RIGHT, padx=10, pady=8)
+
+    # Option 2: Manifold (fast) - only CSV
+    fast_frame = tk.Frame(btn_frame, bg="#FFF3E0", relief=tk.RIDGE, bd=1)
+    fast_frame.pack(fill=tk.X, pady=5)
+    tk.Label(fast_frame, text="⚡ Manifold (fast)", font=("Segoe UI", 11, "bold"), bg="#FFF3E0", fg="#E65100").pack(anchor=tk.W, padx=10, pady=(8,2))
+    tk.Label(fast_frame, text="Download ZIP + extract CSV only (no PLM images)", font=("Segoe UI", 9), bg="#FFF3E0", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
+    fast_btn = tk.Button(fast_frame, text="Browse Manifold...", command=lambda: [dialog.destroy(), load_manifold_fast()],
+                         bg="#F57C00", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2")
+    fast_btn.pack(side=tk.RIGHT, padx=10, pady=8)
+
+    # Option 3: Manifold (complete) - full ZIP
+    full_frame = tk.Frame(btn_frame, bg="#E8F5E9", relief=tk.RIDGE, bd=1)
+    full_frame.pack(fill=tk.X, pady=5)
+    tk.Label(full_frame, text="📦 Manifold (complete)", font=("Segoe UI", 11, "bold"), bg="#E8F5E9", fg="#2E7D32").pack(anchor=tk.W, padx=10, pady=(8,2))
+    tk.Label(full_frame, text="Download full ZIP (CSV + PLM images)", font=("Segoe UI", 9), bg="#E8F5E9", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
+    full_btn = tk.Button(full_frame, text="Browse Manifold...", command=lambda: [dialog.destroy(), load_manifold_complete()],
+                         bg="#388E3C", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2")
+    full_btn.pack(side=tk.RIGHT, padx=10, pady=8)
+
+    # Cancel button
+    tk.Button(dialog, text="Cancel", command=dialog.destroy, font=("Segoe UI", 9)).pack(pady=15)
+
+def load_local_wafer():
+    """Load wafer from local file system - supports STDF, CSV, MC-300"""
+    file_path = filedialog.askopenfilename(
+        title="Select STDF, CSV, or MC-300 file",
+        filetypes=[
+            ("All supported", "*.stdf;*.std;*.csv;*.txt"),
+            ("STDF files", "*.stdf;*.std"),
+            ("CSV files", "*.csv"),
+            ("MC-300 files", "*.txt"),
+            ("All files", "*.*")
+        ]
+    )
+    if file_path:
+        ext = file_path.lower()
+        if ext.endswith('.stdf') or ext.endswith('.std'):
+            load_multiple_stdf_files([file_path])
+        elif ext.endswith('.csv'):
+            load_csv_wafermap_file()
+        elif ext.endswith('.txt'):
+            load_mc300_file()
+        else:
+            load_csv_wafermap_file()
+
+def load_manifold_fast():
+    """Load wafer from Manifold - fast mode (CSV only)"""
+    show_manifold_browser(mode="fast")
+
+def load_manifold_complete():
+    """Load wafer from Manifold - complete mode (full ZIP with images)"""
+    show_manifold_browser(mode="complete")
+
+def show_manifold_browser(mode="fast"):
+    """Show Manifold file browser dialog"""
+    import subprocess
+    import tempfile
+    import zipfile
+    import io
+
+    parent = wafer_left_panel.winfo_toplevel()
+    browser = tk.Toplevel(parent)
+    browser.title(f"Manifold Browser ({'Fast - CSV only' if mode == 'fast' else 'Complete - Full ZIP'})")
+    browser.geometry("750x600")
+    browser.transient(parent)
+    browser.grab_set()
+    browser.resizable(True, True)
+
+    # Manifold paths
+    MANIFOLD_PATHS = {
+        "Tuscar": {
+            "9ATE1": "odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/tuskar/uled/incoming/tool_data/9ATE1",
+            "9ATE2": "odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/tuskar/uled/incoming/tool_data/9ATE2",
+            "9ATE3": "odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/tuskar/uled/incoming/tool_data/9ATE3",
+            "9ATE4": "odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/tuskar/uled/incoming/tool_data/9ATE4",
+        },
+        "Taiwan": {
+            "TPW-CP2": "odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/tpw/PEQUIN/CP2",
+        },
+        "Regensburg": {
+            "RGS-ATE": "odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/arranmore/testing",
+        }
+    }
+
+    # Top: Site/Tool selection
+    top_frame = tk.Frame(browser)
+    top_frame.pack(fill=tk.X, padx=10, pady=10)
+
+    tk.Label(top_frame, text="Site:", font=("Segoe UI", 10, "bold")).pack(side=tk.LEFT)
+    site_var = tk.StringVar(value="Tuscar")
+    site_combo = ttk.Combobox(top_frame, textvariable=site_var, values=list(MANIFOLD_PATHS.keys()), state="readonly", width=12)
+    site_combo.pack(side=tk.LEFT, padx=5)
+
+    tk.Label(top_frame, text="Tool:", font=("Segoe UI", 10, "bold")).pack(side=tk.LEFT, padx=(15,0))
+    tool_var = tk.StringVar(value="9ATE3")
+    tool_combo = ttk.Combobox(top_frame, textvariable=tool_var, state="readonly", width=12)
+    tool_combo.pack(side=tk.LEFT, padx=5)
+
+    def update_tools(*args):
+        site = site_var.get()
+        tools = list(MANIFOLD_PATHS.get(site, {}).keys())
+        tool_combo['values'] = tools
+        if tools:
+            tool_var.set(tools[0])
+
+    site_var.trace('w', update_tools)
+    update_tools()
+
+    refresh_btn = tk.Button(top_frame, text="🔄 Refresh", command=lambda: refresh_file_list())
+    refresh_btn.pack(side=tk.LEFT, padx=10)
+
+    # Status
+    status_var = tk.StringVar(value="Select site and tool, then click Refresh")
+    status_label = tk.Label(browser, textvariable=status_var, font=("Segoe UI", 9), fg="#666")
+    status_label.pack(fill=tk.X, padx=10)
+
+    # Bottom buttons - PACK FIRST so they are always visible!
+    btn_frame_bottom = tk.Frame(browser)
+    btn_frame_bottom.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
+
+    tk.Button(btn_frame_bottom, text="Cancel", command=browser.destroy).pack(side=tk.RIGHT, padx=5)
+
+    load_btn = tk.Button(btn_frame_bottom, text=f"📥 Load {'CSV' if mode == 'fast' else 'Complete ZIP'}",
+                         command=lambda: load_selected(), bg="#1976D2", fg="white", font=("Segoe UI", 10, "bold"))
+    load_btn.pack(side=tk.RIGHT, padx=5)
+
+    # File list
+    list_frame = tk.Frame(browser)
+    list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+    cols = ("filename", "size", "date")
+    file_tree = ttk.Treeview(list_frame, columns=cols, show="headings", height=15)
+    file_tree.heading("filename", text="Filename")
+    file_tree.heading("size", text="Size")
+    file_tree.heading("date", text="Date")
+    file_tree.column("filename", width=400)
+    file_tree.column("size", width=80)
+    file_tree.column("date", width=120)
+
+    scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=file_tree.yview)
+    file_tree.configure(yscrollcommand=scrollbar.set)
+    file_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+    manifold_files = []
+
+    def refresh_file_list():
+        nonlocal manifold_files
+        site = site_var.get()
+        tool = tool_var.get()
+        path = MANIFOLD_PATHS.get(site, {}).get(tool, "")
+
+        if not path:
+            status_var.set("Invalid path")
+            return
+
+        status_var.set(f"Loading from {path}...")
+        browser.update()
+
+        for item in file_tree.get_children():
+            file_tree.delete(item)
+        manifold_files = []
+
+        try:
+            cmd = f'manifold --vip ls {path}'
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
+
+            if result.returncode == 0:
+                for line in result.stdout.strip().split('\n'):
+                    parts = line.strip().split(None, 1)
+                    if len(parts) != 2:
+                        continue
+                    size_str, name = parts
+                    if size_str == "DIR" or name.endswith('.manifest'):
+                        continue
+                    if not name.endswith('.zip'):
+                        continue
+
+                    try:
+                        size = int(size_str)
+                        if size > 1e9:
+                            size_disp = f"{size/1e9:.1f} GB"
+                        elif size > 1e6:
+                            size_disp = f"{size/1e6:.1f} MB"
+                        else:
+                            size_disp = f"{size/1e3:.1f} KB"
+                    except:
+                        size_disp = size_str
+                        size = 0
+
+                    import re
+                    date_match = re.search(r'_(\d{8})-(\d{6})\.zip', name)
+                    if date_match:
+                        date_str = f"{date_match.group(1)[:4]}-{date_match.group(1)[4:6]}-{date_match.group(1)[6:]}"
+                    else:
+                        date_str = "---"
+
+                    manifold_files.append({"name": name, "size": size, "path": path})
+                    file_tree.insert("", tk.END, values=(name, size_disp, date_str))
+
+                status_var.set(f"Found {len(manifold_files)} files")
+            else:
+                status_var.set(f"Error: {result.stderr[:100]}")
+        except Exception as e:
+            status_var.set(f"Error: {str(e)[:100]}")
+
+    def load_selected():
+        selection = file_tree.selection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select a file to load")
+            return
+
+        idx = file_tree.index(selection[0])
+        file_info = manifold_files[idx]
+
+        status_var.set(f"Loading {file_info['name']}...")
+        browser.update()
+
+        try:
+            if mode == "fast":
+                load_from_manifold_fast(file_info['path'], file_info['name'])
+            else:
+                load_from_manifold_complete(file_info['path'], file_info['name'])
+
+            browser.destroy()
+        except Exception as e:
+            status_var.set(f"Error loading: {str(e)[:100]}")
+            messagebox.showerror("Load Error", str(e))
+
+def load_from_manifold_fast(manifold_path, filename):
+    """Option 2: Fast load - download ZIP and extract CSV to memory"""
+    import subprocess
+    import tempfile
+    import zipfile
+    import io
+
+    temp_dir = tempfile.mkdtemp(prefix="manifold_fast_")
+    zip_path = os.path.join(temp_dir, filename)
+
+    try:
+        cmd = f'manifold --vip get {manifold_path}/{filename} {zip_path}'
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=600)
+
+        if result.returncode != 0:
+            raise Exception(f"Download failed: {result.stderr}")
+
+        with zipfile.ZipFile(zip_path, 'r') as zf:
+            csv_files = [f for f in zf.namelist() if f.endswith('.csv')]
+
+            if not csv_files:
+                raise Exception("No CSV file found in ZIP")
+
+            extract_dir = os.path.join(temp_dir, "extracted")
+            zf.extract(csv_files[0], extract_dir)
+            csv_path = os.path.join(extract_dir, csv_files[0])
+
+            # Load CSV using existing function
+            load_csv_wafermap_from_path(csv_path)
+
+        import shutil
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+    except Exception as e:
+        import shutil
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        raise e
+
+def load_from_manifold_complete(manifold_path, filename):
+    """Option 1: Complete load - download and extract full ZIP to temp folder"""
+    import subprocess
+    import tempfile
+    import zipfile
+
+    temp_dir = tempfile.mkdtemp(prefix="manifold_complete_")
+    zip_path = os.path.join(temp_dir, filename)
+    extract_dir = os.path.join(temp_dir, "extracted")
+
+    try:
+        cmd = f'manifold --vip get {manifold_path}/{filename} {zip_path}'
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=1800)
+
+        if result.returncode != 0:
+            raise Exception(f"Download failed: {result.stderr}")
+
+        with zipfile.ZipFile(zip_path, 'r') as zf:
+            zf.extractall(extract_dir)
+
+        csv_path = None
+        for root, dirs, files in os.walk(extract_dir):
+            for f in files:
+                if f.endswith('.csv'):
+                    csv_path = os.path.join(root, f)
+                    break
+            if csv_path:
+                break
+
+        if not csv_path:
+            raise Exception("No CSV file found in extracted ZIP")
+
+        load_csv_wafermap_from_path(csv_path)
+
+        global manifold_temp_dir
+        manifold_temp_dir = temp_dir
+
+        messagebox.showinfo("Loaded", f"Wafer loaded from Manifold!\n\nTemp folder: {temp_dir}\n\nPLM images available.")
+
+    except Exception as e:
+        import shutil
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        raise e
+
+def load_csv_wafermap_from_path(csv_path):
+    """Load CSV wafermap from a specific file path"""
+    global current_stdf_data, current_wafer_id, test_parameters, grouped_parameters, test_limits
+    global multiple_stdf_data, multiple_wafer_ids, die_image_directory
+
+    try:
+        print(f"Loading CSV file: {csv_path}")
+        df = pd.read_csv(csv_path)
+
+        x_col_candidates = ['x', 'X', 'x_coord', 'X_COORD', 'DIE_X', 'die_x', 'col', 'COL']
+        y_col_candidates = ['y', 'Y', 'y_coord', 'Y_COORD', 'DIE_Y', 'die_y', 'row', 'ROW']
+
+        x_col = None
+        y_col = None
+
+        for candidate in x_col_candidates:
+            if candidate in df.columns:
+                x_col = candidate
+                break
+
+        for candidate in y_col_candidates:
+            if candidate in df.columns:
+                y_col = candidate
+                break
+
+        if x_col is None or y_col is None:
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            if len(numeric_cols) >= 2:
+                x_col = numeric_cols[0]
+                y_col = numeric_cols[1]
+
+        df = df.rename(columns={x_col: 'x', y_col: 'y'})
+
+        current_stdf_data = df
+        wafer_id = os.path.basename(csv_path).replace('.csv', '')
+        current_wafer_id = wafer_id
+
+        multiple_stdf_data = [df]
+        multiple_wafer_ids = [wafer_id]
+
+        update_group_combobox()
+        refresh_heatmap_display()
+
+        print(f"Loaded CSV with {len(df)} dies")
+
+    except Exception as e:
+        print(f"Error loading CSV: {e}")
+        messagebox.showerror("Load Error", f"Failed to load CSV:\n{e}")
+
+# Load Wafer Button
+load_wafer_btn = tk.Button(
+    wafer_left_panel,
+    text="📂 Load Wafer",
+    font=("Segoe UI", 10, "bold"),
+    bg="#1565C0",
+    fg="white",
+    cursor="hand2",
+    command=show_load_wafer_dialog
+)
+load_wafer_btn.pack(fill=tk.X, padx=5, pady=(8, 5))
 
 # Buttons frame
 wafer_select_btn_frame = tk.Frame(wafer_left_panel)

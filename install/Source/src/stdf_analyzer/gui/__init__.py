@@ -1,0 +1,3 @@
+"""
+Tkinter GUI components.
+"""
