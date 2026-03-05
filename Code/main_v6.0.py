@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "5.2.6"  # Dashboard, 1-Zeilen-Toolbar, PLM Uniformity, Dialog-Fix, CSV direktes Laden
+APP_VERSION = "6.0.0"  # PLM Image Analysis Tab - Uniformity, Bridged, Stuck Pixel Detection
 
 import sys
 
@@ -923,7 +923,11 @@ notebook.add(tab_diffmap, text="🔄 Diffmap")
 tab_grr = ttk.Frame(notebook)
 notebook.add(tab_grr, text="📏 Gage R&R")
 
-# Tab 6: STDF to CSV Converter
+# Tab 6: PLM Image Analysis (NEU v6.0.0)
+tab_plm_analysis = ttk.Frame(notebook)
+notebook.add(tab_plm_analysis, text="🔬 PLM Analysis")
+
+# Tab 7: STDF to CSV Converter
 tab_stdf_csv = ttk.Frame(notebook)
 notebook.add(tab_stdf_csv, text="🔄 STDF to CSV")
 
@@ -35039,5 +35043,502 @@ settings_info_label.pack(pady=8, padx=10)
 
 # Initial load of job list
 refresh_job_list()
+
+# ================================================================================
+# PLM IMAGE ANALYSIS TAB (v6.0.0)
+# ================================================================================
+
+# Import PLM Analyzer
+try:
+    from src.stdf_analyzer.core.plm_analyzer import (
+        PLMAnalyzer, PLMImage, AnalysisResult, AnalysisThresholds,
+        DefectType, DEFECT_COLORS, DEFECT_NAMES
+    )
+    PLM_ANALYZER_AVAILABLE = True
+    print("PLM Analyzer module loaded successfully")
+except ImportError as e:
+    PLM_ANALYZER_AVAILABLE = False
+    print(f"Warning: PLM Analyzer module not available: {e}")
+
+# Global state for PLM Analysis Tab
+plm_analysis_results = {}  # Dict[(die_x, die_y)] -> AnalysisResult
+plm_analysis_current_die = None  # Current selected die for analysis
+plm_analysis_thresholds = AnalysisThresholds() if PLM_ANALYZER_AVAILABLE else None
+plm_analyzer_instance = PLMAnalyzer(plm_analysis_thresholds) if PLM_ANALYZER_AVAILABLE else None
+
+# PLM Analysis Tab Layout
+plm_main_frame = tk.Frame(tab_plm_analysis)
+plm_main_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+# === CONTROL PANEL (Top) ===
+plm_control_frame = tk.LabelFrame(plm_main_frame, text="Analysis Controls", font=("Segoe UI", 10, "bold"))
+plm_control_frame.pack(fill=tk.X, padx=5, pady=5)
+
+plm_control_row1 = tk.Frame(plm_control_frame)
+plm_control_row1.pack(fill=tk.X, padx=5, pady=5)
+
+# Mode selection
+tk.Label(plm_control_row1, text="Mode:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(0, 5))
+plm_mode_var = tk.StringVar(value="single")
+tk.Radiobutton(plm_control_row1, text="Single Die", variable=plm_mode_var, value="single",
+               font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=2)
+tk.Radiobutton(plm_control_row1, text="Whole Wafer", variable=plm_mode_var, value="wafer",
+               font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=2)
+
+# Separator
+ttk.Separator(plm_control_row1, orient='vertical').pack(side=tk.LEFT, fill='y', padx=10)
+
+# PLM Source
+tk.Label(plm_control_row1, text="Source:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(0, 5))
+plm_source_var = tk.StringVar(value="stitched")
+plm_source_combo = ttk.Combobox(plm_control_row1, textvariable=plm_source_var,
+                                 values=["Stitched (Raw)", "Pre-calculated"],
+                                 state="readonly", width=15)
+plm_source_combo.pack(side=tk.LEFT, padx=2)
+plm_source_combo.current(0)
+
+# Analysis type
+tk.Label(plm_control_row1, text="Analysis:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(10, 5))
+plm_analysis_type_var = tk.StringVar(value="all")
+plm_analysis_combo = ttk.Combobox(plm_control_row1, textvariable=plm_analysis_type_var,
+                                   values=["All Defects", "Uniformity Only", "Bridged Only", "Stuck Only"],
+                                   state="readonly", width=15)
+plm_analysis_combo.pack(side=tk.LEFT, padx=2)
+plm_analysis_combo.current(0)
+
+# Control row 2 - Thresholds
+plm_control_row2 = tk.Frame(plm_control_frame)
+plm_control_row2.pack(fill=tk.X, padx=5, pady=5)
+
+tk.Label(plm_control_row2, text="Thresholds:", font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT, padx=(0, 10))
+
+tk.Label(plm_control_row2, text="Uniformity σ:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(0, 2))
+plm_uniformity_sigma_var = tk.StringVar(value="2.0")
+plm_uniformity_sigma_entry = tk.Entry(plm_control_row2, textvariable=plm_uniformity_sigma_var, width=5)
+plm_uniformity_sigma_entry.pack(side=tk.LEFT, padx=2)
+
+tk.Label(plm_control_row2, text="Bridged min:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(10, 2))
+plm_bridged_min_var = tk.StringVar(value="3")
+plm_bridged_min_entry = tk.Entry(plm_control_row2, textvariable=plm_bridged_min_var, width=5)
+plm_bridged_min_entry.pack(side=tk.LEFT, padx=2)
+
+tk.Label(plm_control_row2, text="Stuck thresh:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(10, 2))
+plm_stuck_var = tk.StringVar(value="250")
+plm_stuck_entry = tk.Entry(plm_control_row2, textvariable=plm_stuck_var, width=5)
+plm_stuck_entry.pack(side=tk.LEFT, padx=2)
+
+# Buttons
+plm_btn_frame = tk.Frame(plm_control_row2)
+plm_btn_frame.pack(side=tk.RIGHT, padx=5)
+
+def plm_run_analysis():
+    """Run PLM analysis based on current settings"""
+    global plm_analysis_results, plm_analysis_current_die
+
+    if not PLM_ANALYZER_AVAILABLE:
+        messagebox.showerror("Error", "PLM Analyzer module not available")
+        return
+
+    if not plm_file_directory or not os.path.exists(plm_file_directory):
+        messagebox.showwarning("Warning", "No PLM folder selected. Load a wafer with PLM files first.")
+        return
+
+    # Update thresholds
+    try:
+        plm_analysis_thresholds.uniformity_sigma_minor = float(plm_uniformity_sigma_var.get())
+        plm_analysis_thresholds.uniformity_sigma_major = float(plm_uniformity_sigma_var.get()) + 1.0
+        plm_analysis_thresholds.bridged_min_count = int(plm_bridged_min_var.get())
+        plm_analysis_thresholds.stuck_on_threshold = float(plm_stuck_var.get())
+    except ValueError:
+        messagebox.showerror("Error", "Invalid threshold values")
+        return
+
+    # Get analysis type
+    analysis_type_map = {
+        "All Defects": "all",
+        "Uniformity Only": "uniformity",
+        "Bridged Only": "bridged",
+        "Stuck Only": "stuck"
+    }
+    analysis_type = analysis_type_map.get(plm_analysis_type_var.get(), "all")
+
+    # Use pre-calculated or raw
+    use_precalculated = "Pre-calculated" in plm_source_var.get()
+
+    mode = plm_mode_var.get()
+
+    if mode == "single":
+        # Single die analysis
+        if selected_die_coords is None:
+            messagebox.showwarning("Warning", "Please select a die on the wafer heatmap first")
+            return
+
+        die_x, die_y = selected_die_coords
+        plm_analysis_current_die = (die_x, die_y)
+
+        # Find PLM files for this die
+        plm_files = plm_analyzer_instance._find_plm_files_for_die(plm_file_directory, die_x, die_y)
+
+        if not plm_files:
+            messagebox.showwarning("Warning", f"No PLM files found for die ({die_x}, {die_y})")
+            return
+
+        plm_status_var.set(f"Analyzing die ({die_x}, {die_y})...")
+        tab_plm_analysis.update()
+
+        result = plm_analyzer_instance.analyze_die(plm_files, die_x, die_y, analysis_type, use_precalculated)
+        plm_analysis_results[(die_x, die_y)] = result
+
+        # Update display
+        plm_update_single_die_display(result)
+        plm_status_var.set(f"Analysis complete: {'PASS' if result.passed else 'FAIL'}")
+
+    else:
+        # Whole wafer analysis
+        if current_stdf_data is None or len(current_stdf_data) == 0:
+            messagebox.showwarning("Warning", "No wafer data loaded")
+            return
+
+        # Get all die coordinates
+        die_coords = list(zip(current_stdf_data['x'].values, current_stdf_data['y'].values))
+        die_coords = list(set(die_coords))  # Remove duplicates
+
+        plm_status_var.set(f"Analyzing {len(die_coords)} dies...")
+        tab_plm_analysis.update()
+
+        def progress_callback(current, total):
+            plm_status_var.set(f"Analyzing die {current}/{total}...")
+            plm_progress_var.set(int(100 * current / total) if total > 0 else 0)
+            tab_plm_analysis.update()
+
+        plm_analysis_results = plm_analyzer_instance.analyze_wafer(
+            plm_file_directory, die_coords, analysis_type, use_precalculated, progress_callback
+        )
+
+        # Update wafer display
+        plm_update_wafer_display()
+
+        # Count results
+        passed = sum(1 for r in plm_analysis_results.values() if r.passed)
+        failed = len(plm_analysis_results) - passed
+        plm_status_var.set(f"Analysis complete: {passed} PASS, {failed} FAIL")
+
+def plm_update_single_die_display(result):
+    """Update the single die view with analysis result"""
+    if result is None:
+        return
+
+    # Clear previous plots
+    for widget in plm_single_die_frame.winfo_children():
+        widget.destroy()
+
+    # Create figure with 2 subplots
+    fig = Figure(figsize=(12, 5), dpi=100)
+
+    # Left: Original PLM image
+    ax1 = fig.add_subplot(121)
+    if result.raw_image is not None:
+        im1 = ax1.imshow(result.raw_image, cmap='gray', aspect='auto')
+        ax1.set_title(f"Original PLM - Die ({result.die_x}, {result.die_y})")
+        ax1.set_xlabel("Pixel X")
+        ax1.set_ylabel("Pixel Y")
+        fig.colorbar(im1, ax=ax1, label="Brightness (nits)")
+    else:
+        ax1.text(0.5, 0.5, "No image data", ha='center', va='center', transform=ax1.transAxes)
+        ax1.set_title("Original PLM")
+
+    # Right: Defect map
+    ax2 = fig.add_subplot(122)
+    if result.defect_map is not None:
+        # Create custom colormap for defects
+        from matplotlib.colors import ListedColormap, BoundaryNorm
+
+        # Define colors for each defect type
+        colors = ['#00C853', '#FF6B6B', '#D32F2F', '#FFD54F', '#FF8F00',
+                  '#42A5F5', '#1565C0', '#424242', '#AB47BC']
+        bounds = [0, 5, 10, 15, 20, 25, 30, 35, 40, 55]
+        cmap = ListedColormap(colors)
+        norm = BoundaryNorm(bounds, cmap.N)
+
+        im2 = ax2.imshow(result.defect_map, cmap=cmap, norm=norm, aspect='auto')
+        ax2.set_title(f"Defect Map - {'PASS' if result.passed else 'FAIL'}")
+        ax2.set_xlabel("Pixel X")
+        ax2.set_ylabel("Pixel Y")
+
+        # Add legend
+        legend_text = f"🟢 OK | 🔴 Bridged: {result.bridged_count} | 🟡 Uniformity: {result.uniformity_count} | 🔵 Stuck: {result.stuck_count}"
+        ax2.set_xlabel(legend_text, fontsize=8)
+    else:
+        ax2.text(0.5, 0.5, "No defect data", ha='center', va='center', transform=ax2.transAxes)
+        ax2.set_title("Defect Map")
+
+    fig.tight_layout()
+
+    # Embed in tkinter
+    canvas = FigureCanvasTkAgg(fig, master=plm_single_die_frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Update statistics
+    plm_update_statistics(result)
+
+def plm_update_wafer_display():
+    """Update the wafer-level view with analysis results"""
+    if not plm_analysis_results:
+        return
+
+    # Clear previous plots
+    for widget in plm_wafer_frame.winfo_children():
+        widget.destroy()
+
+    # Create figure
+    fig = Figure(figsize=(10, 8), dpi=100)
+    ax = fig.add_subplot(111)
+
+    # Get wafer data
+    if current_stdf_data is None:
+        return
+
+    x_coords = current_stdf_data['x'].values
+    y_coords = current_stdf_data['y'].values
+
+    # Create defect count map
+    defect_counts = []
+    colors = []
+
+    for i in range(len(x_coords)):
+        die_x, die_y = int(x_coords[i]), int(y_coords[i])
+        if (die_x, die_y) in plm_analysis_results:
+            result = plm_analysis_results[(die_x, die_y)]
+            total_defects = result.bridged_count + result.uniformity_count + result.stuck_count
+            defect_counts.append(total_defects)
+            if result.passed:
+                colors.append('#00C853')  # Green
+            else:
+                colors.append('#D32F2F')  # Red
+        else:
+            defect_counts.append(0)
+            colors.append('#BDBDBD')  # Gray - not analyzed
+
+    # Create scatter plot
+    scatter = ax.scatter(x_coords, y_coords, c=defect_counts, cmap='RdYlGn_r',
+                         s=50, edgecolors='black', linewidths=0.5)
+
+    ax.set_xlabel("Die X")
+    ax.set_ylabel("Die Y")
+    ax.set_title("PLM Analysis - Wafer Defect Map")
+    ax.set_aspect('equal')
+    ax.invert_yaxis()
+
+    cbar = fig.colorbar(scatter, ax=ax)
+    cbar.set_label("Defect Count")
+
+    fig.tight_layout()
+
+    # Embed in tkinter
+    canvas = FigureCanvasTkAgg(fig, master=plm_wafer_frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Update summary statistics
+    plm_update_wafer_statistics()
+
+def plm_update_statistics(result):
+    """Update statistics display for single die"""
+    plm_stats_text.delete('1.0', tk.END)
+
+    if result is None:
+        plm_stats_text.insert(tk.END, "No analysis results")
+        return
+
+    stats = f"""
+╔══════════════════════════════════════════════════════════════╗
+║  PLM ANALYSIS RESULT - Die ({result.die_x}, {result.die_y})
+╠══════════════════════════════════════════════════════════════╣
+║  Status: {'✅ PASS' if result.passed else '❌ FAIL'}
+║  {f'Reason: {result.fail_reason}' if not result.passed else ''}
+╠══════════════════════════════════════════════════════════════╣
+║  IMAGE STATISTICS:
+║  ├─ Total Pixels:    {result.total_pixels:,}
+║  ├─ Mean Brightness: {result.mean_brightness:.2f} nits
+║  └─ Std Deviation:   {result.std_brightness:.2f}
+╠══════════════════════════════════════════════════════════════╣
+║  DEFECT SUMMARY:
+║  ├─ 🔴 Bridged:      {result.bridged_count:,} pixels
+║  ├─ 🟡 Uniformity:   {result.uniformity_count:,} pixels
+║  ├─ 🔵 Stuck:        {result.stuck_count:,} pixels
+║  ├─ 🟣 Clusters:     {result.cluster_count}
+║  └─ Total Defects:   {result.bridged_count + result.uniformity_count + result.stuck_count:,} ({result.get_defect_percentage():.4f}%)
+╚══════════════════════════════════════════════════════════════╝
+"""
+    plm_stats_text.insert(tk.END, stats)
+
+def plm_update_wafer_statistics():
+    """Update statistics for wafer-level analysis"""
+    plm_stats_text.delete('1.0', tk.END)
+
+    if not plm_analysis_results:
+        plm_stats_text.insert(tk.END, "No wafer analysis results")
+        return
+
+    total_dies = len(plm_analysis_results)
+    passed = sum(1 for r in plm_analysis_results.values() if r.passed)
+    failed = total_dies - passed
+
+    total_bridged = sum(r.bridged_count for r in plm_analysis_results.values())
+    total_uniformity = sum(r.uniformity_count for r in plm_analysis_results.values())
+    total_stuck = sum(r.stuck_count for r in plm_analysis_results.values())
+
+    stats = f"""
+╔══════════════════════════════════════════════════════════════╗
+║  PLM WAFER ANALYSIS SUMMARY
+╠══════════════════════════════════════════════════════════════╣
+║  Dies Analyzed:   {total_dies}
+║  ├─ ✅ PASS:      {passed} ({100*passed/total_dies:.1f}%)
+║  └─ ❌ FAIL:      {failed} ({100*failed/total_dies:.1f}%)
+╠══════════════════════════════════════════════════════════════╣
+║  TOTAL DEFECTS ACROSS WAFER:
+║  ├─ 🔴 Bridged:      {total_bridged:,} pixels
+║  ├─ 🟡 Uniformity:   {total_uniformity:,} pixels
+║  └─ 🔵 Stuck:        {total_stuck:,} pixels
+╠══════════════════════════════════════════════════════════════╣
+║  YIELD IMPACT:
+║  └─ PLM Yield:    {100*passed/total_dies:.2f}%
+╚══════════════════════════════════════════════════════════════╝
+"""
+    plm_stats_text.insert(tk.END, stats)
+
+def plm_apply_to_wafer():
+    """Apply PLM analysis results to wafer binning"""
+    global current_stdf_data
+
+    if not plm_analysis_results:
+        messagebox.showwarning("Warning", "No analysis results to apply")
+        return
+
+    if current_stdf_data is None:
+        messagebox.showwarning("Warning", "No wafer data loaded")
+        return
+
+    # Generate binning from results
+    binning = plm_analyzer_instance.generate_wafer_binning(plm_analysis_results)
+
+    # Add PLM_Bin column to dataframe
+    plm_bins = []
+    for i in range(len(current_stdf_data)):
+        die_x = int(current_stdf_data.iloc[i]['x'])
+        die_y = int(current_stdf_data.iloc[i]['y'])
+        plm_bins.append(binning.get((die_x, die_y), 0))
+
+    current_stdf_data['PLM_Bin'] = plm_bins
+
+    # Update group combobox
+    update_group_combobox()
+
+    messagebox.showinfo("Success", f"PLM binning applied to {len(binning)} dies.\nNew column 'PLM_Bin' added.")
+    plm_status_var.set("PLM binning applied to wafer data")
+
+def plm_export_csv():
+    """Export PLM analysis results to CSV"""
+    if not plm_analysis_results:
+        messagebox.showwarning("Warning", "No analysis results to export")
+        return
+
+    file_path = filedialog.asksaveasfilename(
+        title="Export PLM Analysis Results",
+        defaultextension=".csv",
+        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+    )
+
+    if not file_path:
+        return
+
+    # Create dataframe
+    data = []
+    for (die_x, die_y), result in plm_analysis_results.items():
+        data.append({
+            'Die_X': die_x,
+            'Die_Y': die_y,
+            'Passed': result.passed,
+            'Bridged_Count': result.bridged_count,
+            'Uniformity_Count': result.uniformity_count,
+            'Stuck_Count': result.stuck_count,
+            'Cluster_Count': result.cluster_count,
+            'Mean_Brightness': result.mean_brightness,
+            'Std_Brightness': result.std_brightness,
+            'Defect_Percentage': result.get_defect_percentage(),
+            'Fail_Reason': result.fail_reason
+        })
+
+    df = pd.DataFrame(data)
+    df.to_csv(file_path, index=False)
+
+    messagebox.showinfo("Success", f"Exported {len(data)} results to:\n{file_path}")
+
+# Run Analysis button
+plm_run_btn = tk.Button(plm_btn_frame, text="🔍 Run Analysis", font=("Segoe UI", 9, "bold"),
+                         bg="#2E7D32", fg="white", command=plm_run_analysis)
+plm_run_btn.pack(side=tk.LEFT, padx=2)
+
+# Apply to Wafer button
+plm_apply_btn = tk.Button(plm_btn_frame, text="📊 Apply to Wafer", font=("Segoe UI", 9),
+                           bg="#1565C0", fg="white", command=plm_apply_to_wafer)
+plm_apply_btn.pack(side=tk.LEFT, padx=2)
+
+# Export CSV button
+plm_export_btn = tk.Button(plm_btn_frame, text="📄 Export CSV", font=("Segoe UI", 9),
+                            command=plm_export_csv)
+plm_export_btn.pack(side=tk.LEFT, padx=2)
+
+# === MAIN CONTENT AREA ===
+plm_content_frame = tk.Frame(plm_main_frame)
+plm_content_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+# Left: Visualizations
+plm_viz_frame = tk.LabelFrame(plm_content_frame, text="Visualization", font=("Segoe UI", 10, "bold"))
+plm_viz_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+
+# Single die view frame
+plm_single_die_frame = tk.Frame(plm_viz_frame)
+plm_single_die_frame.pack(fill=tk.BOTH, expand=True)
+
+# Wafer view frame (hidden by default)
+plm_wafer_frame = tk.Frame(plm_viz_frame)
+
+# Placeholder text
+plm_placeholder = tk.Label(plm_single_die_frame,
+                            text="Select a die and click 'Run Analysis' to start\n\n"
+                                 "1. Load a wafer with PLM files\n"
+                                 "2. Click on a die in the Wafer tab\n"
+                                 "3. Return here and click 'Run Analysis'",
+                            font=("Segoe UI", 12), fg="gray")
+plm_placeholder.pack(expand=True)
+
+# Right: Statistics
+plm_stats_frame = tk.LabelFrame(plm_content_frame, text="Analysis Statistics", font=("Segoe UI", 10, "bold"))
+plm_stats_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=(5, 0), ipadx=5)
+
+plm_stats_text = tk.Text(plm_stats_frame, width=50, height=25, font=("Consolas", 9))
+plm_stats_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+# === STATUS BAR ===
+plm_status_frame = tk.Frame(plm_main_frame, bg='#E3F2FD', relief='ridge', bd=1)
+plm_status_frame.pack(fill=tk.X, pady=(5, 0))
+
+plm_status_var = tk.StringVar(value="Ready - Load wafer and select die to analyze")
+plm_status_label = tk.Label(plm_status_frame, textvariable=plm_status_var,
+                             font=("Segoe UI", 9), bg='#E3F2FD', fg='#1565C0')
+plm_status_label.pack(side=tk.LEFT, padx=10, pady=5)
+
+plm_progress_var = tk.IntVar(value=0)
+plm_progress_bar = ttk.Progressbar(plm_status_frame, variable=plm_progress_var,
+                                    length=200, mode='determinate')
+plm_progress_bar.pack(side=tk.RIGHT, padx=10, pady=5)
+
+print("PLM Image Analysis Tab initialized (v6.0.0)")
+
+# ================================================================================
+# END PLM IMAGE ANALYSIS TAB
+# ================================================================================
 
 main_win.mainloop()
