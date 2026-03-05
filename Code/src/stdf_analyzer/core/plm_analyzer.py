@@ -144,10 +144,11 @@ class PLMImage:
 
     def __init__(self, file_path: str):
         self.file_path = file_path
-        self.width = 768
-        self.height = 568
+        self.width = 0  # Auto-detect from data
+        self.height = 0  # Auto-detect from data
         self.data: Optional[np.ndarray] = None
         self.plm_type = self._detect_plm_type(file_path)
+        self.metadata = {}
 
     def _detect_plm_type(self, file_path: str) -> str:
         """Detect PLM type from filename"""
@@ -155,10 +156,10 @@ class PLMImage:
 
         if 'uniformity' in filename or 'uniformitysyn' in filename:
             return 'Uniformity'
-        elif 'bridged' in filename:
-            return 'Bridged'
         elif 'stitched' in filename:
             return 'Stitched'
+        elif 'bridged' in filename and 'map' not in filename:
+            return 'Bridged'
         else:
             return 'Unknown'
 
@@ -169,63 +170,64 @@ class PLMImage:
                 print(f"PLM file not found: {self.file_path}")
                 return False
 
-            # Read the file
             with open(self.file_path, 'r') as f:
-                content = f.read()
+                lines = f.readlines()
 
-            # Parse the data - PLM files contain pixel values
-            # Format varies but typically: one value per pixel, row by row
-            lines = content.strip().split('\n')
+            if not lines:
+                print(f"Empty PLM file: {self.file_path}")
+                return False
 
-            # Skip header lines (if any) - look for numeric data
+            # Detect file format and parse
             data_lines = []
+
             for line in lines:
-                # Skip empty lines and obvious headers
                 line = line.strip()
                 if not line:
                     continue
-                # Check if line contains mostly numbers
-                try:
-                    values = [float(v) for v in line.replace(',', ' ').replace('\t', ' ').split() if v]
-                    if values:
-                        data_lines.append(values)
-                except ValueError:
+
+                # Check for header lines
+                if ':' in line and not line[0].isdigit():
+                    # Parse header fields
+                    if line.startswith('Columns:'):
+                        try:
+                            self.width = int(line.split(':')[1].strip())
+                        except:
+                            pass
+                    elif line.startswith('Rows:'):
+                        try:
+                            self.height = int(line.split(':')[1].strip())
+                        except:
+                            pass
                     continue
+
+                # Try to parse as data line (comma-separated numbers)
+                if ',' in line:
+                    try:
+                        values = [float(v.strip()) for v in line.split(',') if v.strip()]
+                        if values:
+                            data_lines.append(values)
+                    except ValueError:
+                        continue
 
             if not data_lines:
                 print(f"No valid data found in PLM file: {self.file_path}")
                 return False
 
+            # Auto-detect dimensions from data
+            self.height = len(data_lines)
+            self.width = len(data_lines[0]) if data_lines else 0
+
             # Convert to numpy array
-            # Handle different formats:
-            # 1. One row per image row (width values per line)
-            # 2. All values in sequence
+            self.data = np.array(data_lines, dtype=np.float32)
 
-            if len(data_lines) == self.height and len(data_lines[0]) == self.width:
-                # Format 1: Matrix format
-                self.data = np.array(data_lines, dtype=np.float32)
-            else:
-                # Format 2: Flat format - reshape
-                flat_data = []
-                for row in data_lines:
-                    flat_data.extend(row)
-
-                expected_size = self.width * self.height
-                if len(flat_data) >= expected_size:
-                    self.data = np.array(flat_data[:expected_size], dtype=np.float32).reshape(self.height, self.width)
-                elif len(flat_data) > 0:
-                    # Partial data - pad with zeros
-                    padded = np.zeros(expected_size, dtype=np.float32)
-                    padded[:len(flat_data)] = flat_data
-                    self.data = padded.reshape(self.height, self.width)
-                    print(f"Warning: PLM file has {len(flat_data)} values, expected {expected_size}")
-                else:
-                    return False
+            print(f"Loaded PLM: {self.plm_type}, {self.width}x{self.height}, range: {np.min(self.data):.0f}-{np.max(self.data):.0f}")
 
             return True
 
         except Exception as e:
             print(f"Error loading PLM file {self.file_path}: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
     def get_statistics(self) -> Dict[str, float]:

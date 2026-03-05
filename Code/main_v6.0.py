@@ -35054,6 +35054,8 @@ try:
         PLMAnalyzer, PLMImage, AnalysisResult, AnalysisThresholds,
         DefectType, DEFECT_COLORS, DEFECT_NAMES
     )
+    from matplotlib.figure import Figure
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
     PLM_ANALYZER_AVAILABLE = True
     print("PLM Analyzer module loaded successfully")
 except ImportError as e:
