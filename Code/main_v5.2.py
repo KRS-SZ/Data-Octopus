@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "5.2.4"  # Dashboard, 1-Zeilen-Toolbar, PLM Uniformity-Fix
+APP_VERSION = "5.2.6"  # Dashboard, 1-Zeilen-Toolbar, PLM Uniformity, Dialog-Fix, CSV direktes Laden
 
 import sys
 
@@ -1323,15 +1323,17 @@ def load_mc300_file():
         messagebox.showerror("Error", f"Failed to load MC-300:\n{str(e)}")
 
 
-def load_csv_wafermap_file():
+def load_csv_wafermap_file(csv_path=None):
     """Load wafermap data from a CSV file"""
     global current_stdf_data, current_wafer_id, test_parameters, grouped_parameters, test_limits
     global multiple_stdf_data, multiple_wafer_ids, die_image_directory
 
-    csv_path = filedialog.askopenfilename(
-        title="Select a CSV file with wafermap data",
-        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
-    )
+    # Wenn kein Pfad übergeben, zeige File-Dialog
+    if not csv_path:
+        csv_path = filedialog.askopenfilename(
+            title="Select a CSV file with wafermap data",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+        )
 
     if not csv_path:
         return
@@ -3983,11 +3985,14 @@ def load_local_wafer():
         if ext.endswith('.stdf') or ext.endswith('.std'):
             load_multiple_stdf_files([file_path])
         elif ext.endswith('.csv'):
-            load_csv_wafermap_file()
+            # Direkt die CSV laden mit vorgegebenem Pfad
+            load_csv_wafermap_file(file_path)
         elif ext.endswith('.txt'):
-            load_mc300_file()
+            # MC-300 direkt laden
+            load_mc300_wafermap(file_path)
         else:
-            load_csv_wafermap_file()
+            # Fallback: als CSV behandeln
+            load_csv_wafermap_file(file_path)
 
 def load_manifold_fast():
     """Load wafer from Manifold - fast mode (CSV only)"""

@@ -170,18 +170,32 @@ Data Octopus/
 ### 6.2.1 🚨 LOKALE VERSIONIERUNG – PFLICHT FÜR DEVMATE
 
 ⚠️ **BEI JEDER CODE-ÄNDERUNG DIE ICH (DEVMATE) MACHE:**
-1. **BEVOR** ich die Änderung starte: `APP_VERSION` PATCH hochzählen (z.B. 3.2.0 → 3.2.1)
+
+#### A) APP_VERSION im Code
+1. **BEVOR** ich die Änderung starte: `APP_VERSION` PATCH hochzählen (z.B. 5.2.0 → 5.2.1)
 2. **DANN** die Code-Änderung durchführen
 3. **DANN** committen mit neuer Versionsnummer
 
-**WARUM:** Doppelte Sicherheit - jedes Kompilat hat eine eigene Version.
+#### B) DATEINAME (ab v5.1+)
+⚠️ **Wenn signifikante Änderungen gemacht werden:**
 
-**BEISPIEL:**
-```
-Aktuell: v3.2.0
-Devmate macht Änderung → Version wird 3.2.1 → Commit
-Devmate macht weitere Änderung → Version wird 3.2.2 → Commit
-```
+| Änderungstyp | Dateiname-Änderung | Beispiel |
+|--------------|-------------------|----------|
+| **Bugfixes, kleine Features** | PATCH erhöhen | `main_v5.1.py` → `main_v5.1.1.py` → `main_v5.1.2.py` |
+| **Neue Features, Tab-Änderungen** | MINOR erhöhen | `main_v5.1.py` → `main_v5.2.py` |
+| **Große Architektur-Änderungen** | MAJOR erhöhen | `main_v5.py` → `main_v6.py` |
+
+**WORKFLOW:**
+1. Datei kopieren/umbenennen: `main_v5.1.py` → `main_v5.1.1.py`
+2. In der neuen Datei arbeiten
+3. `APP_VERSION` in der neuen Datei aktualisieren
+4. Commit + Push
+
+**AKTUELLER STAND (05.03.2026):**
+- `main_v5.1.py` = Version 5.2.5 (APP_VERSION im Code)
+- → Sollte umbenannt werden zu `main_v5.2.py` oder `main_v5.1.5.py`
+
+**WARUM:** Doppelte Sicherheit - jedes Kompilat hat eine eigene Datei UND Version im Code.
 
 **AUSNAHMEN:**
 - Nur Rules-File Änderungen (kein Code) → keine Versionserhöhung nötig
