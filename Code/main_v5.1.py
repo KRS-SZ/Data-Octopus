@@ -3308,74 +3308,12 @@ def update_heatmap_parameter_list():
 control_frame_heatmap = tk.Frame(tab6)
 control_frame_heatmap.pack(side=tk.TOP, fill=tk.X, padx=5, pady=2)
 
-# Row 1: File loading controls
+# Single Row: All controls in one toolbar (v5.2.0 - simplified)
 control_row1 = tk.Frame(control_frame_heatmap)
 control_row1.pack(side=tk.TOP, fill=tk.X, pady=2)
 
-# File source selector (Dropdown/Combobox)
+# Keep variables for backward compatibility (used elsewhere)
 file_source_var = tk.StringVar(value="STDF")
-
-source_label = tk.Label(control_row1, text="Format:", font=("Helvetica", 9))
-source_label.pack(side=tk.LEFT, padx=(0, 3))
-
-file_source_combobox = ttk.Combobox(
-    control_row1,
-    textvariable=file_source_var,
-    values=["STDF", "CSV", "MC-300"],
-    state="readonly",
-    width=7,
-    font=("Helvetica", 9)
-)
-file_source_combobox.pack(side=tk.LEFT, padx=2)
-file_source_combobox.bind("<<ComboboxSelected>>", lambda e: update_source_buttons())
-
-# Frame to hold the file-type specific load buttons (STDF or CSV)
-load_buttons_frame = tk.Frame(control_row1)
-load_buttons_frame.pack(side=tk.LEFT, padx=2)
-
-select_multiple_stdf_button = tk.Button(
-    load_buttons_frame,
-    text="Load STDF",
-    command=lambda: load_multiple_stdf_files(),
-    font=("Helvetica", 9),
-)
-select_multiple_stdf_button.pack(side=tk.LEFT, padx=2)
-
-# CSV Load button (initially hidden)
-select_csv_button = tk.Button(
-    load_buttons_frame,
-    text="Load CSV",
-    command=lambda: load_csv_wafermap_file(),
-    font=("Helvetica", 9),
-    bg="#4CAF50",
-    fg="white",
-)
-# Don't pack initially - will be managed by update_source_buttons()
-
-# MC-300 Load button (initially hidden)
-select_mc300_button = tk.Button(
-    load_buttons_frame,
-    text="Load MC-300",
-    command=lambda: load_mc300_file(),
-    font=("Helvetica", 9),
-    bg="#9C27B0",
-    fg="white",
-)
-# Don't pack initially - will be managed by update_source_buttons()
-
-# Button to load entire project folder (always visible)
-load_project_button = tk.Button(
-    control_row1,
-    text="Project Folder",
-    command=lambda: load_project_folder(),
-    font=("Helvetica", 9),
-    bg="#FF9800",
-    fg="white",
-)
-load_project_button.pack(side=tk.LEFT, padx=2)
-
-# Separator
-tk.Label(control_row1, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
 
 # Group selection dropdown
 tk.Label(control_row1, text="Group:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=2)
@@ -3389,58 +3327,18 @@ heatmap_group_combobox.bind("<<ComboboxSelected>>", lambda e: on_group_selected(
 tk.Label(control_row1, text="Param:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=2)
 
 heatmap_param_combobox = ttk.Combobox(
-    control_row1, state="readonly", width=90, font=("Helvetica", 9)
+    control_row1, state="readonly", width=70, font=("Helvetica", 9)
 )
 heatmap_param_combobox.pack(side=tk.LEFT, padx=2)
 heatmap_param_combobox.bind("<<ComboboxSelected>>", lambda e: refresh_heatmap_display())
 
-heatmap_refresh_button = tk.Button(
-    control_row1,
-    text="Refresh",
-    command=lambda: refresh_heatmap_display(),
-    font=("Helvetica", 9),
-)
-heatmap_refresh_button.pack(side=tk.LEFT, padx=3)
+# Separator
+tk.Label(control_row1, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
 
-# Custom Test Calculator button
-custom_test_button = tk.Button(
-    control_row1,
-    text="🧮 Custom Test",
-    command=open_custom_test_calculator,
-    font=("Helvetica", 9),
-    bg="#9C27B0",
-    fg="white",
-)
-custom_test_button.pack(side=tk.LEFT, padx=3)
-
-# Save Modified Data button
-save_data_button = tk.Button(
-    control_row1,
-    text="💾 Save Data",
-    command=lambda: open_save_data_dialog(),
-    font=("Helvetica", 9),
-    bg="#2196F3",
-    fg="white",
-)
-save_data_button.pack(side=tk.LEFT, padx=3)
-
-# Info label at the end of row 1
-heatmap_info_label = tk.Label(
-    control_row1,
-    text="No files loaded",
-    font=("Helvetica", 8),
-    fg="gray"
-)
-heatmap_info_label.pack(side=tk.RIGHT, padx=5)
-
-# Row 2: View controls and image options
-control_row2 = tk.Frame(control_frame_heatmap)
-control_row2.pack(side=tk.TOP, fill=tk.X, pady=2)
-
-# Binning controls at the start of Row 2
+# Binning controls
 load_binning_button = tk.Button(
-    control_row2,
-    text="📋 Load Binning",
+    control_row1,
+    text="📋 Binning",
     command=lambda: load_binning_file(),
     font=("Helvetica", 9),
     bg="#9C27B0",
@@ -3649,8 +3547,8 @@ def show_bin_legend():
     close_btn.pack(pady=10)
 
 show_bins_button = tk.Button(
-    control_row2,
-    text="📊 Show Bins",
+    control_row1,
+    text="📊 Bins",
     command=show_bin_legend,
     font=("Helvetica", 9),
     bg="#607D8B",
@@ -3658,17 +3556,12 @@ show_bins_button = tk.Button(
 )
 show_bins_button.pack(side=tk.LEFT, padx=2)
 
-# Binning status label
-binning_status_var = tk.StringVar(value="Binning: Not loaded")
-binning_status_label = tk.Label(control_row2, textvariable=binning_status_var, font=("Helvetica", 8), fg="gray")
-binning_status_label.pack(side=tk.LEFT, padx=5)
-
 # Separator
-tk.Label(control_row2, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
+tk.Label(control_row1, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
 
 show_grid_var = tk.BooleanVar(value=False)
 show_grid_checkbox = tk.Checkbutton(
-    control_row2,
+    control_row1,
     text="Grid",
     variable=show_grid_var,
     command=lambda: refresh_heatmap_display(),
@@ -3678,7 +3571,7 @@ show_grid_checkbox.pack(side=tk.LEFT, padx=3)
 
 # Zoom buttons
 zoom_in_button = tk.Button(
-    control_row2,
+    control_row1,
     text="Zoom+",
     command=lambda: zoom_heatmap(True),
     font=("Helvetica", 9),
@@ -3686,7 +3579,7 @@ zoom_in_button = tk.Button(
 zoom_in_button.pack(side=tk.LEFT, padx=1)
 
 zoom_out_button = tk.Button(
-    control_row2,
+    control_row1,
     text="Zoom-",
     command=lambda: zoom_heatmap(False),
     font=("Helvetica", 9),
@@ -3694,7 +3587,7 @@ zoom_out_button = tk.Button(
 zoom_out_button.pack(side=tk.LEFT, padx=1)
 
 reset_zoom_button = tk.Button(
-    control_row2,
+    control_row1,
     text="Reset",
     command=lambda: refresh_heatmap_display(),
     font=("Helvetica", 9),
@@ -3702,7 +3595,7 @@ reset_zoom_button = tk.Button(
 reset_zoom_button.pack(side=tk.LEFT, padx=1)
 
 clear_selection_button = tk.Button(
-    control_row2,
+    control_row1,
     text="Clear Sel",
     command=lambda: clear_die_selection(),
     font=("Helvetica", 9),
@@ -3710,14 +3603,14 @@ clear_selection_button = tk.Button(
 clear_selection_button.pack(side=tk.LEFT, padx=2)
 
 # Separator
-tk.Label(control_row2, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
+tk.Label(control_row1, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
 
 # View Type dropdown (Data, Images, PLM Files)
-tk.Label(control_row2, text="View:", font=("Helvetica", 9, "bold")).pack(side=tk.LEFT, padx=2)
+tk.Label(control_row1, text="View:", font=("Helvetica", 9, "bold")).pack(side=tk.LEFT, padx=2)
 
 view_type_var = tk.StringVar(value="Data")
 view_type_combobox = ttk.Combobox(
-    control_row2,
+    control_row1,
     textvariable=view_type_var,
     values=["Data", "Images", "PLM Files"],
     state="readonly",
@@ -3727,11 +3620,11 @@ view_type_combobox = ttk.Combobox(
 view_type_combobox.pack(side=tk.LEFT, padx=2)
 
 # Sub-options dropdown (changes based on View Type selection)
-tk.Label(control_row2, text="Type:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=2)
+tk.Label(control_row1, text="Type:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=2)
 
 view_subtype_var = tk.StringVar(value="Heatmap")
 view_subtype_combobox = ttk.Combobox(
-    control_row2,
+    control_row1,
     textvariable=view_subtype_var,
     values=["Heatmap"],
     state="readonly",
@@ -3806,14 +3699,53 @@ image_view_var = tk.BooleanVar(value=False)
 plm_view_var = tk.BooleanVar(value=False)
 image_type_view_var = tk.StringVar(value="All")
 
-# Folder status label (shows what folders are loaded from project)
+# Separator before action buttons
+tk.Label(control_row1, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
+
+# Custom Test Calculator button
+custom_test_button = tk.Button(
+    control_row1,
+    text="🧮 Custom",
+    command=open_custom_test_calculator,
+    font=("Helvetica", 9),
+    bg="#9C27B0",
+    fg="white",
+)
+custom_test_button.pack(side=tk.LEFT, padx=2)
+
+# Save Modified Data button
+save_data_button = tk.Button(
+    control_row1,
+    text="💾 Save",
+    command=lambda: open_save_data_dialog(),
+    font=("Helvetica", 9),
+    bg="#2196F3",
+    fg="white",
+)
+save_data_button.pack(side=tk.LEFT, padx=2)
+
+# Info label at the end
+heatmap_info_label = tk.Label(
+    control_row1,
+    text="No files loaded",
+    font=("Helvetica", 8),
+    fg="gray"
+)
+heatmap_info_label.pack(side=tk.RIGHT, padx=5)
+
+# Binning status label (for backward compatibility)
+binning_status_var = tk.StringVar(value="")
+binning_status_label = tk.Label(control_row1, textvariable=binning_status_var, font=("Helvetica", 8), fg="gray")
+# Not packed to keep toolbar clean
+
+# Folder status (for backward compatibility)
 folder_status_label = tk.Label(
-    control_row2,
+    control_row1,
     text="",
     font=("Helvetica", 8),
     fg="gray",
 )
-folder_status_label.pack(side=tk.LEFT, padx=5)
+# Not packed to keep toolbar clean
 
 # PLM folder directory
 plm_file_directory = None
