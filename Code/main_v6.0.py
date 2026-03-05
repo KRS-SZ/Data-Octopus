@@ -35272,7 +35272,7 @@ def plm_update_single_die_display(result):
         ax2.set_title(f"Defect Map - {'PASS' if result.passed else 'FAIL'}")
         ax2.set_xlabel("Pixel X")
         ax2.set_ylabel("Pixel Y")
-        
+
         # Create legend with colored patches
         legend_elements = [
             mpatches.Patch(facecolor='#00C853', edgecolor='black', label=f'OK'),
@@ -35281,7 +35281,7 @@ def plm_update_single_die_display(result):
             mpatches.Patch(facecolor='#42A5F5', edgecolor='black', label=f'Stuck: {result.stuck_count}'),
             mpatches.Patch(facecolor='#AB47BC', edgecolor='black', label=f'Cluster: {result.cluster_count}'),
         ]
-        ax2.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1.02, 1), 
+        ax2.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1.02, 1),
                    fontsize=8, framealpha=0.9)
     else:
         ax2.text(0.5, 0.5, "No defect data", ha='center', va='center', transform=ax2.transAxes)
@@ -35359,34 +35359,74 @@ def plm_update_wafer_display():
     plm_update_wafer_statistics()
 
 def plm_update_statistics(result):
-    """Update statistics display for single die"""
+    """Update statistics display for single die with colored defect summary"""
     plm_stats_text.delete('1.0', tk.END)
+
+    # Configure color tags
+    plm_stats_text.tag_configure('header', font=('Consolas', 10, 'bold'))
+    plm_stats_text.tag_configure('pass', foreground='#00C853', font=('Consolas', 10, 'bold'))
+    plm_stats_text.tag_configure('fail', foreground='#D32F2F', font=('Consolas', 10, 'bold'))
+    plm_stats_text.tag_configure('bridged', foreground='#D32F2F', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('uniformity', foreground='#FF8F00', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('stuck', foreground='#42A5F5', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('cluster', foreground='#AB47BC', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('normal', font=('Consolas', 9))
 
     if result is None:
         plm_stats_text.insert(tk.END, "No analysis results")
         return
 
-    stats = f"""
-+==============================================================+
-|  PLM ANALYSIS RESULT - Die ({result.die_x}, {result.die_y})
-+==============================================================+
-|  Status: {'[PASS]' if result.passed else '[FAIL]'}
-|  {f'Reason: {result.fail_reason}' if not result.passed else ''}
-+--------------------------------------------------------------+
-|  IMAGE STATISTICS:
-|  +- Total Pixels:    {result.total_pixels:,}
-|  +- Mean Brightness: {result.mean_brightness:.2f} nits
-|  +- Std Deviation:   {result.std_brightness:.2f}
-+--------------------------------------------------------------+
-|  DEFECT SUMMARY:
-|  +- [RED] Bridged:      {result.bridged_count:,} pixels
-|  +- [YEL] Uniformity:   {result.uniformity_count:,} pixels
-|  +- [BLU] Stuck:        {result.stuck_count:,} pixels
-|  +- [PUR] Clusters:     {result.cluster_count}
-|  +- Total Defects:      {result.bridged_count + result.uniformity_count + result.stuck_count:,} ({result.get_defect_percentage():.4f}%)
-+==============================================================+
-"""
-    plm_stats_text.insert(tk.END, stats)
+    # Header
+    plm_stats_text.insert(tk.END, "+==============================================================+\n", 'header')
+    plm_stats_text.insert(tk.END, f"|  PLM ANALYSIS RESULT - Die ({result.die_x}, {result.die_y})\n", 'header')
+    plm_stats_text.insert(tk.END, "+==============================================================+\n", 'header')
+
+    # Status
+    plm_stats_text.insert(tk.END, "|  Status: ", 'normal')
+    if result.passed:
+        plm_stats_text.insert(tk.END, "[PASS]", 'pass')
+    else:
+        plm_stats_text.insert(tk.END, "[FAIL]", 'fail')
+    plm_stats_text.insert(tk.END, "\n", 'normal')
+
+    if not result.passed:
+        plm_stats_text.insert(tk.END, f"|  Reason: {result.fail_reason}\n", 'fail')
+
+    # Image Statistics
+    plm_stats_text.insert(tk.END, "+--------------------------------------------------------------+\n", 'normal')
+    plm_stats_text.insert(tk.END, "|  IMAGE STATISTICS:\n", 'header')
+    plm_stats_text.insert(tk.END, f"|  +- Total Pixels:    {result.total_pixels:,}\n", 'normal')
+    plm_stats_text.insert(tk.END, f"|  +- Mean Brightness: {result.mean_brightness:.2f} nits\n", 'normal')
+    plm_stats_text.insert(tk.END, f"|  +- Std Deviation:   {result.std_brightness:.2f}\n", 'normal')
+
+    # Defect Summary with colors
+    plm_stats_text.insert(tk.END, "+--------------------------------------------------------------+\n", 'normal')
+    plm_stats_text.insert(tk.END, "|  DEFECT SUMMARY:\n", 'header')
+
+    # Bridged (red)
+    plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+    plm_stats_text.insert(tk.END, "[RED] Bridged:", 'bridged')
+    plm_stats_text.insert(tk.END, f"      {result.bridged_count:,} pixels\n", 'normal')
+
+    # Uniformity (orange)
+    plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+    plm_stats_text.insert(tk.END, "[YEL] Uniformity:", 'uniformity')
+    plm_stats_text.insert(tk.END, f"   {result.uniformity_count:,} pixels\n", 'normal')
+
+    # Stuck (blue)
+    plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+    plm_stats_text.insert(tk.END, "[BLU] Stuck:", 'stuck')
+    plm_stats_text.insert(tk.END, f"        {result.stuck_count:,} pixels\n", 'normal')
+
+    # Cluster (purple)
+    plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+    plm_stats_text.insert(tk.END, "[PUR] Clusters:", 'cluster')
+    plm_stats_text.insert(tk.END, f"     {result.cluster_count}\n", 'normal')
+
+    # Total
+    total_defects = result.bridged_count + result.uniformity_count + result.stuck_count
+    plm_stats_text.insert(tk.END, f"|  +- Total Defects:      {total_defects:,} ({result.get_defect_percentage():.4f}%)\n", 'normal')
+    plm_stats_text.insert(tk.END, "+==============================================================+\n", 'header')
 
 def plm_update_wafer_statistics():
     """Update statistics for wafer-level analysis"""
