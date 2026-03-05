@@ -3636,13 +3636,26 @@ def detect_plm_types():
         import re
         for filename in os.listdir(plm_dir):
             if filename.lower().endswith(('.plm', '.txt', '.csv', '.dat')):
-                # Extract type from end of filename before extension
-                # Pattern: ..._TypeName_timestamp.txt
-                # Examples: CheckerSyn, InvCheckerSyn, UniformitySyn, Bridged-Pixels, PLM-Stitched-Image
+                # Pattern 1: ..._TypeName_timestamp.txt (z.B. CheckerSyn, InvCheckerSyn)
                 match = re.search(r'_([A-Za-z][A-Za-z0-9\-]+)_\d{14}\.', filename)
                 if match:
                     plm_type = match.group(1)
                     found_types.add(plm_type)
+                    continue
+                
+                # Pattern 2: OPTIC-PEQA-TYPENAME-... (z.B. GRIDUNIFORMITY, CHECKER, etc.)
+                match = re.search(r'OPTIC-PEQA-([A-Z0-9]+)-', filename, re.IGNORECASE)
+                if match:
+                    plm_type = match.group(1)
+                    found_types.add(plm_type)
+                    continue
+                
+                # Pattern 3: _TypeName_ anywhere in filename (fallback)
+                match = re.search(r'_(Uniformity|Checker|Bridged|Stitched|InvChecker)[A-Za-z]*_', filename, re.IGNORECASE)
+                if match:
+                    plm_type = match.group(1)
+                    found_types.add(plm_type)
+                    
     except Exception as e:
         print(f"Error detecting PLM types: {e}")
 
