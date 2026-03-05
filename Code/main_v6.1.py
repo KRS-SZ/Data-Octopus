@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "6.1.1"  # PLM Image Analysis - 7 Module, Auto-Detection, Dynamische Legende
+APP_VERSION = "6.1.5"  # Die Image fix, Ring/Contour + Mura Auto-Detection
 
 import sys
 
