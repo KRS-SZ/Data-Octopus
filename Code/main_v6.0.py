@@ -35236,7 +35236,7 @@ def plm_run_analysis():
         plm_status_var.set(f"Analysis complete: {passed} PASS, {failed} FAIL")
 
 def plm_update_single_die_display(result):
-    """Update the single die view with analysis result"""
+    """Update the single die view with analysis result - Auto-scaling layout"""
     if result is None:
         return
 
@@ -35247,18 +35247,29 @@ def plm_update_single_die_display(result):
     # Check if Die Image should be shown
     show_die_image = plm_show_die_image_var.get()
 
-    # Determine layout based on checkbox
-    if show_die_image:
-        # 3 images: Die Image | PLM | Defect Map + Legend
-        fig = Figure(figsize=(18, 6), dpi=100)
-        from matplotlib.gridspec import GridSpec
-        gs = GridSpec(1, 4, figure=fig, width_ratios=[1, 1, 1, 0.15], wspace=0.08)
+    # Get frame size for auto-scaling
+    plm_single_die_frame.update_idletasks()
+    frame_width = plm_single_die_frame.winfo_width()
+    frame_height = plm_single_die_frame.winfo_height()
 
-        # Left: Die Image (from die_image_directory)
+    # Calculate figure size based on available space
+    dpi = 100
+    fig_width = max(12, frame_width / dpi - 1)
+    fig_height = max(6, frame_height / dpi - 1)
+
+    from matplotlib.gridspec import GridSpec
+    import matplotlib.patches as mpatches
+    from matplotlib.colors import ListedColormap, BoundaryNorm
+
+    if show_die_image:
+        # 3 EQUAL images: Die Image | PLM | Defect Map
+        fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
+        gs = GridSpec(1, 3, figure=fig, wspace=0.15)
+
+        # Left: Die Image
         ax0 = fig.add_subplot(gs[0, 0])
         die_image_loaded = False
         if die_image_directory and os.path.exists(die_image_directory):
-            # Try to find die image for this die
             die_x, die_y = result.die_x, result.die_y
             for img_file in os.listdir(die_image_directory):
                 if f"X{die_x}" in img_file and f"Y{die_y}" in img_file:
@@ -35267,8 +35278,8 @@ def plm_update_single_die_display(result):
                             from PIL import Image
                             img_path = os.path.join(die_image_directory, img_file)
                             img = Image.open(img_path)
-                            ax0.imshow(np.array(img))
-                            ax0.set_title(f"Die Image - ({die_x}, {die_y})", fontsize=10)
+                            ax0.imshow(np.array(img), aspect='equal')
+                            ax0.set_title(f"Die Image ({die_x}, {die_y})", fontsize=9)
                             ax0.axis('off')
                             die_image_loaded = True
                             break
@@ -35277,49 +35288,40 @@ def plm_update_single_die_display(result):
 
         if not die_image_loaded:
             ax0.text(0.5, 0.5, "No Die Image\nfound", ha='center', va='center',
-                     transform=ax0.transAxes, fontsize=12, color='gray')
-            ax0.set_title(f"Die Image - ({result.die_x}, {result.die_y})", fontsize=10)
-            ax0.axis('off')
+                     transform=ax0.transAxes, fontsize=11, color='gray')
+            ax0.set_title(f"Die Image ({result.die_x}, {result.die_y})", fontsize=9)
+            ax0.set_facecolor('#f0f0f0')
+            ax0.set_xticks([])
+            ax0.set_yticks([])
 
-        # Middle-Left: Original PLM image
+        # Middle: PLM
         ax1 = fig.add_subplot(gs[0, 1])
-        plm_col_idx = 1
-        defect_col_idx = 2
-        legend_col_idx = 3
+        # Right: Defect Map
+        ax2 = fig.add_subplot(gs[0, 2])
     else:
-        # 2 images: PLM | Defect Map + Legend
-        fig = Figure(figsize=(16, 7), dpi=100)
-        from matplotlib.gridspec import GridSpec
-        gs = GridSpec(1, 3, figure=fig, width_ratios=[1, 1, 0.15], wspace=0.05)
+        # 2 EQUAL images: PLM | Defect Map
+        fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
+        gs = GridSpec(1, 2, figure=fig, wspace=0.15)
 
         ax1 = fig.add_subplot(gs[0, 0])
-        plm_col_idx = 0
-        defect_col_idx = 1
-        legend_col_idx = 2
+        ax2 = fig.add_subplot(gs[0, 1])
 
-    # PLM Image
+    # PLM Image with VERTICAL colorbar
     if result.raw_image is not None:
         im1 = ax1.imshow(result.raw_image, cmap='gray', aspect='equal')
-        ax1.set_title(f"Original PLM - Die ({result.die_x}, {result.die_y})", fontsize=10)
-        ax1.set_xlabel("Pixel X")
-        ax1.set_ylabel("Pixel Y")
-        # Colorbar underneath the plot
-        cbar1 = fig.colorbar(im1, ax=ax1, orientation='horizontal', pad=0.12, shrink=0.8)
-        cbar1.set_label("Brightness (nits)", fontsize=8)
+        ax1.set_title(f"Original PLM ({result.die_x}, {result.die_y})", fontsize=9)
+        ax1.set_xlabel("Pixel X", fontsize=8)
+        ax1.set_ylabel("Pixel Y", fontsize=8)
+        # Vertical colorbar on the side
+        cbar1 = fig.colorbar(im1, ax=ax1, orientation='vertical', shrink=0.8, pad=0.02)
+        cbar1.set_label("Brightness (nits)", fontsize=7)
+        cbar1.ax.tick_params(labelsize=6)
     else:
         ax1.text(0.5, 0.5, "No image data", ha='center', va='center', transform=ax1.transAxes)
-        ax1.set_title("Original PLM")
+        ax1.set_title("Original PLM", fontsize=9)
 
     # Defect map
-    if show_die_image:
-        ax2 = fig.add_subplot(gs[0, defect_col_idx])
-    else:
-        ax2 = fig.add_subplot(gs[0, defect_col_idx])
-
     if result.defect_map is not None:
-        from matplotlib.colors import ListedColormap, BoundaryNorm
-        import matplotlib.patches as mpatches
-
         colors = ['#00C853', '#FF6B6B', '#D32F2F', '#FFD54F', '#FF8F00',
                   '#42A5F5', '#1565C0', '#424242', '#AB47BC']
         bounds = [0, 5, 10, 15, 20, 25, 30, 35, 40, 55]
@@ -35327,27 +35329,25 @@ def plm_update_single_die_display(result):
         norm = BoundaryNorm(bounds, cmap.N)
 
         im2 = ax2.imshow(result.defect_map, cmap=cmap, norm=norm, aspect='equal')
-        ax2.set_title(f"Defect Map - {'PASS' if result.passed else 'FAIL'}", fontsize=10)
-        ax2.set_xlabel("Pixel X")
-        ax2.set_ylabel("Pixel Y")
+        ax2.set_title(f"Defect Map - {'PASS' if result.passed else 'FAIL'}", fontsize=9)
+        ax2.set_xlabel("Pixel X", fontsize=8)
+        ax2.set_ylabel("Pixel Y", fontsize=8)
 
-        # Legend in separate subplot area
-        ax_legend = fig.add_subplot(gs[0, legend_col_idx])
-        ax_legend.axis('off')
-
+        # Legend inside the plot (upper right corner)
         legend_elements = [
-            mpatches.Patch(facecolor='#00C853', edgecolor='black', label=f'OK'),
+            mpatches.Patch(facecolor='#00C853', edgecolor='black', label='OK'),
             mpatches.Patch(facecolor='#D32F2F', edgecolor='black', label=f'Bridged: {result.bridged_count}'),
-            mpatches.Patch(facecolor='#FF8F00', edgecolor='black', label=f'Uniformity: {result.uniformity_count}'),
+            mpatches.Patch(facecolor='#FF8F00', edgecolor='black', label=f'Uniform: {result.uniformity_count}'),
             mpatches.Patch(facecolor='#42A5F5', edgecolor='black', label=f'Stuck: {result.stuck_count}'),
             mpatches.Patch(facecolor='#AB47BC', edgecolor='black', label=f'Cluster: {result.cluster_count}'),
         ]
-        ax_legend.legend(handles=legend_elements, loc='center left', fontsize=9, framealpha=0.9)
+        ax2.legend(handles=legend_elements, loc='upper right', fontsize=6,
+                   framealpha=0.85, handlelength=1, handleheight=0.8)
     else:
         ax2.text(0.5, 0.5, "No defect data", ha='center', va='center', transform=ax2.transAxes)
-        ax2.set_title("Defect Map")
+        ax2.set_title("Defect Map", fontsize=9)
 
-    fig.tight_layout()
+    fig.tight_layout(pad=1.0)
 
     # Embed in tkinter
     canvas = FigureCanvasTkAgg(fig, master=plm_single_die_frame)
