@@ -35323,10 +35323,10 @@ plm_mod_mura_var = tk.BooleanVar(value=False)
 tk.Checkbutton(plm_mod_mura_frame, text="Mura", variable=plm_mod_mura_var,
                font=("Segoe UI", 9, "bold"), fg="#E91E63").pack(side=tk.LEFT, padx=2)
 tk.Label(plm_mod_mura_frame, text="blur σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
-plm_mura_blur_var = tk.StringVar(value="15")
+plm_mura_blur_var = tk.StringVar(value="10")
 tk.Entry(plm_mod_mura_frame, textvariable=plm_mura_blur_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
 tk.Label(plm_mod_mura_frame, text="thresh%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
-plm_mura_thresh_var = tk.StringVar(value="10")
+plm_mura_thresh_var = tk.StringVar(value="3")
 tk.Entry(plm_mod_mura_frame, textvariable=plm_mura_thresh_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
 
 # Module 6: Line/Column (NEW)

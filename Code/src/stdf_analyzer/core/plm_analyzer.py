@@ -884,6 +884,7 @@ class GradientAnalyzer:
             max_radius = min(center_y, center_x)
 
             ring_means = []
+            ring_masks = []
             for i, r in enumerate([0.25, 0.5, 0.75, 1.0]):
                 radius = int(max_radius * r)
                 y, x = np.ogrid[:height, :width]
@@ -894,10 +895,92 @@ class GradientAnalyzer:
 
                 if np.any(mask):
                     ring_means.append(np.mean(image[mask]))
+                    ring_masks.append(mask)
 
             if ring_means:
+                metrics['ring_means'] = ring_means
                 metrics['center_to_edge'] = (ring_means[-1] - ring_means[0]) / global_mean * 100
-                metrics['has_gradient'] = abs(metrics['center_to_edge']) > self.threshold_percent
+
+                # Check each ring for deviation
+                max_ring_dev = 0
+                for i, (ring_mean, ring_mask) in enumerate(zip(ring_means, ring_masks)):
+                    ring_dev = abs(ring_mean - global_mean) / global_mean * 100
+                    max_ring_dev = max(max_ring_dev, ring_dev)
+                    if ring_dev > self.threshold_percent:
+                        # Mark this ring as gradient defect
+                        defect_map[ring_mask] = DefectType.GRADIENT.value
+
+                metrics['max_ring_deviation'] = max_ring_dev
+                metrics['has_gradient'] = max_ring_dev > self.threshold_percent
+
+        return defect_map, metrics
+
+
+class CircularPatternDetector:
+    """Detect circular/ring patterns in image (like vignetting or interference)"""
+
+    def __init__(self, num_rings: int = 8, threshold_percent: float = 3.0):
+        self.num_rings = num_rings
+        self.threshold_percent = threshold_percent
+
+    def analyze(self, image: np.ndarray) -> Tuple[np.ndarray, Dict]:
+        """
+        Detect circular patterns by analyzing radial brightness profile.
+
+        Returns:
+            - defect_map: Pixels marked as part of circular pattern
+            - metrics: Dictionary with ring analysis
+        """
+        if image is None or image.size == 0:
+            return np.zeros((1, 1), dtype=np.int32), {}
+
+        height, width = image.shape
+        defect_map = np.zeros((height, width), dtype=np.int32)
+
+        center_y, center_x = height // 2, width // 2
+        max_radius = np.sqrt(center_x**2 + center_y**2)
+
+        # Create distance map from center
+        y, x = np.ogrid[:height, :width]
+        dist_from_center = np.sqrt((x - center_x)**2 + (y - center_y)**2)
+
+        # Analyze radial profile
+        ring_width = max_radius / self.num_rings
+        ring_means = []
+        global_mean = np.mean(image)
+
+        for i in range(self.num_rings):
+            inner_r = i * ring_width
+            outer_r = (i + 1) * ring_width
+            mask = (dist_from_center >= inner_r) & (dist_from_center < outer_r)
+
+            if np.any(mask):
+                ring_mean = np.mean(image[mask])
+                ring_means.append(ring_mean)
+
+                # Check for deviation
+                deviation = abs(ring_mean - global_mean) / global_mean * 100
+                if deviation > self.threshold_percent:
+                    defect_map[mask] = DefectType.GRADIENT.value
+
+        # Calculate metrics
+        metrics = {
+            'ring_means': ring_means,
+            'global_mean': float(global_mean),
+            'num_rings': self.num_rings,
+        }
+
+        if len(ring_means) >= 2:
+            # Check for systematic gradient (center vs edge)
+            metrics['center_brightness'] = ring_means[0]
+            metrics['edge_brightness'] = ring_means[-1]
+            metrics['center_to_edge_percent'] = (ring_means[-1] - ring_means[0]) / global_mean * 100
+
+            # Check for ring pattern (alternating high/low)
+            diffs = [ring_means[i+1] - ring_means[i] for i in range(len(ring_means)-1)]
+            sign_changes = sum(1 for i in range(len(diffs)-1) if diffs[i] * diffs[i+1] < 0)
+            metrics['ring_pattern_detected'] = sign_changes >= 2
+            metrics['sign_changes'] = sign_changes
 
         return defect_map, metrics
 
