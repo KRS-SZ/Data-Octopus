@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "6.1.5"  # Die Image fix, Ring/Contour + Mura Auto-Detection
+APP_VERSION = "6.1.6"  # Zoom/Pan Toolbar + Klick-Auswahl mit blauer Umrandung
 
 import sys
 
