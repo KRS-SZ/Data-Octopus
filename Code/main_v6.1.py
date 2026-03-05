@@ -35820,7 +35820,7 @@ def plm_update_single_die_display(result):
     # Store references for selection highlighting
     plm_current_canvas = canvas
     plm_current_fig = fig
-
+    
     # Collect all axes for click selection
     if show_die_image:
         plm_all_axes = [ax0, ax1, ax2]
@@ -35828,29 +35828,28 @@ def plm_update_single_die_display(result):
     else:
         plm_all_axes = [ax1, ax2]
         axes_names = ["PLM", "Defect Map"]
-
-    plm_selected_ax = None
-
+    
+    # Selected axis tracker (mutable container for closure)
+    selected_ax_container = [None]
+    
     def on_axes_click(event):
         """Handle click on axes - highlight selected axis with blue border"""
-        nonlocal plm_selected_ax
-
         if event.inaxes is None:
             return
-
+        
         # Remove previous selection highlight
         for ax in plm_all_axes:
             for spine in ax.spines.values():
                 spine.set_edgecolor('black')
                 spine.set_linewidth(0.5)
-
+        
         # Highlight clicked axis with blue border
         if event.inaxes in plm_all_axes:
-            plm_selected_ax = event.inaxes
+            selected_ax_container[0] = event.inaxes
             for spine in event.inaxes.spines.values():
                 spine.set_edgecolor('#2196F3')  # Blue
                 spine.set_linewidth(3)
-
+            
             # Find axis name
             try:
                 idx = plm_all_axes.index(event.inaxes)
@@ -35858,9 +35857,9 @@ def plm_update_single_die_display(result):
                 plm_status_var.set(f"Selected: {ax_name} - Use toolbar to Zoom/Pan")
             except:
                 pass
-
+            
             canvas.draw_idle()
-
+    
     # Connect click event
     canvas.mpl_connect('button_press_event', on_axes_click)
 
