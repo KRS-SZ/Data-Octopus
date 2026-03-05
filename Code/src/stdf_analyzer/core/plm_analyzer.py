@@ -73,10 +73,11 @@ class AnalysisThresholds:
     bridged_min_count: int = 3               # Min connected pixels for bridged
     bridged_brightness_threshold: float = 0.8  # % of max brightness to consider "on"
 
-    # Stuck pixel thresholds
+    # Stuck pixel thresholds (relative to data range!)
     stuck_variance_threshold: float = 5.0    # Max variance to consider stuck
-    stuck_on_threshold: float = 250          # Value to consider "stuck on"
-    stuck_off_threshold: float = 5           # Value to consider "stuck off"
+    stuck_on_percentile: float = 99.5        # Percentile above which = stuck ON
+    stuck_off_percentile: float = 0.5        # Percentile below which = stuck OFF
+    stuck_use_percentile: bool = True        # Use percentile instead of absolute
 
     # Cluster thresholds
     cluster_min_size: int = 5                # Min defects to form a cluster
@@ -427,7 +428,7 @@ class StuckPixelAnalyzer:
     def analyze_single(self, image: np.ndarray) -> Tuple[np.ndarray, List[PixelDefect]]:
         """
         Analyze single image for stuck pixels based on extreme values.
-        For proper stuck pixel detection, multiple images should be compared.
+        Uses percentile-based thresholds to work with any data range (nits, 8-bit, etc.)
         """
         if image is None or image.size == 0:
             return np.zeros((568, 768), dtype=np.int32), []
@@ -436,26 +437,46 @@ class StuckPixelAnalyzer:
         defect_map = np.zeros((height, width), dtype=np.int32)
         defects = []
 
-        # Find stuck ON pixels (very bright)
-        stuck_on_mask = image >= self.thresholds.stuck_on_threshold
-        for y, x in zip(*np.where(stuck_on_mask)):
-            defect_map[y, x] = DefectType.STUCK_ON.value
-            defects.append(PixelDefect(
-                x=int(x), y=int(y),
-                defect_type=DefectType.STUCK_ON,
-                value=float(image[y, x])
-            ))
+        # Use PERCENTILE-based thresholds (works for any data range!)
+        stuck_on_threshold = np.percentile(image, self.thresholds.stuck_on_percentile)
+        stuck_off_threshold = np.percentile(image, self.thresholds.stuck_off_percentile)
 
-        # Find stuck OFF pixels (very dark)
-        stuck_off_mask = image <= self.thresholds.stuck_off_threshold
-        for y, x in zip(*np.where(stuck_off_mask)):
-            if defect_map[y, x] == 0:  # Don't overwrite stuck_on
-                defect_map[y, x] = DefectType.STUCK_OFF.value
+        print(f"Stuck thresholds: ON > {stuck_on_threshold:.0f} (P{self.thresholds.stuck_on_percentile}), "
+              f"OFF < {stuck_off_threshold:.0f} (P{self.thresholds.stuck_off_percentile})")
+
+        # Find stuck ON pixels (above 99.5th percentile)
+        stuck_on_mask = image >= stuck_on_threshold
+        stuck_on_count = np.sum(stuck_on_mask)
+
+        # Find stuck OFF pixels (below 0.5th percentile)
+        stuck_off_mask = image <= stuck_off_threshold
+        stuck_off_count = np.sum(stuck_off_mask)
+
+        print(f"Found {stuck_on_count} stuck ON pixels, {stuck_off_count} stuck OFF pixels")
+
+        # Only create defect entries if count is reasonable (< 1% of image)
+        max_defects = int(image.size * 0.01)  # Max 1% of pixels
+
+        if stuck_on_count <= max_defects:
+            for y, x in zip(*np.where(stuck_on_mask)):
+                defect_map[y, x] = DefectType.STUCK_ON.value
                 defects.append(PixelDefect(
                     x=int(x), y=int(y),
-                    defect_type=DefectType.STUCK_OFF,
+                    defect_type=DefectType.STUCK_ON,
                     value=float(image[y, x])
                 ))
+
+        if stuck_off_count <= max_defects:
+            for y, x in zip(*np.where(stuck_off_mask)):
+                if defect_map[y, x] == 0:
+                    defect_map[y, x] = DefectType.STUCK_OFF.value
+                    defects.append(PixelDefect(
+                        x=int(x), y=int(y),
+                        defect_type=DefectType.STUCK_OFF,
+                        value=float(image[y, x])
+                    ))
+
+        return defect_map, defects
 
         return defect_map, defects
 
