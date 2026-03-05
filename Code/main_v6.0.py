@@ -35084,7 +35084,7 @@ def plm_show_help():
     """Show help dialog explaining all PLM analysis parameters"""
     help_window = tk.Toplevel()
     help_window.title("PLM Analysis - Parameter Help")
-    help_window.geometry("650x550")
+    help_window.geometry("720x700")
     help_window.resizable(True, True)
 
     # Scrollable text
@@ -35128,6 +35128,54 @@ def plm_show_help():
     help_text.insert(tk.END, "Detect only electrically connected pixels\n", 'desc')
     help_text.insert(tk.END, "Stuck Only: ", 'param')
     help_text.insert(tk.END, "Detect only pixels that don't switch (always on/off)\n\n", 'desc')
+
+    help_text.insert(tk.END, "═══════════════════════════════════════════════════════\n", 'section')
+    help_text.insert(tk.END, "=== CALCULATION METHODS ===\n\n", 'title')
+
+    help_text.insert(tk.END, "▸ UNIFORMITY ANALYSIS\n", 'section')
+    help_text.insert(tk.END, "  Algorithm: ", 'param')
+    help_text.insert(tk.END, "Global Z-Score based deviation detection\n", 'desc')
+    help_text.insert(tk.END, "  Formula:   ", 'param')
+    help_text.insert(tk.END, "deviation = |pixel_value - mean| / std\n", 'desc')
+    help_text.insert(tk.END, "  Steps:\n", 'param')
+    help_text.insert(tk.END, "    1. Calculate mean brightness: μ = Σ(pixels) / N\n", 'desc')
+    help_text.insert(tk.END, "    2. Calculate standard deviation: σ = √(Σ(pixel-μ)² / N)\n", 'desc')
+    help_text.insert(tk.END, "    3. For each pixel: Z = |pixel - μ| / σ\n", 'desc')
+    help_text.insert(tk.END, "    4. If Z > threshold_σ → UNIFORMITY DEFECT\n", 'desc')
+    help_text.insert(tk.END, "  Default σ threshold: 2.0 (detects ~5% outliers)\n\n", 'desc')
+
+    help_text.insert(tk.END, "▸ BRIDGED PIXEL DETECTION\n", 'section')
+    help_text.insert(tk.END, "  Algorithm: ", 'param')
+    help_text.insert(tk.END, "Connected Component Analysis (Flood-Fill)\n", 'desc')
+    help_text.insert(tk.END, "  Steps:\n", 'param')
+    help_text.insert(tk.END, "    1. Threshold bright pixels: pixel > (max_val × 0.8)\n", 'desc')
+    help_text.insert(tk.END, "    2. Find connected regions using 4-connectivity\n", 'desc')
+    help_text.insert(tk.END, "       (up, down, left, right neighbors)\n", 'desc')
+    help_text.insert(tk.END, "    3. If region size ≥ min_count → BRIDGED\n", 'desc')
+    help_text.insert(tk.END, "       - 3-4 pixels: BRIDGED_MINOR (light red)\n", 'desc')
+    help_text.insert(tk.END, "       - 5+ pixels: BRIDGED_MAJOR (dark red)\n", 'desc')
+    help_text.insert(tk.END, "  Default min_count: 3 pixels\n\n", 'desc')
+
+    help_text.insert(tk.END, "▸ STUCK PIXEL DETECTION\n", 'section')
+    help_text.insert(tk.END, "  Algorithm: ", 'param')
+    help_text.insert(tk.END, "Percentile-based extreme value detection\n", 'desc')
+    help_text.insert(tk.END, "  Formula:\n", 'param')
+    help_text.insert(tk.END, "    - Stuck ON:  pixel ≥ P99.5 (99.5th percentile)\n", 'desc')
+    help_text.insert(tk.END, "    - Stuck OFF: pixel ≤ P0.5  (0.5th percentile)\n", 'desc')
+    help_text.insert(tk.END, "  Why percentile:\n", 'param')
+    help_text.insert(tk.END, "    - Works for ANY data range (nits: 0-400,000)\n", 'desc')
+    help_text.insert(tk.END, "    - Identifies the most extreme 0.5% of pixels\n", 'desc')
+    help_text.insert(tk.END, "    - Robust against different brightness levels\n\n", 'desc')
+
+    help_text.insert(tk.END, "▸ CLUSTER DETECTION\n", 'section')
+    help_text.insert(tk.END, "  Algorithm: ", 'param')
+    help_text.insert(tk.END, "8-connectivity flood-fill on defect map\n", 'desc')
+    help_text.insert(tk.END, "  Steps:\n", 'param')
+    help_text.insert(tk.END, "    1. Find all defective pixels (any type)\n", 'desc')
+    help_text.insert(tk.END, "    2. Group adjacent defects (8-neighbors)\n", 'desc')
+    help_text.insert(tk.END, "    3. If group size ≥ 5 → mark as CLUSTER\n\n", 'desc')
+
+    help_text.insert(tk.END, "═══════════════════════════════════════════════════════\n\n", 'section')
 
     help_text.insert(tk.END, "=== THRESHOLDS ===\n", 'section')
     help_text.insert(tk.END, "Uniformity σ: ", 'param')
@@ -35356,9 +35404,9 @@ def plm_update_single_die_display(result):
     from matplotlib.colors import ListedColormap, BoundaryNorm
 
     if show_die_image:
-        # 3 EQUAL images: Die Image | PLM | Defect Map + Legend space
+        # 3 EQUAL images: Die Image | PLM + cbar | Defect Map + Legend
         fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
-        gs = GridSpec(1, 4, figure=fig, width_ratios=[1, 1, 1, 0.2], wspace=0.12)
+        gs = GridSpec(1, 6, figure=fig, width_ratios=[1, 0.05, 1, 0.05, 1, 0.15], wspace=0.08)
 
         # Left: Die Image
         ax0 = fig.add_subplot(gs[0, 0])
@@ -35388,34 +35436,36 @@ def plm_update_single_die_display(result):
             ax0.set_xticks([])
             ax0.set_yticks([])
 
-        # Middle: PLM
-        ax1 = fig.add_subplot(gs[0, 1])
-        # Right: Defect Map
-        ax2 = fig.add_subplot(gs[0, 2])
-        # Far right: Legend
-        ax_legend = fig.add_subplot(gs[0, 3])
+        # PLM in column 2, Colorbar in column 3
+        ax1 = fig.add_subplot(gs[0, 2])
+        ax1_cbar = fig.add_subplot(gs[0, 3])
+        # Defect Map in column 4, Legend in column 5
+        ax2 = fig.add_subplot(gs[0, 4])
+        ax_legend = fig.add_subplot(gs[0, 5])
     else:
-        # 2 EQUAL images: PLM | Defect Map + Legend space
+        # 2 EQUAL images: PLM + cbar | Defect Map + Legend
         fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
-        gs = GridSpec(1, 3, figure=fig, width_ratios=[1, 1, 0.2], wspace=0.12)
+        gs = GridSpec(1, 4, figure=fig, width_ratios=[1, 0.05, 1, 0.15], wspace=0.08)
 
         ax1 = fig.add_subplot(gs[0, 0])
-        ax2 = fig.add_subplot(gs[0, 1])
-        ax_legend = fig.add_subplot(gs[0, 2])
+        ax1_cbar = fig.add_subplot(gs[0, 1])
+        ax2 = fig.add_subplot(gs[0, 2])
+        ax_legend = fig.add_subplot(gs[0, 3])
 
-    # PLM Image with VERTICAL colorbar
+    # PLM Image with SEPARATE colorbar axis (same size as defect map!)
     if result.raw_image is not None:
         im1 = ax1.imshow(result.raw_image, cmap='gray', aspect='equal')
         ax1.set_title(f"Original PLM ({result.die_x}, {result.die_y})", fontsize=9)
         ax1.set_xlabel("Pixel X", fontsize=8)
         ax1.set_ylabel("Pixel Y", fontsize=8)
-        # Vertical colorbar on the side
-        cbar1 = fig.colorbar(im1, ax=ax1, orientation='vertical', shrink=0.8, pad=0.02)
-        cbar1.set_label("Brightness (nits)", fontsize=7)
+        # Colorbar in separate axis (ax1_cbar)
+        cbar1 = fig.colorbar(im1, cax=ax1_cbar)
+        cbar1.set_label("nits", fontsize=7)
         cbar1.ax.tick_params(labelsize=6)
     else:
         ax1.text(0.5, 0.5, "No image data", ha='center', va='center', transform=ax1.transAxes)
         ax1.set_title("Original PLM", fontsize=9)
+        ax1_cbar.axis('off')
 
     # Defect map
     if result.defect_map is not None:
