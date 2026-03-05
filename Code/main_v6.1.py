@@ -35308,11 +35308,18 @@ plm_mod_ring_frame.pack(side=tk.LEFT, padx=3, pady=2)
 plm_mod_ring_var = tk.BooleanVar(value=False)
 tk.Checkbutton(plm_mod_ring_frame, text="Ring/Contour", variable=plm_mod_ring_var,
                font=("Segoe UI", 9, "bold"), fg="#FF5722").pack(side=tk.LEFT, padx=2)
+# AUTO checkbox for automatic parameter detection
+plm_ring_auto_var = tk.BooleanVar(value=False)
+plm_ring_auto_cb = tk.Checkbutton(plm_mod_ring_frame, text="[AUTO]", variable=plm_ring_auto_var,
+               font=("Segoe UI", 9, "bold"), fg="#FFFFFF", bg="#FF5722",
+               selectcolor="#E64A19", activebackground="#FF7043",
+               activeforeground="#FFFFFF")
+plm_ring_auto_cb.pack(side=tk.LEFT, padx=3)
 tk.Label(plm_mod_ring_frame, text="blur:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
-plm_ring_blur_var = tk.StringVar(value="3.0")
+plm_ring_blur_var = tk.StringVar(value="5.0")
 tk.Entry(plm_mod_ring_frame, textvariable=plm_ring_blur_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
 tk.Label(plm_mod_ring_frame, text="edge%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
-plm_ring_edge_var = tk.StringVar(value="2")
+plm_ring_edge_var = tk.StringVar(value="15")
 tk.Entry(plm_mod_ring_frame, textvariable=plm_ring_edge_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
 
 # Module 5: Gradient (NEW)
@@ -35539,11 +35546,14 @@ def plm_run_analysis():
             # Ring Contour Detection (NEW - Edge-based ring detection)
             if enabled_modules.get('ring', False):
                 try:
+                    # Check if AUTO mode is enabled
+                    auto_mode = plm_ring_auto_var.get()
                     ring_detector = RingContourDetector(
                         blur_sigma=float(plm_ring_blur_var.get()),
                         edge_threshold_low=float(plm_ring_edge_var.get()) / 100.0,
                         edge_threshold_high=float(plm_ring_edge_var.get()) / 100.0 * 2.5,
-                        min_contour_length=30
+                        min_contour_length=30,
+                        auto_detect=auto_mode  # Use auto detection if checkbox is checked
                     )
                     contour_mask, contours, ring_metrics = ring_detector.analyze(result.raw_image)
                     result.additional_metrics['ring_contours'] = {
@@ -35629,14 +35639,17 @@ def plm_update_single_die_display(result):
             die_x, die_y = result.die_x, result.die_y
             for img_file in os.listdir(die_image_directory):
                 if f"X{die_x}" in img_file and f"Y{die_y}" in img_file:
-                    if img_file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
+                    if img_file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif')):
                         try:
                             from PIL import Image
                             img_path = os.path.join(die_image_directory, img_file)
                             img = Image.open(img_path)
-                            ax0.imshow(np.array(img), aspect='equal')
+                            img_array = np.array(img)
+                            # Use aspect='auto' to fill the subplot and match PLM size
+                            ax0.imshow(img_array, aspect='auto')
                             ax0.set_title(f"Die Image ({die_x}, {die_y})", fontsize=9)
-                            ax0.axis('off')
+                            ax0.set_xlabel("Pixel X", fontsize=8)
+                            ax0.set_ylabel("Pixel Y", fontsize=8)
                             die_image_loaded = True
                             break
                         except Exception as e:

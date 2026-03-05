@@ -992,11 +992,13 @@ class RingContourDetector:
     """
 
     def __init__(self, blur_sigma: float = 3.0, edge_threshold_low: float = 0.02,
-                 edge_threshold_high: float = 0.05, min_contour_length: int = 50):
+                 edge_threshold_high: float = 0.05, min_contour_length: int = 50,
+                 auto_detect: bool = False):
         self.blur_sigma = blur_sigma
         self.edge_threshold_low = edge_threshold_low  # Percentage of max gradient
         self.edge_threshold_high = edge_threshold_high
         self.min_contour_length = min_contour_length
+        self.auto_detect = auto_detect
 
     def analyze(self, image: np.ndarray) -> Tuple[np.ndarray, List[np.ndarray], Dict]:
         """
@@ -1010,6 +1012,54 @@ class RingContourDetector:
         if image is None or image.size == 0:
             return np.zeros((1, 1), dtype=np.uint8), [], {}
 
+        # AUTO-DETECT MODE: Find optimal parameters automatically
+        if self.auto_detect:
+            best_result = None
+            best_params = {}
+            best_score = float('inf')
+
+            # Try different parameter combinations
+            for blur in [3.0, 5.0, 8.0, 12.0]:
+                for edge_pct in [5, 10, 15, 20, 25, 30]:
+                    edge_low = edge_pct / 100.0
+                    edge_high = edge_pct / 100.0 * 2.5
+
+                    mask, contours, metrics = self._analyze_with_params(
+                        image, blur, edge_low, edge_high, self.min_contour_length
+                    )
+
+                    num_contours = metrics.get('num_contours', 0)
+                    total_pixels = metrics.get('total_contour_pixels', 0)
+                    image_pixels = image.shape[0] * image.shape[1]
+                    coverage_pct = (total_pixels / image_pixels) * 100
+
+                    # Scoring: We want 5-50 contours and 0.5%-5% coverage (not too much, not too little)
+                    if 5 <= num_contours <= 100 and 0.5 <= coverage_pct <= 10:
+                        # Score based on how close to ideal (20 contours, 2% coverage)
+                        score = abs(num_contours - 30) + abs(coverage_pct - 3) * 10
+
+                        if score < best_score:
+                            best_score = score
+                            best_result = (mask, contours, metrics)
+                            best_params = {'blur': blur, 'edge_pct': edge_pct}
+
+            if best_result:
+                print(f"Ring Contour AUTO-DETECT: {best_result[2].get('num_contours', 0)} contours with blur={best_params['blur']}, edge={best_params['edge_pct']}%")
+                return best_result
+            else:
+                # Fallback to default if no good parameters found
+                print("Ring Contour AUTO-DETECT: No optimal parameters found, using defaults")
+                return self._analyze_with_params(image, 5.0, 0.15, 0.375, 30)
+
+        return self._analyze_with_params(
+            image, self.blur_sigma, self.edge_threshold_low,
+            self.edge_threshold_high, self.min_contour_length
+        )
+
+    def _analyze_with_params(self, image: np.ndarray, blur_sigma: float,
+                              edge_low: float, edge_high: float,
+                              min_contour_length: int) -> Tuple[np.ndarray, List, Dict]:
+        """Internal analysis with specific parameters"""
         height, width = image.shape
 
         # Step 1: Normalize image to 0-1 range
@@ -1018,7 +1068,7 @@ class RingContourDetector:
         # Step 2: Apply Gaussian blur to reduce noise
         try:
             from scipy.ndimage import gaussian_filter
-            img_smooth = gaussian_filter(img_norm, sigma=self.blur_sigma)
+            img_smooth = gaussian_filter(img_norm, sigma=blur_sigma)
         except ImportError:
             img_smooth = img_norm  # Fallback: no smoothing
 
@@ -1042,8 +1092,8 @@ class RingContourDetector:
             gradient_norm = gradient_mag
 
         # Double threshold (like Canny edge detection)
-        edge_strong = gradient_norm > self.edge_threshold_high
-        edge_weak = (gradient_norm > self.edge_threshold_low) & ~edge_strong
+        edge_strong = gradient_norm > edge_high
+        edge_weak = (gradient_norm > edge_low) & ~edge_strong
 
         # Step 5: Edge linking - connect weak edges that are adjacent to strong edges
         contour_mask = edge_strong.copy().astype(np.uint8)
@@ -1061,7 +1111,7 @@ class RingContourDetector:
         contours = self._extract_contours(contour_mask)
 
         # Step 7: Filter by minimum length
-        contours = [c for c in contours if len(c) >= self.min_contour_length]
+        contours = [c for c in contours if len(c) >= min_contour_length]
 
         metrics = {
             'num_contours': len(contours),
@@ -1069,6 +1119,8 @@ class RingContourDetector:
             'gradient_max': float(grad_max),
             'contour_lengths': [len(c) for c in contours]
         }
+
+        return contour_mask, contours, metrics
 
         return contour_mask, contours, metrics
 
