@@ -35234,42 +35234,55 @@ def plm_update_single_die_display(result):
     for widget in plm_single_die_frame.winfo_children():
         widget.destroy()
 
-    # Create figure with 2 subplots
-    fig = Figure(figsize=(12, 5), dpi=100)
+    # Create figure with 2 subplots - EQUAL SIZE
+    fig = Figure(figsize=(14, 6), dpi=100)
+
+    # Use GridSpec for equal subplot sizes
+    from matplotlib.gridspec import GridSpec
+    gs = GridSpec(1, 2, figure=fig, wspace=0.3)
 
     # Left: Original PLM image
-    ax1 = fig.add_subplot(121)
+    ax1 = fig.add_subplot(gs[0, 0])
     if result.raw_image is not None:
-        im1 = ax1.imshow(result.raw_image, cmap='gray', aspect='auto')
+        im1 = ax1.imshow(result.raw_image, cmap='gray', aspect='equal')
         ax1.set_title(f"Original PLM - Die ({result.die_x}, {result.die_y})")
         ax1.set_xlabel("Pixel X")
         ax1.set_ylabel("Pixel Y")
-        fig.colorbar(im1, ax=ax1, label="Brightness (nits)")
+        fig.colorbar(im1, ax=ax1, label="Brightness (nits)", shrink=0.8)
     else:
         ax1.text(0.5, 0.5, "No image data", ha='center', va='center', transform=ax1.transAxes)
         ax1.set_title("Original PLM")
 
-    # Right: Defect map
-    ax2 = fig.add_subplot(122)
+    # Right: Defect map - SAME SIZE as left
+    ax2 = fig.add_subplot(gs[0, 1])
     if result.defect_map is not None:
         # Create custom colormap for defects
         from matplotlib.colors import ListedColormap, BoundaryNorm
+        import matplotlib.patches as mpatches
 
-        # Define colors for each defect type
+        # Define colors for each defect type (matching DefectType enum values)
+        # 0=OK, 10=Bridged Minor, 11=Bridged Major, 20=Unif Minor, 21=Unif Major, 30=Stuck ON, 31=Stuck OFF, 40=Dead, 50=Cluster
         colors = ['#00C853', '#FF6B6B', '#D32F2F', '#FFD54F', '#FF8F00',
                   '#42A5F5', '#1565C0', '#424242', '#AB47BC']
         bounds = [0, 5, 10, 15, 20, 25, 30, 35, 40, 55]
         cmap = ListedColormap(colors)
         norm = BoundaryNorm(bounds, cmap.N)
 
-        im2 = ax2.imshow(result.defect_map, cmap=cmap, norm=norm, aspect='auto')
+        im2 = ax2.imshow(result.defect_map, cmap=cmap, norm=norm, aspect='equal')
         ax2.set_title(f"Defect Map - {'PASS' if result.passed else 'FAIL'}")
         ax2.set_xlabel("Pixel X")
         ax2.set_ylabel("Pixel Y")
-
-        # Add legend
-        legend_text = f"🟢 OK | 🔴 Bridged: {result.bridged_count} | 🟡 Uniformity: {result.uniformity_count} | 🔵 Stuck: {result.stuck_count}"
-        ax2.set_xlabel(legend_text, fontsize=8)
+        
+        # Create legend with colored patches
+        legend_elements = [
+            mpatches.Patch(facecolor='#00C853', edgecolor='black', label=f'OK'),
+            mpatches.Patch(facecolor='#D32F2F', edgecolor='black', label=f'Bridged: {result.bridged_count}'),
+            mpatches.Patch(facecolor='#FF8F00', edgecolor='black', label=f'Uniformity: {result.uniformity_count}'),
+            mpatches.Patch(facecolor='#42A5F5', edgecolor='black', label=f'Stuck: {result.stuck_count}'),
+            mpatches.Patch(facecolor='#AB47BC', edgecolor='black', label=f'Cluster: {result.cluster_count}'),
+        ]
+        ax2.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1.02, 1), 
+                   fontsize=8, framealpha=0.9)
     else:
         ax2.text(0.5, 0.5, "No defect data", ha='center', va='center', transform=ax2.transAxes)
         ax2.set_title("Defect Map")
@@ -35354,24 +35367,24 @@ def plm_update_statistics(result):
         return
 
     stats = f"""
-╔══════════════════════════════════════════════════════════════╗
-║  PLM ANALYSIS RESULT - Die ({result.die_x}, {result.die_y})
-╠══════════════════════════════════════════════════════════════╣
-║  Status: {'✅ PASS' if result.passed else '❌ FAIL'}
-║  {f'Reason: {result.fail_reason}' if not result.passed else ''}
-╠══════════════════════════════════════════════════════════════╣
-║  IMAGE STATISTICS:
-║  ├─ Total Pixels:    {result.total_pixels:,}
-║  ├─ Mean Brightness: {result.mean_brightness:.2f} nits
-║  └─ Std Deviation:   {result.std_brightness:.2f}
-╠══════════════════════════════════════════════════════════════╣
-║  DEFECT SUMMARY:
-║  ├─ 🔴 Bridged:      {result.bridged_count:,} pixels
-║  ├─ 🟡 Uniformity:   {result.uniformity_count:,} pixels
-║  ├─ 🔵 Stuck:        {result.stuck_count:,} pixels
-║  ├─ 🟣 Clusters:     {result.cluster_count}
-║  └─ Total Defects:   {result.bridged_count + result.uniformity_count + result.stuck_count:,} ({result.get_defect_percentage():.4f}%)
-╚══════════════════════════════════════════════════════════════╝
++==============================================================+
+|  PLM ANALYSIS RESULT - Die ({result.die_x}, {result.die_y})
++==============================================================+
+|  Status: {'[PASS]' if result.passed else '[FAIL]'}
+|  {f'Reason: {result.fail_reason}' if not result.passed else ''}
++--------------------------------------------------------------+
+|  IMAGE STATISTICS:
+|  +- Total Pixels:    {result.total_pixels:,}
+|  +- Mean Brightness: {result.mean_brightness:.2f} nits
+|  +- Std Deviation:   {result.std_brightness:.2f}
++--------------------------------------------------------------+
+|  DEFECT SUMMARY:
+|  +- [RED] Bridged:      {result.bridged_count:,} pixels
+|  +- [YEL] Uniformity:   {result.uniformity_count:,} pixels
+|  +- [BLU] Stuck:        {result.stuck_count:,} pixels
+|  +- [PUR] Clusters:     {result.cluster_count}
+|  +- Total Defects:      {result.bridged_count + result.uniformity_count + result.stuck_count:,} ({result.get_defect_percentage():.4f}%)
++==============================================================+
 """
     plm_stats_text.insert(tk.END, stats)
 
@@ -35392,21 +35405,21 @@ def plm_update_wafer_statistics():
     total_stuck = sum(r.stuck_count for r in plm_analysis_results.values())
 
     stats = f"""
-╔══════════════════════════════════════════════════════════════╗
-║  PLM WAFER ANALYSIS SUMMARY
-╠══════════════════════════════════════════════════════════════╣
-║  Dies Analyzed:   {total_dies}
-║  ├─ ✅ PASS:      {passed} ({100*passed/total_dies:.1f}%)
-║  └─ ❌ FAIL:      {failed} ({100*failed/total_dies:.1f}%)
-╠══════════════════════════════════════════════════════════════╣
-║  TOTAL DEFECTS ACROSS WAFER:
-║  ├─ 🔴 Bridged:      {total_bridged:,} pixels
-║  ├─ 🟡 Uniformity:   {total_uniformity:,} pixels
-║  └─ 🔵 Stuck:        {total_stuck:,} pixels
-╠══════════════════════════════════════════════════════════════╣
-║  YIELD IMPACT:
-║  └─ PLM Yield:    {100*passed/total_dies:.2f}%
-╚══════════════════════════════════════════════════════════════╝
++==============================================================+
+|  PLM WAFER ANALYSIS SUMMARY
++==============================================================+
+|  Dies Analyzed:   {total_dies}
+|  +- [PASS]:       {passed} ({100*passed/total_dies:.1f}%)
+|  +- [FAIL]:       {failed} ({100*failed/total_dies:.1f}%)
++--------------------------------------------------------------+
+|  TOTAL DEFECTS ACROSS WAFER:
+|  +- [RED] Bridged:      {total_bridged:,} pixels
+|  +- [YEL] Uniformity:   {total_uniformity:,} pixels
+|  +- [BLU] Stuck:        {total_stuck:,} pixels
++--------------------------------------------------------------+
+|  YIELD IMPACT:
+|  +- PLM Yield:    {100*passed/total_dies:.2f}%
++==============================================================+
 """
     plm_stats_text.insert(tk.END, stats)
 
