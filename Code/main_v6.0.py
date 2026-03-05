@@ -35079,6 +35079,100 @@ plm_control_frame.pack(fill=tk.X, padx=5, pady=5)
 plm_control_row1 = tk.Frame(plm_control_frame)
 plm_control_row1.pack(fill=tk.X, padx=5, pady=5)
 
+# Help Button (?) - Parameter explanation
+def plm_show_help():
+    """Show help dialog explaining all PLM analysis parameters"""
+    help_window = tk.Toplevel()
+    help_window.title("PLM Analysis - Parameter Help")
+    help_window.geometry("650x550")
+    help_window.resizable(True, True)
+
+    # Scrollable text
+    help_frame = tk.Frame(help_window)
+    help_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+    scrollbar = tk.Scrollbar(help_frame)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+    help_text = tk.Text(help_frame, wrap=tk.WORD, font=("Consolas", 10), yscrollcommand=scrollbar.set)
+    help_text.pack(fill=tk.BOTH, expand=True)
+    scrollbar.config(command=help_text.yview)
+
+    # Configure tags for formatting
+    help_text.tag_configure('title', font=('Segoe UI', 14, 'bold'), foreground='#1565C0')
+    help_text.tag_configure('section', font=('Segoe UI', 11, 'bold'), foreground='#2E7D32')
+    help_text.tag_configure('param', font=('Consolas', 10, 'bold'), foreground='#D32F2F')
+    help_text.tag_configure('desc', font=('Segoe UI', 10))
+
+    # Content
+    help_text.insert(tk.END, "PLM IMAGE ANALYSIS - PARAMETER HELP\n\n", 'title')
+
+    help_text.insert(tk.END, "=== MODE ===\n", 'section')
+    help_text.insert(tk.END, "Single Die: ", 'param')
+    help_text.insert(tk.END, "Analyze only the selected die (click on wafer first)\n", 'desc')
+    help_text.insert(tk.END, "Whole Wafer: ", 'param')
+    help_text.insert(tk.END, "Analyze all dies on the wafer (takes longer)\n\n", 'desc')
+
+    help_text.insert(tk.END, "=== SOURCE ===\n", 'section')
+    help_text.insert(tk.END, "Stitched (Raw): ", 'param')
+    help_text.insert(tk.END, "Use raw PLM image (576x768 pixels, brightness in nits)\n", 'desc')
+    help_text.insert(tk.END, "Pre-calculated: ", 'param')
+    help_text.insert(tk.END, "Use pre-calculated uniformity/bridged maps from tester\n\n", 'desc')
+
+    help_text.insert(tk.END, "=== ANALYSIS TYPE ===\n", 'section')
+    help_text.insert(tk.END, "All Defects: ", 'param')
+    help_text.insert(tk.END, "Run all defect detections (Uniformity + Bridged + Stuck)\n", 'desc')
+    help_text.insert(tk.END, "Uniformity Only: ", 'param')
+    help_text.insert(tk.END, "Detect only brightness deviation (hot/cold spots)\n", 'desc')
+    help_text.insert(tk.END, "Bridged Only: ", 'param')
+    help_text.insert(tk.END, "Detect only electrically connected pixels\n", 'desc')
+    help_text.insert(tk.END, "Stuck Only: ", 'param')
+    help_text.insert(tk.END, "Detect only pixels that don't switch (always on/off)\n\n", 'desc')
+
+    help_text.insert(tk.END, "=== THRESHOLDS ===\n", 'section')
+    help_text.insert(tk.END, "Uniformity σ: ", 'param')
+    help_text.insert(tk.END, "Standard deviation multiplier for uniformity detection.\n", 'desc')
+    help_text.insert(tk.END, "  - Pixels deviating > σ*std from mean = UNIFORMITY defect\n", 'desc')
+    help_text.insert(tk.END, "  - Default: 2.0 (detects ~5% outliers in normal distribution)\n\n", 'desc')
+
+    help_text.insert(tk.END, "Bridged min: ", 'param')
+    help_text.insert(tk.END, "Minimum connected bright pixels to be considered 'bridged'.\n", 'desc')
+    help_text.insert(tk.END, "  - Default: 3 (3+ connected pixels = bridged)\n\n", 'desc')
+
+    help_text.insert(tk.END, "Stuck thresh: ", 'param')
+    help_text.insert(tk.END, "(Currently using percentile-based detection)\n", 'desc')
+    help_text.insert(tk.END, "  - Stuck ON: Pixels above 99.5th percentile\n", 'desc')
+    help_text.insert(tk.END, "  - Stuck OFF: Pixels below 0.5th percentile\n\n", 'desc')
+
+    help_text.insert(tk.END, "=== DEFECT COLORS ===\n", 'section')
+    help_text.insert(tk.END, "GREEN: ", 'param')
+    help_text.insert(tk.END, "OK - No defect detected\n", 'desc')
+    help_text.insert(tk.END, "RED: ", 'param')
+    help_text.insert(tk.END, "Bridged pixels (electrically connected)\n", 'desc')
+    help_text.insert(tk.END, "ORANGE: ", 'param')
+    help_text.insert(tk.END, "Uniformity defects (brightness deviation)\n", 'desc')
+    help_text.insert(tk.END, "BLUE: ", 'param')
+    help_text.insert(tk.END, "Stuck pixels (always on or always off)\n", 'desc')
+    help_text.insert(tk.END, "PURPLE: ", 'param')
+    help_text.insert(tk.END, "Cluster (group of adjacent defects)\n\n", 'desc')
+
+    help_text.insert(tk.END, "=== PASS/FAIL CRITERIA ===\n", 'section')
+    help_text.insert(tk.END, "A die FAILS if any of these limits is exceeded:\n", 'desc')
+    help_text.insert(tk.END, "  - Bridged pixels > 5\n", 'desc')
+    help_text.insert(tk.END, "  - Uniformity defects > 10\n", 'desc')
+    help_text.insert(tk.END, "  - Stuck pixels > 3\n", 'desc')
+
+    help_text.config(state=tk.DISABLED)  # Read-only
+
+    # Close button
+    tk.Button(help_window, text="Close", command=help_window.destroy,
+              font=("Segoe UI", 10), width=10).pack(pady=10)
+
+# ? Help button
+plm_help_btn = tk.Button(plm_control_row1, text="?", font=("Segoe UI", 10, "bold"),
+                          width=2, command=plm_show_help, bg="#E3F2FD", fg="#1565C0")
+plm_help_btn.pack(side=tk.RIGHT, padx=5)
+
 # Mode selection
 tk.Label(plm_control_row1, text="Mode:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(0, 5))
 plm_mode_var = tk.StringVar(value="single")
@@ -35262,9 +35356,9 @@ def plm_update_single_die_display(result):
     from matplotlib.colors import ListedColormap, BoundaryNorm
 
     if show_die_image:
-        # 3 EQUAL images: Die Image | PLM | Defect Map
+        # 3 EQUAL images: Die Image | PLM | Defect Map + Legend space
         fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
-        gs = GridSpec(1, 3, figure=fig, wspace=0.15)
+        gs = GridSpec(1, 4, figure=fig, width_ratios=[1, 1, 1, 0.2], wspace=0.12)
 
         # Left: Die Image
         ax0 = fig.add_subplot(gs[0, 0])
@@ -35298,13 +35392,16 @@ def plm_update_single_die_display(result):
         ax1 = fig.add_subplot(gs[0, 1])
         # Right: Defect Map
         ax2 = fig.add_subplot(gs[0, 2])
+        # Far right: Legend
+        ax_legend = fig.add_subplot(gs[0, 3])
     else:
-        # 2 EQUAL images: PLM | Defect Map
+        # 2 EQUAL images: PLM | Defect Map + Legend space
         fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
-        gs = GridSpec(1, 2, figure=fig, wspace=0.15)
+        gs = GridSpec(1, 3, figure=fig, width_ratios=[1, 1, 0.2], wspace=0.12)
 
         ax1 = fig.add_subplot(gs[0, 0])
         ax2 = fig.add_subplot(gs[0, 1])
+        ax_legend = fig.add_subplot(gs[0, 2])
 
     # PLM Image with VERTICAL colorbar
     if result.raw_image is not None:
@@ -35333,7 +35430,8 @@ def plm_update_single_die_display(result):
         ax2.set_xlabel("Pixel X", fontsize=8)
         ax2.set_ylabel("Pixel Y", fontsize=8)
 
-        # Legend inside the plot (upper right corner)
+        # Legend in separate panel (ax_legend) - OUTSIDE the image
+        ax_legend.axis('off')
         legend_elements = [
             mpatches.Patch(facecolor='#00C853', edgecolor='black', label='OK'),
             mpatches.Patch(facecolor='#D32F2F', edgecolor='black', label=f'Bridged: {result.bridged_count}'),
@@ -35341,11 +35439,12 @@ def plm_update_single_die_display(result):
             mpatches.Patch(facecolor='#42A5F5', edgecolor='black', label=f'Stuck: {result.stuck_count}'),
             mpatches.Patch(facecolor='#AB47BC', edgecolor='black', label=f'Cluster: {result.cluster_count}'),
         ]
-        ax2.legend(handles=legend_elements, loc='upper right', fontsize=6,
-                   framealpha=0.85, handlelength=1, handleheight=0.8)
+        ax_legend.legend(handles=legend_elements, loc='upper left', fontsize=8,
+                         framealpha=0.9, handlelength=1.5, handleheight=1.0)
     else:
         ax2.text(0.5, 0.5, "No defect data", ha='center', va='center', transform=ax2.transAxes)
         ax2.set_title("Defect Map", fontsize=9)
+        ax_legend.axis('off')
 
     fig.tight_layout(pad=1.0)
 
