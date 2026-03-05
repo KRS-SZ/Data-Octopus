@@ -35322,10 +35322,13 @@ plm_mod_mura_frame.pack(side=tk.LEFT, padx=3, pady=2)
 plm_mod_mura_var = tk.BooleanVar(value=False)
 tk.Checkbutton(plm_mod_mura_frame, text="Mura", variable=plm_mod_mura_var,
                font=("Segoe UI", 9, "bold"), fg="#E91E63").pack(side=tk.LEFT, padx=2)
-# AUTO checkbox for automatic parameter detection
+# AUTO checkbox for automatic parameter detection - DEUTLICH SICHTBAR
 plm_mura_auto_var = tk.BooleanVar(value=False)
-tk.Checkbutton(plm_mod_mura_frame, text="Auto", variable=plm_mura_auto_var,
-               font=("Segoe UI", 8), fg="#666").pack(side=tk.LEFT)
+plm_mura_auto_cb = tk.Checkbutton(plm_mod_mura_frame, text="[AUTO]", variable=plm_mura_auto_var,
+               font=("Segoe UI", 9, "bold"), fg="#FFFFFF", bg="#2196F3",
+               selectcolor="#1565C0", activebackground="#1976D2",
+               activeforeground="#FFFFFF")
+plm_mura_auto_cb.pack(side=tk.LEFT, padx=3)
 tk.Label(plm_mod_mura_frame, text="blur:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
 plm_mura_blur_var = tk.StringVar(value="10")
 tk.Entry(plm_mod_mura_frame, textvariable=plm_mura_blur_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
