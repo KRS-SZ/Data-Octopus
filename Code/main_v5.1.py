@@ -3885,8 +3885,28 @@ wafer_mode_label = tk.Label(
 wafer_mode_label.pack(fill=tk.X, padx=5)
 
 # ============== LOAD WAFER BUTTON + MANIFOLD INTEGRATION ==============
+import threading
+_load_dialog_lock = threading.Lock()
+_load_dialog_open = False
+
 def show_load_wafer_dialog():
     """Show dialog to choose: Load lokal, Manifold (fast), Manifold (complete)"""
+    global _load_dialog_open
+
+    # Thread-safe lock to prevent double dialog
+    if not _load_dialog_lock.acquire(blocking=False):
+        print("DEBUG: Lock already acquired, ignoring call")
+        return
+
+    if _load_dialog_open:
+        print("DEBUG: Dialog already open, ignoring")
+        _load_dialog_lock.release()
+        return
+    _load_dialog_open = True
+    _load_dialog_lock.release()
+
+    print("DEBUG: Creating load dialog...")
+
     parent = wafer_left_panel.winfo_toplevel()
     dialog = tk.Toplevel(parent)
     dialog.title("Load Wafer")
@@ -3894,6 +3914,13 @@ def show_load_wafer_dialog():
     dialog.transient(parent)
     dialog.grab_set()
     dialog.resizable(False, False)
+
+    def on_dialog_close():
+        global _load_dialog_open
+        _load_dialog_open = False
+        dialog.destroy()
+
+    dialog.protocol("WM_DELETE_WINDOW", on_dialog_close)
 
     # Center on parent
     dialog.update_idletasks()
@@ -3914,7 +3941,7 @@ def show_load_wafer_dialog():
     local_frame.pack(fill=tk.X, pady=5)
     tk.Label(local_frame, text="💻 Load lokal", font=("Segoe UI", 11, "bold"), bg="#E3F2FD", fg="#1565C0").pack(anchor=tk.W, padx=10, pady=(8,2))
     tk.Label(local_frame, text="Load STDF/CSV/MC-300 from local file system", font=("Segoe UI", 9), bg="#E3F2FD", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
-    local_btn = tk.Button(local_frame, text="Select File...", command=lambda: [dialog.destroy(), load_local_wafer()],
+    local_btn = tk.Button(local_frame, text="Select File...", command=lambda: [on_dialog_close(), load_local_wafer()],
                           bg="#1976D2", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2")
     local_btn.pack(side=tk.RIGHT, padx=10, pady=8)
 
@@ -3923,7 +3950,7 @@ def show_load_wafer_dialog():
     fast_frame.pack(fill=tk.X, pady=5)
     tk.Label(fast_frame, text="⚡ Manifold (fast)", font=("Segoe UI", 11, "bold"), bg="#FFF3E0", fg="#E65100").pack(anchor=tk.W, padx=10, pady=(8,2))
     tk.Label(fast_frame, text="Download ZIP + extract CSV only (no PLM images)", font=("Segoe UI", 9), bg="#FFF3E0", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
-    fast_btn = tk.Button(fast_frame, text="Browse Manifold...", command=lambda: [dialog.destroy(), load_manifold_fast()],
+    fast_btn = tk.Button(fast_frame, text="Browse Manifold...", command=lambda: [on_dialog_close(), load_manifold_fast()],
                          bg="#F57C00", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2")
     fast_btn.pack(side=tk.RIGHT, padx=10, pady=8)
 
@@ -3932,12 +3959,12 @@ def show_load_wafer_dialog():
     full_frame.pack(fill=tk.X, pady=5)
     tk.Label(full_frame, text="📦 Manifold (complete)", font=("Segoe UI", 11, "bold"), bg="#E8F5E9", fg="#2E7D32").pack(anchor=tk.W, padx=10, pady=(8,2))
     tk.Label(full_frame, text="Download full ZIP (CSV + PLM images)", font=("Segoe UI", 9), bg="#E8F5E9", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
-    full_btn = tk.Button(full_frame, text="Browse Manifold...", command=lambda: [dialog.destroy(), load_manifold_complete()],
+    full_btn = tk.Button(full_frame, text="Browse Manifold...", command=lambda: [on_dialog_close(), load_manifold_complete()],
                          bg="#388E3C", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2")
     full_btn.pack(side=tk.RIGHT, padx=10, pady=8)
 
     # Cancel button
-    tk.Button(dialog, text="Cancel", command=dialog.destroy, font=("Segoe UI", 9)).pack(pady=15)
+    tk.Button(dialog, text="Cancel", command=on_dialog_close, font=("Segoe UI", 9)).pack(pady=15)
 
 def load_local_wafer():
     """Load wafer from local file system - supports STDF, CSV, MC-300"""
