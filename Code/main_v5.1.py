@@ -1121,26 +1121,11 @@ def select_stdf_file():
 
 
 def update_source_buttons():
-    """Update button visibility based on selected file source (STDF, CSV, or MC-300)"""
-    source = file_source_var.get()
-
-    # Hide all buttons first
-    select_multiple_stdf_button.pack_forget()
-    select_csv_button.pack_forget()
-    try:
-        select_mc300_button.pack_forget()
-    except:
-        pass
-
-    if source == "STDF":
-        select_multiple_stdf_button.pack(side=tk.LEFT, padx=3)
-    elif source == "CSV":
-        select_csv_button.pack(side=tk.LEFT, padx=3)
-    elif source == "MC-300":
-        try:
-            select_mc300_button.pack(side=tk.LEFT, padx=3)
-        except:
-            pass
+    """Update button visibility based on selected file source (STDF, CSV, or MC-300)
+    NOTE: v5.2.1 - Diese Funktion ist jetzt ein No-Op, da die Load-Buttons entfernt wurden.
+    Der 'Load Wafer' Button in der Sidebar übernimmt alle Formate.
+    """
+    pass  # No-op - buttons removed in v5.2.1
 
 
 # NOTE: sort_test_params_numerically, simplify_param_name, extract_group_from_column,
@@ -1174,29 +1159,6 @@ def select_stdf_file():
 
     if stdf_path:
         load_stdf_data(stdf_path)
-
-
-def update_source_buttons():
-    """Update button visibility based on selected file source (STDF, CSV, or MC-300)"""
-    source = file_source_var.get()
-
-    # Hide all buttons first
-    select_multiple_stdf_button.pack_forget()
-    select_csv_button.pack_forget()
-    try:
-        select_mc300_button.pack_forget()
-    except:
-        pass
-
-    if source == "STDF":
-        select_multiple_stdf_button.pack(side=tk.LEFT, padx=3)
-    elif source == "CSV":
-        select_csv_button.pack(side=tk.LEFT, padx=3)
-    elif source == "MC-300":
-        try:
-            select_mc300_button.pack(side=tk.LEFT, padx=3)
-        except:
-            pass
 
 
 # NOTE: sort_test_params_numerically, simplify_param_name, extract_group_from_column,
