@@ -35602,7 +35602,9 @@ def plm_run_analysis():
         plm_status_var.set(f"Analysis complete: {passed} PASS, {failed} FAIL")
 
 def plm_update_single_die_display(result):
-    """Update the single die view with analysis result - Auto-scaling layout"""
+    """Update the single die view with analysis result - Auto-scaling layout with ZOOM support"""
+    global plm_selected_ax, plm_all_axes, plm_current_canvas, plm_current_fig
+
     if result is None:
         return
 
@@ -35628,11 +35630,13 @@ def plm_update_single_die_display(result):
     from matplotlib.colors import ListedColormap, BoundaryNorm
 
     if show_die_image:
-        # 3 EQUAL images: Die Image | PLM + cbar | Defect Map + Legend
+        # 3 EQUAL images: Die Image | PLM | Defect Map - alle GLEICH GROSS
+        # Platz durch 3 teilen! Jedes Bild = 1 Einheit
         fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
-        gs = GridSpec(1, 6, figure=fig, width_ratios=[1, 0.05, 1, 0.05, 1, 0.15], wspace=0.08)
+        # 3 gleiche Bildfelder (je 1.0) + winzige Colorbar (0.02) + winzige Legend (0.08)
+        gs = GridSpec(1, 5, figure=fig, width_ratios=[1.0, 1.0, 0.02, 1.0, 0.08], wspace=0.03)
 
-        # Left: Die Image
+        # Column 0: Die Image - EXAKT GLEICHE GRÖSSE wie PLM und Defect Map
         ax0 = fig.add_subplot(gs[0, 0])
         die_image_loaded = False
         if die_image_directory and os.path.exists(die_image_directory):
@@ -35663,12 +35667,11 @@ def plm_update_single_die_display(result):
             ax0.set_xticks([])
             ax0.set_yticks([])
 
-        # PLM in column 2, Colorbar in column 3
-        ax1 = fig.add_subplot(gs[0, 2])
-        ax1_cbar = fig.add_subplot(gs[0, 3])
-        # Defect Map in column 4, Legend in column 5
-        ax2 = fig.add_subplot(gs[0, 4])
-        ax_legend = fig.add_subplot(gs[0, 5])
+        # Column 1: PLM, Column 2: Colorbar (klein!), Column 3: Defect Map, Column 4: Legend
+        ax1 = fig.add_subplot(gs[0, 1])
+        ax1_cbar = fig.add_subplot(gs[0, 2])
+        ax2 = fig.add_subplot(gs[0, 3])
+        ax_legend = fig.add_subplot(gs[0, 4])
     else:
         # 2 EQUAL images: PLM + cbar | Defect Map + Legend
         fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
@@ -35798,10 +35801,68 @@ def plm_update_single_die_display(result):
 
     fig.tight_layout(pad=1.0)
 
-    # Embed in tkinter
-    canvas = FigureCanvasTkAgg(fig, master=plm_single_die_frame)
+    # Embed in tkinter with Navigation Toolbar for ZOOM
+    from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
+
+    # Create container frame
+    container = tk.Frame(plm_single_die_frame)
+    container.pack(fill=tk.BOTH, expand=True)
+
+    canvas = FigureCanvasTkAgg(fig, master=container)
     canvas.draw()
-    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+    # Add Navigation Toolbar (Zoom, Pan, Home, Save)
+    toolbar = NavigationToolbar2Tk(canvas, container)
+    toolbar.update()
+    toolbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+    # Store references for selection highlighting
+    plm_current_canvas = canvas
+    plm_current_fig = fig
+
+    # Collect all axes for click selection
+    if show_die_image:
+        plm_all_axes = [ax0, ax1, ax2]
+        axes_names = ["Die Image", "PLM", "Defect Map"]
+    else:
+        plm_all_axes = [ax1, ax2]
+        axes_names = ["PLM", "Defect Map"]
+
+    plm_selected_ax = None
+
+    def on_axes_click(event):
+        """Handle click on axes - highlight selected axis with blue border"""
+        nonlocal plm_selected_ax
+
+        if event.inaxes is None:
+            return
+
+        # Remove previous selection highlight
+        for ax in plm_all_axes:
+            for spine in ax.spines.values():
+                spine.set_edgecolor('black')
+                spine.set_linewidth(0.5)
+
+        # Highlight clicked axis with blue border
+        if event.inaxes in plm_all_axes:
+            plm_selected_ax = event.inaxes
+            for spine in event.inaxes.spines.values():
+                spine.set_edgecolor('#2196F3')  # Blue
+                spine.set_linewidth(3)
+
+            # Find axis name
+            try:
+                idx = plm_all_axes.index(event.inaxes)
+                ax_name = axes_names[idx]
+                plm_status_var.set(f"Selected: {ax_name} - Use toolbar to Zoom/Pan")
+            except:
+                pass
+
+            canvas.draw_idle()
+
+    # Connect click event
+    canvas.mpl_connect('button_press_event', on_axes_click)
 
     # Update statistics
     plm_update_statistics(result)
