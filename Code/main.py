@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "4.0.0"
+APP_VERSION = "6.1.7"  # FINAL: 3-Spalten Layout, Zoom/Pan Toolbar, blaue Klick-Auswahl
 
 import sys
 
@@ -143,9 +143,34 @@ from src.stdf_analyzer.core.parameter_utils import (
     sort_test_params_numerically,
     convert_am_data_column_name,
 )
+from src.stdf_analyzer.core.data_loader import load_csv_file
+from src.stdf_analyzer.core.statistics_utils import (
+    calculate_basic_stats,
+    calculate_percentiles,
+    calculate_cpk,
+    calculate_yield,
+    calculate_bin_summary,
+    calculate_grr,
+    format_stat_value,
+)
+from src.stdf_analyzer.core.wafermap_utils import (
+    WaferConfig,
+    calculate_wafer_center,
+    calculate_die_dimensions,
+    get_wafer_bounds,
+    find_die_at_position,
+    transform_coordinates,
+    get_edge_dies,
+    get_center_dies,
+    calculate_radial_position,
+)
+from src.stdf_analyzer.gui.datalog_tab import DatalogTab  # v5.1.0
+
 # AppState class is available for future migration of global variables
 # Usage: from src.stdf_analyzer.core.app_state import app_state
 # See app_state.py for documentation on migrating global variables
+
+# DiffmapTab will be imported after tab_diffmap is created (line ~889)
 
 # Global binning lookup instance
 binning_lookup = BinningLookup()
@@ -803,7 +828,7 @@ main_win.geometry("1200x800")
 print("Main window created successfully")
 
 style = ttk.Style(main_win)
-style.configure("TNotebook.Tab", font=("Helvetica", 20, "bold"))
+style.configure("TNotebook.Tab", font=("Helvetica", 18, "bold"))
 
 # Top bar for language selection
 top_bar = tk.Frame(main_win)
@@ -872,11 +897,17 @@ language_combobox.bind("<<ComboboxSelected>>", change_language)
 notebook = ttk.Notebook(main_win)
 notebook.pack(fill="both", expand=True)
 
-# Tab 1: Configuration (moved to first position)
-tab7 = ttk.Frame(notebook)
-notebook.add(tab7, text="⚙ Config")
+# Tab 1: Dashboard (NEW - als erstes!)
+tab_dashboard = ttk.Frame(notebook)
+notebook.add(tab_dashboard, text="📊 Dashboard")
+try:
+    from src.stdf_analyzer.gui.dashboard_tab import DashboardTab
+    dashboard_tab_instance = DashboardTab(notebook, tab_dashboard)
+except ImportError as e:
+    print(f"Warning: DashboardTab import failed: {e}")
+    tk.Label(tab_dashboard, text="Dashboard nicht verfügbar", font=("Segoe UI", 14)).pack(pady=50)
 
-# Tab 2: Wafermap (renamed from STDF Heatmap)
+# Tab 2: Wafermap
 tab6 = ttk.Frame(notebook)
 notebook.add(tab6, text="🗺 Wafer")
 
@@ -892,17 +923,30 @@ notebook.add(tab_diffmap, text="🔄 Diffmap")
 tab_grr = ttk.Frame(notebook)
 notebook.add(tab_grr, text="📏 Gage R&R")
 
-# Tab 6: STDF to CSV Converter
+# Tab 6: PLM Image Analysis (NEU v6.0.0)
+tab_plm_analysis = ttk.Frame(notebook)
+notebook.add(tab_plm_analysis, text="🔬 PLM Analysis")
+
+# Tab 7: STDF to CSV Converter
 tab_stdf_csv = ttk.Frame(notebook)
 notebook.add(tab_stdf_csv, text="🔄 STDF to CSV")
 
-# Tab 7: Report (at the end)
+# Tab 7: Report
 tab_presentation = ttk.Frame(notebook)
 notebook.add(tab_presentation, text="📑 Report")
 
 # Tab 8: Auto. Jobs Save/Load
 tab_settings = ttk.Frame(notebook)
 notebook.add(tab_settings, text="🔄 Auto. Jobs")
+
+# Tab 9: Datalog (nach hinten verschoben)
+tab_datalog = ttk.Frame(notebook)
+notebook.add(tab_datalog, text="📋 Datalog")
+datalog_tab_instance = DatalogTab(notebook, tab_datalog)
+
+# Tab 10: Configuration (ganz am Ende)
+tab7 = ttk.Frame(notebook)
+notebook.add(tab7, text="⚙ Config")
 
 # Global variables for plot canvases
 canvas1 = None
@@ -1081,26 +1125,11 @@ def select_stdf_file():
 
 
 def update_source_buttons():
-    """Update button visibility based on selected file source (STDF, CSV, or MC-300)"""
-    source = file_source_var.get()
-
-    # Hide all buttons first
-    select_multiple_stdf_button.pack_forget()
-    select_csv_button.pack_forget()
-    try:
-        select_mc300_button.pack_forget()
-    except:
-        pass
-
-    if source == "STDF":
-        select_multiple_stdf_button.pack(side=tk.LEFT, padx=3)
-    elif source == "CSV":
-        select_csv_button.pack(side=tk.LEFT, padx=3)
-    elif source == "MC-300":
-        try:
-            select_mc300_button.pack(side=tk.LEFT, padx=3)
-        except:
-            pass
+    """Update button visibility based on selected file source (STDF, CSV, or MC-300)
+    NOTE: v5.2.1 - Diese Funktion ist jetzt ein No-Op, da die Load-Buttons entfernt wurden.
+    Der 'Load Wafer' Button in der Sidebar übernimmt alle Formate.
+    """
+    pass  # No-op - buttons removed in v5.2.1
 
 
 # NOTE: sort_test_params_numerically, simplify_param_name, extract_group_from_column,
@@ -1134,29 +1163,6 @@ def select_stdf_file():
 
     if stdf_path:
         load_stdf_data(stdf_path)
-
-
-def update_source_buttons():
-    """Update button visibility based on selected file source (STDF, CSV, or MC-300)"""
-    source = file_source_var.get()
-
-    # Hide all buttons first
-    select_multiple_stdf_button.pack_forget()
-    select_csv_button.pack_forget()
-    try:
-        select_mc300_button.pack_forget()
-    except:
-        pass
-
-    if source == "STDF":
-        select_multiple_stdf_button.pack(side=tk.LEFT, padx=3)
-    elif source == "CSV":
-        select_csv_button.pack(side=tk.LEFT, padx=3)
-    elif source == "MC-300":
-        try:
-            select_mc300_button.pack(side=tk.LEFT, padx=3)
-        except:
-            pass
 
 
 # NOTE: sort_test_params_numerically, simplify_param_name, extract_group_from_column,
@@ -1321,15 +1327,17 @@ def load_mc300_file():
         messagebox.showerror("Error", f"Failed to load MC-300:\n{str(e)}")
 
 
-def load_csv_wafermap_file():
+def load_csv_wafermap_file(csv_path=None):
     """Load wafermap data from a CSV file"""
     global current_stdf_data, current_wafer_id, test_parameters, grouped_parameters, test_limits
     global multiple_stdf_data, multiple_wafer_ids, die_image_directory
 
-    csv_path = filedialog.askopenfilename(
-        title="Select a CSV file with wafermap data",
-        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
-    )
+    # Wenn kein Pfad übergeben, zeige File-Dialog
+    if not csv_path:
+        csv_path = filedialog.askopenfilename(
+            title="Select a CSV file with wafermap data",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+        )
 
     if not csv_path:
         return
@@ -3268,74 +3276,12 @@ def update_heatmap_parameter_list():
 control_frame_heatmap = tk.Frame(tab6)
 control_frame_heatmap.pack(side=tk.TOP, fill=tk.X, padx=5, pady=2)
 
-# Row 1: File loading controls
+# Single Row: All controls in one toolbar (v5.2.0 - simplified)
 control_row1 = tk.Frame(control_frame_heatmap)
 control_row1.pack(side=tk.TOP, fill=tk.X, pady=2)
 
-# File source selector (Dropdown/Combobox)
+# Keep variables for backward compatibility (used elsewhere)
 file_source_var = tk.StringVar(value="STDF")
-
-source_label = tk.Label(control_row1, text="Format:", font=("Helvetica", 9))
-source_label.pack(side=tk.LEFT, padx=(0, 3))
-
-file_source_combobox = ttk.Combobox(
-    control_row1,
-    textvariable=file_source_var,
-    values=["STDF", "CSV", "MC-300"],
-    state="readonly",
-    width=7,
-    font=("Helvetica", 9)
-)
-file_source_combobox.pack(side=tk.LEFT, padx=2)
-file_source_combobox.bind("<<ComboboxSelected>>", lambda e: update_source_buttons())
-
-# Frame to hold the file-type specific load buttons (STDF or CSV)
-load_buttons_frame = tk.Frame(control_row1)
-load_buttons_frame.pack(side=tk.LEFT, padx=2)
-
-select_multiple_stdf_button = tk.Button(
-    load_buttons_frame,
-    text="Load STDF",
-    command=lambda: load_multiple_stdf_files(),
-    font=("Helvetica", 9),
-)
-select_multiple_stdf_button.pack(side=tk.LEFT, padx=2)
-
-# CSV Load button (initially hidden)
-select_csv_button = tk.Button(
-    load_buttons_frame,
-    text="Load CSV",
-    command=lambda: load_csv_wafermap_file(),
-    font=("Helvetica", 9),
-    bg="#4CAF50",
-    fg="white",
-)
-# Don't pack initially - will be managed by update_source_buttons()
-
-# MC-300 Load button (initially hidden)
-select_mc300_button = tk.Button(
-    load_buttons_frame,
-    text="Load MC-300",
-    command=lambda: load_mc300_file(),
-    font=("Helvetica", 9),
-    bg="#9C27B0",
-    fg="white",
-)
-# Don't pack initially - will be managed by update_source_buttons()
-
-# Button to load entire project folder (always visible)
-load_project_button = tk.Button(
-    control_row1,
-    text="Project Folder",
-    command=lambda: load_project_folder(),
-    font=("Helvetica", 9),
-    bg="#FF9800",
-    fg="white",
-)
-load_project_button.pack(side=tk.LEFT, padx=2)
-
-# Separator
-tk.Label(control_row1, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
 
 # Group selection dropdown
 tk.Label(control_row1, text="Group:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=2)
@@ -3349,58 +3295,18 @@ heatmap_group_combobox.bind("<<ComboboxSelected>>", lambda e: on_group_selected(
 tk.Label(control_row1, text="Param:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=2)
 
 heatmap_param_combobox = ttk.Combobox(
-    control_row1, state="readonly", width=90, font=("Helvetica", 9)
+    control_row1, state="readonly", width=70, font=("Helvetica", 9)
 )
 heatmap_param_combobox.pack(side=tk.LEFT, padx=2)
 heatmap_param_combobox.bind("<<ComboboxSelected>>", lambda e: refresh_heatmap_display())
 
-heatmap_refresh_button = tk.Button(
-    control_row1,
-    text="Refresh",
-    command=lambda: refresh_heatmap_display(),
-    font=("Helvetica", 9),
-)
-heatmap_refresh_button.pack(side=tk.LEFT, padx=3)
+# Separator
+tk.Label(control_row1, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
 
-# Custom Test Calculator button
-custom_test_button = tk.Button(
-    control_row1,
-    text="🧮 Custom Test",
-    command=open_custom_test_calculator,
-    font=("Helvetica", 9),
-    bg="#9C27B0",
-    fg="white",
-)
-custom_test_button.pack(side=tk.LEFT, padx=3)
-
-# Save Modified Data button
-save_data_button = tk.Button(
-    control_row1,
-    text="💾 Save Data",
-    command=lambda: open_save_data_dialog(),
-    font=("Helvetica", 9),
-    bg="#2196F3",
-    fg="white",
-)
-save_data_button.pack(side=tk.LEFT, padx=3)
-
-# Info label at the end of row 1
-heatmap_info_label = tk.Label(
-    control_row1,
-    text="No files loaded",
-    font=("Helvetica", 8),
-    fg="gray"
-)
-heatmap_info_label.pack(side=tk.RIGHT, padx=5)
-
-# Row 2: View controls and image options
-control_row2 = tk.Frame(control_frame_heatmap)
-control_row2.pack(side=tk.TOP, fill=tk.X, pady=2)
-
-# Binning controls at the start of Row 2
+# Binning controls
 load_binning_button = tk.Button(
-    control_row2,
-    text="📋 Load Binning",
+    control_row1,
+    text="📋 Binning",
     command=lambda: load_binning_file(),
     font=("Helvetica", 9),
     bg="#9C27B0",
@@ -3609,8 +3515,8 @@ def show_bin_legend():
     close_btn.pack(pady=10)
 
 show_bins_button = tk.Button(
-    control_row2,
-    text="📊 Show Bins",
+    control_row1,
+    text="📊 Bins",
     command=show_bin_legend,
     font=("Helvetica", 9),
     bg="#607D8B",
@@ -3618,17 +3524,12 @@ show_bins_button = tk.Button(
 )
 show_bins_button.pack(side=tk.LEFT, padx=2)
 
-# Binning status label
-binning_status_var = tk.StringVar(value="Binning: Not loaded")
-binning_status_label = tk.Label(control_row2, textvariable=binning_status_var, font=("Helvetica", 8), fg="gray")
-binning_status_label.pack(side=tk.LEFT, padx=5)
-
 # Separator
-tk.Label(control_row2, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
+tk.Label(control_row1, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
 
 show_grid_var = tk.BooleanVar(value=False)
 show_grid_checkbox = tk.Checkbutton(
-    control_row2,
+    control_row1,
     text="Grid",
     variable=show_grid_var,
     command=lambda: refresh_heatmap_display(),
@@ -3638,7 +3539,7 @@ show_grid_checkbox.pack(side=tk.LEFT, padx=3)
 
 # Zoom buttons
 zoom_in_button = tk.Button(
-    control_row2,
+    control_row1,
     text="Zoom+",
     command=lambda: zoom_heatmap(True),
     font=("Helvetica", 9),
@@ -3646,7 +3547,7 @@ zoom_in_button = tk.Button(
 zoom_in_button.pack(side=tk.LEFT, padx=1)
 
 zoom_out_button = tk.Button(
-    control_row2,
+    control_row1,
     text="Zoom-",
     command=lambda: zoom_heatmap(False),
     font=("Helvetica", 9),
@@ -3654,7 +3555,7 @@ zoom_out_button = tk.Button(
 zoom_out_button.pack(side=tk.LEFT, padx=1)
 
 reset_zoom_button = tk.Button(
-    control_row2,
+    control_row1,
     text="Reset",
     command=lambda: refresh_heatmap_display(),
     font=("Helvetica", 9),
@@ -3662,7 +3563,7 @@ reset_zoom_button = tk.Button(
 reset_zoom_button.pack(side=tk.LEFT, padx=1)
 
 clear_selection_button = tk.Button(
-    control_row2,
+    control_row1,
     text="Clear Sel",
     command=lambda: clear_die_selection(),
     font=("Helvetica", 9),
@@ -3670,14 +3571,14 @@ clear_selection_button = tk.Button(
 clear_selection_button.pack(side=tk.LEFT, padx=2)
 
 # Separator
-tk.Label(control_row2, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
+tk.Label(control_row1, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
 
 # View Type dropdown (Data, Images, PLM Files)
-tk.Label(control_row2, text="View:", font=("Helvetica", 9, "bold")).pack(side=tk.LEFT, padx=2)
+tk.Label(control_row1, text="View:", font=("Helvetica", 9, "bold")).pack(side=tk.LEFT, padx=2)
 
 view_type_var = tk.StringVar(value="Data")
 view_type_combobox = ttk.Combobox(
-    control_row2,
+    control_row1,
     textvariable=view_type_var,
     values=["Data", "Images", "PLM Files"],
     state="readonly",
@@ -3687,11 +3588,11 @@ view_type_combobox = ttk.Combobox(
 view_type_combobox.pack(side=tk.LEFT, padx=2)
 
 # Sub-options dropdown (changes based on View Type selection)
-tk.Label(control_row2, text="Type:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=2)
+tk.Label(control_row1, text="Type:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=2)
 
 view_subtype_var = tk.StringVar(value="Heatmap")
 view_subtype_combobox = ttk.Combobox(
-    control_row2,
+    control_row1,
     textvariable=view_subtype_var,
     values=["Heatmap"],
     state="readonly",
@@ -3732,29 +3633,91 @@ def detect_plm_types():
         except:
             pass
 
+    print(f"DEBUG detect_plm_types: plm_dir = {plm_dir}")
+
     if not plm_dir or not os.path.exists(plm_dir):
+        print(f"DEBUG detect_plm_types: Directory does not exist or is None")
         return plm_types
 
     found_types = set()
 
     try:
         import re
-        for filename in os.listdir(plm_dir):
+        files = os.listdir(plm_dir)
+        print(f"DEBUG detect_plm_types: {len(files)} files found")
+
+        for filename in files[:20]:  # Debug first 20 files
             if filename.lower().endswith(('.plm', '.txt', '.csv', '.dat')):
-                # Extract type from end of filename before extension
-                # Pattern: ..._TypeName_timestamp.txt
-                # Examples: CheckerSyn, InvCheckerSyn, UniformitySyn, Bridged-Pixels, PLM-Stitched-Image
+                plm_type = None
+
+                # Pattern 1: ..._TypeName_timestamp.txt (z.B. UniformitySyn, CheckerSyn, PLM-Bridged-Pixels)
                 match = re.search(r'_([A-Za-z][A-Za-z0-9\-]+)_\d{14}\.', filename)
                 if match:
                     plm_type = match.group(1)
-                    found_types.add(plm_type)
+                    print(f"DEBUG Pattern1 matched: {plm_type} from {filename[:50]}...")
+
+                # Pattern 2: OPTIC-PEQA-TYPENAME-... (z.B. GRIDUNIFORMITY, PLMFGR)
+                if not plm_type:
+                    match = re.search(r'OPTIC-PEQA-([A-Z]+)', filename, re.IGNORECASE)
+                    if match:
+                        plm_type = match.group(1)
+                        print(f"DEBUG Pattern2 matched: {plm_type} from {filename[:50]}...")
+
+                # Normalisiere bekannte Typen
+                if plm_type:
+                    plm_type_lower = plm_type.lower()
+                    if 'uniformity' in plm_type_lower or 'griduniformity' in plm_type_lower:
+                        found_types.add('Uniformity')
+                    elif 'checker' in plm_type_lower and 'inv' not in plm_type_lower:
+                        found_types.add('Checker')
+                    elif 'invchecker' in plm_type_lower:
+                        found_types.add('InvChecker')
+                    elif 'bridged' in plm_type_lower:
+                        found_types.add('Bridged')
+                    elif 'stitched' in plm_type_lower:
+                        found_types.add('Stitched')
+                    elif plm_type_lower not in ['txt', 'csv', 'dat', 'plmfgr']:  # Datei-Formate ausschließen
+                        found_types.add(plm_type)
+
+        # Process all remaining files (without debug output)
+        for filename in files[20:]:
+            if filename.lower().endswith(('.plm', '.txt', '.csv', '.dat')):
+                plm_type = None
+                match = re.search(r'_([A-Za-z][A-Za-z0-9\-]+)_\d{14}\.', filename)
+                if match:
+                    plm_type = match.group(1)
+                if not plm_type:
+                    match = re.search(r'OPTIC-PEQA-([A-Z]+)', filename, re.IGNORECASE)
+                    if match:
+                        plm_type = match.group(1)
+                if plm_type:
+                    plm_type_lower = plm_type.lower()
+                    if 'uniformity' in plm_type_lower or 'griduniformity' in plm_type_lower:
+                        found_types.add('Uniformity')
+                    elif 'checker' in plm_type_lower and 'inv' not in plm_type_lower:
+                        found_types.add('Checker')
+                    elif 'invchecker' in plm_type_lower:
+                        found_types.add('InvChecker')
+                    elif 'bridged' in plm_type_lower:
+                        found_types.add('Bridged')
+                    elif 'stitched' in plm_type_lower:
+                        found_types.add('Stitched')
+                    elif plm_type_lower not in ['txt', 'csv', 'dat', 'plmfgr']:
+                        found_types.add(plm_type)
+
     except Exception as e:
         print(f"Error detecting PLM types: {e}")
+
+    print(f"DEBUG detect_plm_types: found_types = {found_types}")
 
     if found_types:
         # Sort and add to list
         plm_types.extend(sorted(found_types))
         print(f"Detected PLM types: {plm_types}")
+    else:
+        print(f"No PLM types detected in {plm_dir}")
+
+    return plm_types
 
     return plm_types
 
@@ -3766,14 +3729,53 @@ image_view_var = tk.BooleanVar(value=False)
 plm_view_var = tk.BooleanVar(value=False)
 image_type_view_var = tk.StringVar(value="All")
 
-# Folder status label (shows what folders are loaded from project)
+# Separator before action buttons
+tk.Label(control_row1, text="|", font=("Helvetica", 10), fg="gray").pack(side=tk.LEFT, padx=3)
+
+# Custom Test Calculator button
+custom_test_button = tk.Button(
+    control_row1,
+    text="🧮 Custom",
+    command=open_custom_test_calculator,
+    font=("Helvetica", 9),
+    bg="#9C27B0",
+    fg="white",
+)
+custom_test_button.pack(side=tk.LEFT, padx=2)
+
+# Save Modified Data button
+save_data_button = tk.Button(
+    control_row1,
+    text="💾 Save",
+    command=lambda: open_save_data_dialog(),
+    font=("Helvetica", 9),
+    bg="#2196F3",
+    fg="white",
+)
+save_data_button.pack(side=tk.LEFT, padx=2)
+
+# Info label at the end
+heatmap_info_label = tk.Label(
+    control_row1,
+    text="No files loaded",
+    font=("Helvetica", 8),
+    fg="gray"
+)
+heatmap_info_label.pack(side=tk.RIGHT, padx=5)
+
+# Binning status label (for backward compatibility)
+binning_status_var = tk.StringVar(value="")
+binning_status_label = tk.Label(control_row1, textvariable=binning_status_var, font=("Helvetica", 8), fg="gray")
+# Not packed to keep toolbar clean
+
+# Folder status (for backward compatibility)
 folder_status_label = tk.Label(
-    control_row2,
+    control_row1,
     text="",
     font=("Helvetica", 8),
     fg="gray",
 )
-folder_status_label.pack(side=tk.LEFT, padx=5)
+# Not packed to keep toolbar clean
 
 # PLM folder directory
 plm_file_directory = None
@@ -3888,6 +3890,441 @@ wafer_mode_label = tk.Label(
 )
 wafer_mode_label.pack(fill=tk.X, padx=5)
 
+# ============== LOAD WAFER BUTTON + MANIFOLD INTEGRATION ==============
+import threading
+_load_dialog_lock = threading.Lock()
+_load_dialog_open = False
+
+def show_load_wafer_dialog():
+    """Show dialog to choose: Load lokal, Manifold (fast), Manifold (complete)"""
+    global _load_dialog_open
+
+    # Thread-safe lock to prevent double dialog
+    if not _load_dialog_lock.acquire(blocking=False):
+        print("DEBUG: Lock already acquired, ignoring call")
+        return
+
+    if _load_dialog_open:
+        print("DEBUG: Dialog already open, ignoring")
+        _load_dialog_lock.release()
+        return
+    _load_dialog_open = True
+    _load_dialog_lock.release()
+
+    print("DEBUG: Creating load dialog...")
+
+    parent = wafer_left_panel.winfo_toplevel()
+    dialog = tk.Toplevel(parent)
+    dialog.title("Load Wafer")
+    dialog.geometry("520x480")
+    dialog.transient(parent)
+    dialog.grab_set()
+    dialog.resizable(False, False)
+
+    def on_dialog_close():
+        global _load_dialog_open
+        _load_dialog_open = False
+        dialog.destroy()
+
+    dialog.protocol("WM_DELETE_WINDOW", on_dialog_close)
+
+    # Center on parent
+    dialog.update_idletasks()
+    x = parent.winfo_x() + (parent.winfo_width() - 520) // 2
+    y = parent.winfo_y() + (parent.winfo_height() - 480) // 2
+    dialog.geometry(f"+{x}+{y}")
+
+    # Title
+    tk.Label(dialog, text="📂 Load Wafer Data", font=("Segoe UI", 14, "bold")).pack(pady=(15, 10))
+    tk.Label(dialog, text="Choose data source:", font=("Segoe UI", 10)).pack(pady=(0, 15))
+
+    # Button frame
+    btn_frame = tk.Frame(dialog)
+    btn_frame.pack(fill=tk.BOTH, expand=True, padx=20)
+
+    # Option 1: Load lokal
+    local_frame = tk.Frame(btn_frame, bg="#E3F2FD", relief=tk.RIDGE, bd=1)
+    local_frame.pack(fill=tk.X, pady=5)
+    tk.Label(local_frame, text="💻 Load lokal", font=("Segoe UI", 11, "bold"), bg="#E3F2FD", fg="#1565C0").pack(anchor=tk.W, padx=10, pady=(8,2))
+    tk.Label(local_frame, text="Load STDF/CSV/MC-300 from local file system", font=("Segoe UI", 9), bg="#E3F2FD", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
+    local_btn = tk.Button(local_frame, text="Select File...", command=lambda: [on_dialog_close(), load_local_wafer()],
+                          bg="#1976D2", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2")
+    local_btn.pack(side=tk.RIGHT, padx=10, pady=8)
+
+    # Option 2: Manifold (fast) - only CSV
+    fast_frame = tk.Frame(btn_frame, bg="#FFF3E0", relief=tk.RIDGE, bd=1)
+    fast_frame.pack(fill=tk.X, pady=5)
+    tk.Label(fast_frame, text="⚡ Manifold (fast)", font=("Segoe UI", 11, "bold"), bg="#FFF3E0", fg="#E65100").pack(anchor=tk.W, padx=10, pady=(8,2))
+    tk.Label(fast_frame, text="Download ZIP + extract CSV only (no PLM images)", font=("Segoe UI", 9), bg="#FFF3E0", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
+    fast_btn = tk.Button(fast_frame, text="Browse Manifold...", command=lambda: [on_dialog_close(), load_manifold_fast()],
+                         bg="#F57C00", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2")
+    fast_btn.pack(side=tk.RIGHT, padx=10, pady=8)
+
+    # Option 3: Manifold (complete) - full ZIP
+    full_frame = tk.Frame(btn_frame, bg="#E8F5E9", relief=tk.RIDGE, bd=1)
+    full_frame.pack(fill=tk.X, pady=5)
+    tk.Label(full_frame, text="📦 Manifold (complete)", font=("Segoe UI", 11, "bold"), bg="#E8F5E9", fg="#2E7D32").pack(anchor=tk.W, padx=10, pady=(8,2))
+    tk.Label(full_frame, text="Download full ZIP (CSV + PLM images)", font=("Segoe UI", 9), bg="#E8F5E9", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
+    full_btn = tk.Button(full_frame, text="Browse Manifold...", command=lambda: [on_dialog_close(), load_manifold_complete()],
+                         bg="#388E3C", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2")
+    full_btn.pack(side=tk.RIGHT, padx=10, pady=8)
+
+    # Cancel button
+    tk.Button(dialog, text="Cancel", command=on_dialog_close, font=("Segoe UI", 9)).pack(pady=15)
+
+def load_local_wafer():
+    """Load wafer from local file system - supports STDF, CSV, MC-300"""
+    file_path = filedialog.askopenfilename(
+        title="Select STDF, CSV, or MC-300 file",
+        filetypes=[
+            ("All supported", "*.stdf;*.std;*.csv;*.txt"),
+            ("STDF files", "*.stdf;*.std"),
+            ("CSV files", "*.csv"),
+            ("MC-300 files", "*.txt"),
+            ("All files", "*.*")
+        ]
+    )
+    if file_path:
+        ext = file_path.lower()
+        if ext.endswith('.stdf') or ext.endswith('.std'):
+            load_multiple_stdf_files([file_path])
+        elif ext.endswith('.csv'):
+            # Direkt die CSV laden mit vorgegebenem Pfad
+            load_csv_wafermap_file(file_path)
+        elif ext.endswith('.txt'):
+            # MC-300 direkt laden
+            load_mc300_wafermap(file_path)
+        else:
+            # Fallback: als CSV behandeln
+            load_csv_wafermap_file(file_path)
+
+def load_manifold_fast():
+    """Load wafer from Manifold - fast mode (CSV only)"""
+    show_manifold_browser(mode="fast")
+
+def load_manifold_complete():
+    """Load wafer from Manifold - complete mode (full ZIP with images)"""
+    show_manifold_browser(mode="complete")
+
+def show_manifold_browser(mode="fast"):
+    """Show Manifold file browser dialog"""
+    import subprocess
+    import tempfile
+    import zipfile
+    import io
+
+    parent = wafer_left_panel.winfo_toplevel()
+    browser = tk.Toplevel(parent)
+    browser.title(f"Manifold Browser ({'Fast - CSV only' if mode == 'fast' else 'Complete - Full ZIP'})")
+    browser.geometry("750x600")
+    browser.transient(parent)
+    browser.grab_set()
+    browser.resizable(True, True)
+
+    # Manifold paths
+    MANIFOLD_PATHS = {
+        "Tuscar": {
+            "9ATE1": "odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/tuskar/uled/incoming/tool_data/9ATE1",
+            "9ATE2": "odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/tuskar/uled/incoming/tool_data/9ATE2",
+            "9ATE3": "odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/tuskar/uled/incoming/tool_data/9ATE3",
+            "9ATE4": "odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/tuskar/uled/incoming/tool_data/9ATE4",
+        },
+        "Taiwan": {
+            "TPW-CP2": "odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/tpw/PEQUIN/CP2",
+        },
+        "Regensburg": {
+            "RGS-ATE": "odin_archive/tree/manifold/hwte-quantum_prod/mfghwteste-quantum_prod/arranmore/testing",
+        }
+    }
+
+    # Top: Site/Tool selection
+    top_frame = tk.Frame(browser)
+    top_frame.pack(fill=tk.X, padx=10, pady=10)
+
+    tk.Label(top_frame, text="Site:", font=("Segoe UI", 10, "bold")).pack(side=tk.LEFT)
+    site_var = tk.StringVar(value="Tuscar")
+    site_combo = ttk.Combobox(top_frame, textvariable=site_var, values=list(MANIFOLD_PATHS.keys()), state="readonly", width=12)
+    site_combo.pack(side=tk.LEFT, padx=5)
+
+    tk.Label(top_frame, text="Tool:", font=("Segoe UI", 10, "bold")).pack(side=tk.LEFT, padx=(15,0))
+    tool_var = tk.StringVar(value="9ATE3")
+    tool_combo = ttk.Combobox(top_frame, textvariable=tool_var, state="readonly", width=12)
+    tool_combo.pack(side=tk.LEFT, padx=5)
+
+    def update_tools(*args):
+        site = site_var.get()
+        tools = list(MANIFOLD_PATHS.get(site, {}).keys())
+        tool_combo['values'] = tools
+        if tools:
+            tool_var.set(tools[0])
+
+    site_var.trace('w', update_tools)
+    update_tools()
+
+    refresh_btn = tk.Button(top_frame, text="🔄 Refresh", command=lambda: refresh_file_list())
+    refresh_btn.pack(side=tk.LEFT, padx=10)
+
+    # Status
+    status_var = tk.StringVar(value="Select site and tool, then click Refresh")
+    status_label = tk.Label(browser, textvariable=status_var, font=("Segoe UI", 9), fg="#666")
+    status_label.pack(fill=tk.X, padx=10)
+
+    # Bottom buttons - PACK FIRST so they are always visible!
+    btn_frame_bottom = tk.Frame(browser)
+    btn_frame_bottom.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
+
+    tk.Button(btn_frame_bottom, text="Cancel", command=browser.destroy).pack(side=tk.RIGHT, padx=5)
+
+    load_btn = tk.Button(btn_frame_bottom, text=f"📥 Load {'CSV' if mode == 'fast' else 'Complete ZIP'}",
+                         command=lambda: load_selected(), bg="#1976D2", fg="white", font=("Segoe UI", 10, "bold"))
+    load_btn.pack(side=tk.RIGHT, padx=5)
+
+    # File list
+    list_frame = tk.Frame(browser)
+    list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+    cols = ("filename", "size", "date")
+    file_tree = ttk.Treeview(list_frame, columns=cols, show="headings", height=15)
+    file_tree.heading("filename", text="Filename")
+    file_tree.heading("size", text="Size")
+    file_tree.heading("date", text="Date")
+    file_tree.column("filename", width=400)
+    file_tree.column("size", width=80)
+    file_tree.column("date", width=120)
+
+    scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=file_tree.yview)
+    file_tree.configure(yscrollcommand=scrollbar.set)
+    file_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+    manifold_files = []
+
+    def refresh_file_list():
+        nonlocal manifold_files
+        site = site_var.get()
+        tool = tool_var.get()
+        path = MANIFOLD_PATHS.get(site, {}).get(tool, "")
+
+        if not path:
+            status_var.set("Invalid path")
+            return
+
+        status_var.set(f"Loading from {path}...")
+        browser.update()
+
+        for item in file_tree.get_children():
+            file_tree.delete(item)
+        manifold_files = []
+
+        try:
+            cmd = f'manifold --vip ls {path}'
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
+
+            if result.returncode == 0:
+                for line in result.stdout.strip().split('\n'):
+                    parts = line.strip().split(None, 1)
+                    if len(parts) != 2:
+                        continue
+                    size_str, name = parts
+                    if size_str == "DIR" or name.endswith('.manifest'):
+                        continue
+                    if not name.endswith('.zip'):
+                        continue
+
+                    try:
+                        size = int(size_str)
+                        if size > 1e9:
+                            size_disp = f"{size/1e9:.1f} GB"
+                        elif size > 1e6:
+                            size_disp = f"{size/1e6:.1f} MB"
+                        else:
+                            size_disp = f"{size/1e3:.1f} KB"
+                    except:
+                        size_disp = size_str
+                        size = 0
+
+                    import re
+                    date_match = re.search(r'_(\d{8})-(\d{6})\.zip', name)
+                    if date_match:
+                        date_str = f"{date_match.group(1)[:4]}-{date_match.group(1)[4:6]}-{date_match.group(1)[6:]}"
+                    else:
+                        date_str = "---"
+
+                    manifold_files.append({"name": name, "size": size, "path": path})
+                    file_tree.insert("", tk.END, values=(name, size_disp, date_str))
+
+                status_var.set(f"Found {len(manifold_files)} files")
+            else:
+                status_var.set(f"Error: {result.stderr[:100]}")
+        except Exception as e:
+            status_var.set(f"Error: {str(e)[:100]}")
+
+    def load_selected():
+        selection = file_tree.selection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select a file to load")
+            return
+
+        idx = file_tree.index(selection[0])
+        file_info = manifold_files[idx]
+
+        status_var.set(f"Loading {file_info['name']}...")
+        browser.update()
+
+        try:
+            if mode == "fast":
+                load_from_manifold_fast(file_info['path'], file_info['name'])
+            else:
+                load_from_manifold_complete(file_info['path'], file_info['name'])
+
+            browser.destroy()
+        except Exception as e:
+            status_var.set(f"Error loading: {str(e)[:100]}")
+            messagebox.showerror("Load Error", str(e))
+
+def load_from_manifold_fast(manifold_path, filename):
+    """Option 2: Fast load - download ZIP and extract CSV to memory"""
+    import subprocess
+    import tempfile
+    import zipfile
+    import io
+
+    temp_dir = tempfile.mkdtemp(prefix="manifold_fast_")
+    zip_path = os.path.join(temp_dir, filename)
+
+    try:
+        cmd = f'manifold --vip get {manifold_path}/{filename} {zip_path}'
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=600)
+
+        if result.returncode != 0:
+            raise Exception(f"Download failed: {result.stderr}")
+
+        with zipfile.ZipFile(zip_path, 'r') as zf:
+            csv_files = [f for f in zf.namelist() if f.endswith('.csv')]
+
+            if not csv_files:
+                raise Exception("No CSV file found in ZIP")
+
+            extract_dir = os.path.join(temp_dir, "extracted")
+            zf.extract(csv_files[0], extract_dir)
+            csv_path = os.path.join(extract_dir, csv_files[0])
+
+            # Load CSV using existing function
+            load_csv_wafermap_from_path(csv_path)
+
+        import shutil
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+    except Exception as e:
+        import shutil
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        raise e
+
+def load_from_manifold_complete(manifold_path, filename):
+    """Option 1: Complete load - download and extract full ZIP to temp folder"""
+    import subprocess
+    import tempfile
+    import zipfile
+
+    temp_dir = tempfile.mkdtemp(prefix="manifold_complete_")
+    zip_path = os.path.join(temp_dir, filename)
+    extract_dir = os.path.join(temp_dir, "extracted")
+
+    try:
+        cmd = f'manifold --vip get {manifold_path}/{filename} {zip_path}'
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=1800)
+
+        if result.returncode != 0:
+            raise Exception(f"Download failed: {result.stderr}")
+
+        with zipfile.ZipFile(zip_path, 'r') as zf:
+            zf.extractall(extract_dir)
+
+        csv_path = None
+        for root, dirs, files in os.walk(extract_dir):
+            for f in files:
+                if f.endswith('.csv'):
+                    csv_path = os.path.join(root, f)
+                    break
+            if csv_path:
+                break
+
+        if not csv_path:
+            raise Exception("No CSV file found in extracted ZIP")
+
+        load_csv_wafermap_from_path(csv_path)
+
+        global manifold_temp_dir
+        manifold_temp_dir = temp_dir
+
+        messagebox.showinfo("Loaded", f"Wafer loaded from Manifold!\n\nTemp folder: {temp_dir}\n\nPLM images available.")
+
+    except Exception as e:
+        import shutil
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        raise e
+
+def load_csv_wafermap_from_path(csv_path):
+    """Load CSV wafermap from a specific file path"""
+    global current_stdf_data, current_wafer_id, test_parameters, grouped_parameters, test_limits
+    global multiple_stdf_data, multiple_wafer_ids, die_image_directory
+
+    try:
+        print(f"Loading CSV file: {csv_path}")
+        df = pd.read_csv(csv_path)
+
+        x_col_candidates = ['x', 'X', 'x_coord', 'X_COORD', 'DIE_X', 'die_x', 'col', 'COL']
+        y_col_candidates = ['y', 'Y', 'y_coord', 'Y_COORD', 'DIE_Y', 'die_y', 'row', 'ROW']
+
+        x_col = None
+        y_col = None
+
+        for candidate in x_col_candidates:
+            if candidate in df.columns:
+                x_col = candidate
+                break
+
+        for candidate in y_col_candidates:
+            if candidate in df.columns:
+                y_col = candidate
+                break
+
+        if x_col is None or y_col is None:
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            if len(numeric_cols) >= 2:
+                x_col = numeric_cols[0]
+                y_col = numeric_cols[1]
+
+        df = df.rename(columns={x_col: 'x', y_col: 'y'})
+
+        current_stdf_data = df
+        wafer_id = os.path.basename(csv_path).replace('.csv', '')
+        current_wafer_id = wafer_id
+
+        multiple_stdf_data = [df]
+        multiple_wafer_ids = [wafer_id]
+
+        update_group_combobox()
+        refresh_heatmap_display()
+
+        print(f"Loaded CSV with {len(df)} dies")
+
+    except Exception as e:
+        print(f"Error loading CSV: {e}")
+        messagebox.showerror("Load Error", f"Failed to load CSV:\n{e}")
+
+# Load Wafer Button
+load_wafer_btn = tk.Button(
+    wafer_left_panel,
+    text="📂 Load Wafer",
+    font=("Segoe UI", 10, "bold"),
+    bg="#1565C0",
+    fg="white",
+    cursor="hand2",
+    command=show_load_wafer_dialog
+)
+load_wafer_btn.pack(fill=tk.X, padx=5, pady=(8, 5))
+
 # Buttons frame
 wafer_select_btn_frame = tk.Frame(wafer_left_panel)
 wafer_select_btn_frame.pack(fill=tk.X, padx=5, pady=2)
@@ -3990,6 +4427,41 @@ wafer_select_all_btn = tk.Button(
 )
 wafer_select_all_btn.pack(side=tk.LEFT, padx=2)
 
+def unload_single_wafer():
+    """Unload the currently selected wafer"""
+    global multiple_stdf_data, multiple_wafer_ids, current_stdf_data, current_wafer_id
+    global test_parameters, grouped_parameters, test_limits
+
+    if not multiple_wafer_ids:
+        print("No wafers loaded")
+        return
+
+    idx = wafer_tab_selected_var.get()
+    if idx < 0 or idx >= len(multiple_wafer_ids):
+        print("No wafer selected")
+        return
+
+    removed_id = multiple_wafer_ids[idx]
+    del multiple_stdf_data[idx]
+    del multiple_wafer_ids[idx]
+
+    if not multiple_wafer_ids:
+        current_stdf_data = None
+        current_wafer_id = None
+        test_parameters.clear()
+        grouped_parameters.clear()
+        test_limits.clear()
+    else:
+        new_idx = min(idx, len(multiple_wafer_ids) - 1)
+        wafer_tab_selected_var.set(new_idx)
+        current_stdf_data = multiple_stdf_data[new_idx]
+        current_wafer_id = multiple_wafer_ids[new_idx]
+
+    update_wafer_tab_selection_list()
+    update_group_combobox()
+    refresh_heatmap_display()
+    print(f"Wafer unloaded: {removed_id}")
+
 def unload_all_wafers():
     """Unload all wafers and reset everything"""
     global multiple_stdf_data, multiple_wafer_ids, current_stdf_data, current_wafer_id
@@ -4007,6 +4479,12 @@ def unload_all_wafers():
     update_group_combobox()
     refresh_heatmap_display()
     print("All wafers unloaded")
+
+wafer_unload_single_btn = tk.Button(
+    wafer_select_btn_frame, text="Unload", command=unload_single_wafer,
+    font=("Helvetica", 7), bg="#FF9800", fg="white"
+)
+wafer_unload_single_btn.pack(side=tk.LEFT, padx=2)
 
 wafer_unload_all_btn = tk.Button(
     wafer_select_btn_frame, text="Unload All", command=unload_all_wafers,
@@ -5558,16 +6036,18 @@ def _draw_multi_param_boxplot(params_to_plot, data_sources, wafer_labels, parent
             short_label = param_label.split(":")[-1].strip()[:15] if ":" in param_label else param_label[:15]
             labels.append(short_label)
 
-            # Calculate statistics
+            # Calculate statistics using imported function
+            basic_stats = calculate_basic_stats(data_arr)
+            percentiles = calculate_percentiles(data_arr, [25, 75])
             stats = {
-                'n': len(data_arr),
-                'mean': np.mean(data_arr),
-                'median': np.median(data_arr),
-                'std': np.std(data_arr),
-                'min': np.min(data_arr),
-                'max': np.max(data_arr),
-                'q1': np.percentile(data_arr, 25),
-                'q3': np.percentile(data_arr, 75),
+                'n': basic_stats['count'],
+                'mean': basic_stats['mean'],
+                'median': basic_stats['median'],
+                'std': basic_stats['std'],
+                'min': basic_stats['min'],
+                'max': basic_stats['max'],
+                'q1': percentiles['p25'],
+                'q3': percentiles['p75'],
             }
             stats_list.append(stats)
 
@@ -5674,14 +6154,15 @@ def _draw_multi_param_distribution(params_to_plot, data_sources, wafer_labels, p
             short_label = param_label.split(":")[-1].strip()[:15] if ":" in param_label else param_label[:15]
             labels.append(short_label)
 
-            # Calculate statistics
+            # Calculate statistics using imported function
+            basic_stats = calculate_basic_stats(data_arr)
             stats = {
-                'n': len(data_arr),
-                'mean': np.mean(data_arr),
-                'median': np.median(data_arr),
-                'std': np.std(data_arr),
-                'min': np.min(data_arr),
-                'max': np.max(data_arr),
+                'n': basic_stats['count'],
+                'mean': basic_stats['mean'],
+                'median': basic_stats['median'],
+                'std': basic_stats['std'],
+                'min': basic_stats['min'],
+                'max': basic_stats['max'],
             }
             stats_list.append(stats)
 
@@ -9118,23 +9599,57 @@ def find_plm_files(x_coord, y_coord, plm_type_filter=None):
 
             if match1 or match2 or match3:
 
-                # Extract PLM type from filename if present
-                type_match = re.search(r'PLM-([A-Z0-9]+)-', filename, re.IGNORECASE)
+                # Extract PLM type from filename
+                plm_type = None
+
+                # Pattern 1: PLM-TYPE- format (z.B. PLM-Bridged-Pixels, PLM-Stitched-Image)
+                type_match = re.search(r'PLM-([A-Za-z]+)', filename, re.IGNORECASE)
                 if type_match:
                     plm_type = type_match.group(1).upper()
+                    # Normalize: BRIDGED-PIXELS -> BRIDGED
+                    if 'BRIDGED' in plm_type:
+                        plm_type = 'BRIDGED'
+                    elif 'STITCHED' in plm_type:
+                        plm_type = 'STITCHED'
+
+                # Pattern 2: _UniformitySyn_ or _Uniformity_ format
+                if not plm_type:
+                    type_match = re.search(r'_(Uniformity[A-Za-z]*|CheckerSyn|InvCheckerSyn)_', filename, re.IGNORECASE)
+                    if type_match:
+                        raw_type = type_match.group(1).upper()
+                        if 'UNIFORMITY' in raw_type:
+                            plm_type = 'UNIFORMITY'
+                        elif 'INVCHECKER' in raw_type:
+                            plm_type = 'INVCHECKER'
+                        elif 'CHECKER' in raw_type:
+                            plm_type = 'CHECKER'
+
+                # Pattern 3: OPTIC-PEQA-GRIDUNIFORMITY format
+                if not plm_type:
+                    type_match = re.search(r'OPTIC-PEQA-([A-Z]+)', filename, re.IGNORECASE)
+                    if type_match:
+                        raw_type = type_match.group(1).upper()
+                        if 'UNIFORMITY' in raw_type or 'GRIDUNIFORMITY' in raw_type:
+                            plm_type = 'UNIFORMITY'
+                        elif raw_type not in ['TXT', 'CSV', 'DAT', 'PLMFGR']:
+                            plm_type = raw_type
+
+                # Add to found types
+                if plm_type:
                     found_types.add(plm_type)
 
                     if plm_type_filter and plm_type_filter != "All":
                         if plm_type != plm_type_filter.upper():
                             continue
                 else:
-                    # Try to extract type from file extension or other patterns
+                    # Fallback: use file extension (but exclude TXT/CSV/DAT)
                     ext = os.path.splitext(filename)[1].upper().replace('.', '')
-                    found_types.add(ext)
+                    if ext not in ['TXT', 'CSV', 'DAT']:
+                        found_types.add(ext)
 
-                    if plm_type_filter and plm_type_filter != "All":
-                        if ext != plm_type_filter.upper():
-                            continue
+                        if plm_type_filter and plm_type_filter != "All":
+                            if ext != plm_type_filter.upper():
+                                continue
 
                 full_path = os.path.join(plm_dir, filename)
                 matching_files.append(full_path)
@@ -9739,8 +10254,9 @@ def show_multi_wafer_plm_window(x_coord, y_coord):
                                 label=f"Wafer {wafer_idx + 1}: {short_id}{label_suffix}", edgecolor='white')
 
                     # Add sigma lines for PDF
-                    mean_val = np.mean(valid_data)
-                    std_val = np.std(valid_data)
+                    basic_stats = calculate_basic_stats(valid_data)
+                    mean_val = basic_stats['mean']
+                    std_val = basic_stats['std']
 
                     # Get y-axis max for line heights
                     y_max = ax_dist.get_ylim()[1]
@@ -10023,10 +10539,11 @@ def show_multi_wafer_plm_window(x_coord, y_coord):
 
                 # Add statistics text for each boxplot
                 for i, (data, label) in enumerate(zip(boxplot_data, labels)):
-                    mean_val = np.mean(data)
-                    median_val = np.median(data)
-                    min_val = np.min(data)
-                    max_val = np.max(data)
+                    basic_stats = calculate_basic_stats(np.array(data))
+                    mean_val = basic_stats['mean']
+                    median_val = basic_stats['median']
+                    min_val = basic_stats['min']
+                    max_val = basic_stats['max']
 
                     # Position text above each box
                     x_pos = i + 1
@@ -10747,13 +11264,15 @@ def show_zoomed_plm(file_path, plm_data):
         patch.set_alpha(0.75)
         patch.set_edgecolor('#2C3E50')
 
-    # Calculate statistics
-    stats_max = np.max(valid_data)
-    stats_min = np.min(valid_data)
-    stats_q1 = np.percentile(valid_data, 25)
-    stats_q3 = np.percentile(valid_data, 75)
-    stats_mean = np.mean(valid_data)
-    stats_median = np.median(valid_data)
+    # Calculate statistics using imported function
+    basic_stats = calculate_basic_stats(valid_data)
+    percentiles = calculate_percentiles(valid_data, [25, 75])
+    stats_max = basic_stats['max']
+    stats_min = basic_stats['min']
+    stats_q1 = percentiles['p25']
+    stats_q3 = percentiles['p75']
+    stats_mean = basic_stats['mean']
+    stats_median = basic_stats['median']
 
     # Add statistics box in top left corner
     stats_text = (
@@ -11613,6 +12132,7 @@ tab_visibility_frame.pack(fill=tk.X, padx=40, pady=5)
 
 # Tab visibility variables
 tab_visibility_vars = {
+    'datalog': tk.BooleanVar(value=True),
     'wafer': tk.BooleanVar(value=True),
     'multi_wafer': tk.BooleanVar(value=True),
     'diffmap': tk.BooleanVar(value=True),
@@ -11624,6 +12144,7 @@ tab_visibility_vars = {
 def update_tab_visibility():
     """Show/hide tabs based on checkbox states"""
     tab_map = {
+        'datalog': (tab_datalog, "📋 Datalog"),
         'wafer': (tab6, "🗺 Wafer"),
         'multi_wafer': (tab_multi_wafer, "📊 Multi-Wafer"),
         'diffmap': (tab_diffmap, "🔄 Diffmap"),
@@ -11632,7 +12153,7 @@ def update_tab_visibility():
         'report': (tab_presentation, "📑 Report"),
     }
 
-    original_order = ['wafer', 'multi_wafer', 'diffmap', 'gage_rr', 'stdf_csv', 'report']
+    original_order = ['datalog', 'wafer', 'multi_wafer', 'diffmap', 'gage_rr', 'stdf_csv', 'report']
 
     for key in original_order:
         tab_widget, tab_name = tab_map[key]
@@ -11680,6 +12201,7 @@ tab_checkbox_frame = tk.Frame(tab_visibility_frame)
 tab_checkbox_frame.pack(pady=5)
 
 tab_labels = [
+    ('datalog', 'Datalog'),
     ('wafer', 'Wafermap'),
     ('multi_wafer', 'Multi-Wafer'),
     ('diffmap', 'Diffmap'),
@@ -13738,8 +14260,9 @@ def update_multi_wafer_stats_table():
                 vals = df[col].dropna().values
                 all_vals.extend(vals)
         if len(all_vals) > 1:
-            m = np.mean(all_vals)
-            s = np.std(all_vals, ddof=1)
+            basic_stats = calculate_basic_stats(np.array(all_vals))
+            m = basic_stats['mean']
+            s = basic_stats['std']
             if m != 0:
                 param_cv_values[col] = (s / abs(m)) * 100
             else:
@@ -13777,50 +14300,55 @@ def update_multi_wafer_stats_table():
                 if col in df.columns:
                     vals = df[col].dropna().values
                     if len(vals) > 0:
-                        # DIREKT berechnen!
+                        # DIREKT berechnen! Nutze calculate_basic_stats für Konsistenz
                         try:
+                            vals_stats = calculate_basic_stats(vals)
                             if mkey == "count":
-                                row.append(f"{len(vals)}")
+                                row.append(f"{vals_stats['count']}")
                             elif mkey == "mean":
-                                row.append(f"{np.mean(vals):.4g}")
+                                row.append(f"{vals_stats['mean']:.4g}")
                             elif mkey == "median":
-                                row.append(f"{np.median(vals):.4g}")
+                                row.append(f"{vals_stats['median']:.4g}")
                             elif mkey == "std":
-                                row.append(f"{np.std(vals, ddof=1):.4g}")
+                                row.append(f"{vals_stats['std']:.4g}")
                             elif mkey == "min":
-                                row.append(f"{np.min(vals):.4g}")
+                                row.append(f"{vals_stats['min']:.4g}")
                             elif mkey == "max":
-                                row.append(f"{np.max(vals):.4g}")
+                                row.append(f"{vals_stats['max']:.4g}")
                             elif mkey == "range":
-                                row.append(f"{np.max(vals) - np.min(vals):.4g}")
+                                row.append(f"{vals_stats['range']:.4g}")
                             elif mkey == "cv":
-                                m = np.mean(vals)
+                                m = vals_stats['mean']
                                 if m != 0:
-                                    row.append(f"{(np.std(vals, ddof=1)/abs(m))*100:.2f}%")
+                                    row.append(f"{(vals_stats['std']/abs(m))*100:.2f}%")
                                 else:
                                     row.append("-")
                             elif mkey == "sigma1":
-                                m, s = np.mean(vals), np.std(vals, ddof=1)
+                                m, s = vals_stats['mean'], vals_stats['std']
                                 row.append(f"{m-s:.3g}~{m+s:.3g}")
                             elif mkey == "sigma2":
-                                m, s = np.mean(vals), np.std(vals, ddof=1)
+                                m, s = vals_stats['mean'], vals_stats['std']
                                 row.append(f"{m-2*s:.3g}~{m+2*s:.3g}")
                             elif mkey == "sigma3":
-                                m, s = np.mean(vals), np.std(vals, ddof=1)
+                                m, s = vals_stats['mean'], vals_stats['std']
                                 row.append(f"{m-3*s:.3g}~{m+3*s:.3g}")
                             elif mkey == "p25":
-                                row.append(f"{np.percentile(vals, 25):.4g}")
+                                pct = calculate_percentiles(vals, [25])
+                                row.append(f"{pct['p25']:.4g}")
                             elif mkey == "p75":
-                                row.append(f"{np.percentile(vals, 75):.4g}")
+                                pct = calculate_percentiles(vals, [75])
+                                row.append(f"{pct['p75']:.4g}")
                             elif mkey == "p95":
-                                row.append(f"{np.percentile(vals, 95):.4g}")
+                                pct = calculate_percentiles(vals, [95])
+                                row.append(f"{pct['p95']:.4g}")
                             elif mkey == "iqr":
-                                row.append(f"{np.percentile(vals, 75) - np.percentile(vals, 25):.4g}")
+                                pct = calculate_percentiles(vals, [25, 75])
+                                row.append(f"{pct['p75'] - pct['p25']:.4g}")
                             elif mkey == "skewness":
                                 n = len(vals)
                                 if n >= 3:
-                                    m = np.mean(vals)
-                                    s = np.std(vals, ddof=1)
+                                    m = vals_stats['mean']
+                                    s = vals_stats['std']
                                     if s > 0:
                                         skew = np.mean(((vals - m) / s) ** 3)
                                         row.append(f"{skew:.4g}")
@@ -13831,8 +14359,8 @@ def update_multi_wafer_stats_table():
                             elif mkey == "kurtosis":
                                 n = len(vals)
                                 if n >= 4:
-                                    m = np.mean(vals)
-                                    s = np.std(vals, ddof=1)
+                                    m = vals_stats['mean']
+                                    s = vals_stats['std']
                                     if s > 0:
                                         kurt = np.mean(((vals - m) / s) ** 4) - 3
                                         row.append(f"{kurt:.4g}")
@@ -13880,42 +14408,47 @@ def calculate_statistic(values, measure_key):
         if len(values) == 0:
             return "-"
 
+        # Use imported statistics functions
+        basic_stats = calculate_basic_stats(values)
+
         if measure_key == "count":
-            return f"{len(values)}"
+            return f"{basic_stats['count']}"
         elif measure_key == "mean":
-            return f"{np.mean(values):.4g}"
+            return f"{basic_stats['mean']:.4g}"
         elif measure_key == "median":
-            return f"{np.median(values):.4g}"
+            return f"{basic_stats['median']:.4g}"
         elif measure_key == "std":
-            return f"{np.std(values, ddof=1):.4g}"
+            return f"{basic_stats['std']:.4g}"
         elif measure_key == "min":
-            return f"{np.min(values):.4g}"
+            return f"{basic_stats['min']:.4g}"
         elif measure_key == "max":
-            return f"{np.max(values):.4g}"
+            return f"{basic_stats['max']:.4g}"
         elif measure_key == "range":
-            return f"{np.max(values) - np.min(values):.4g}"
+            return f"{basic_stats['range']:.4g}"
         elif measure_key == "cv":
-            mean_val = np.mean(values)
+            mean_val = basic_stats['mean']
             if mean_val != 0:
-                cv = (np.std(values, ddof=1) / abs(mean_val)) * 100
+                cv = (basic_stats['std'] / abs(mean_val)) * 100
                 return f"{cv:.2f}%"
             return "-"
         elif measure_key == "sigma1":
-            mean = np.mean(values)
-            std = np.std(values, ddof=1)
+            mean = basic_stats['mean']
+            std = basic_stats['std']
             return f"{mean-std:.4g} - {mean+std:.4g}"
         elif measure_key == "sigma2":
-            mean = np.mean(values)
-            std = np.std(values, ddof=1)
+            mean = basic_stats['mean']
+            std = basic_stats['std']
             return f"{mean-2*std:.4g} - {mean+2*std:.4g}"
         elif measure_key == "sigma3":
-            mean = np.mean(values)
-            std = np.std(values, ddof=1)
+            mean = basic_stats['mean']
+            std = basic_stats['std']
             return f"{mean-3*std:.4g} - {mean+3*std:.4g}"
         elif measure_key == "p25":
-            return f"{np.percentile(values, 25):.4g}"
+            percentiles = calculate_percentiles(values, [25])
+            return f"{percentiles['p25']:.4g}"
         elif measure_key == "p75":
-            return f"{np.percentile(values, 75):.4g}"
+            percentiles = calculate_percentiles(values, [75])
+            return f"{percentiles['p75']:.4g}"
         elif measure_key == "p95":
             return f"{np.percentile(values, 95):.4g}"
         elif measure_key == "iqr":
@@ -15888,8 +16421,8 @@ def update_multi_wafer_display():
                 ax_hist.text(count + max_count * 0.02, bin_center, f'{int(count)}',
                            va='center', ha='left', fontsize=5, color='#333')
 
-        ax_hist.axhline(y=np.mean(all_values), color='red', linestyle='--', linewidth=1.5, label=f'Mean: {np.mean(all_values):.2f}')
-        ax_hist.axhline(y=np.median(all_values), color='green', linestyle='-', linewidth=1.5, label=f'Median: {np.median(all_values):.2f}')
+        ax_hist.axhline(y=calculate_basic_stats(all_values)['mean'], color='red', linestyle='--', linewidth=1.5, label=f'Mean: {calculate_basic_stats(all_values)["mean"]:.2f}')
+        ax_hist.axhline(y=calculate_basic_stats(all_values)['median'], color='green', linestyle='-', linewidth=1.5, label=f'Median: {calculate_basic_stats(all_values)["median"]:.2f}')
         ax_hist.set_xlabel('Count', fontsize=8)
         ax_hist.set_ylabel(param_label[:25], fontsize=8)
         ax_hist.legend(fontsize=6, loc='upper right')
@@ -17129,8 +17662,9 @@ def update_multi_wafer_boxplot():
     # Add statistics annotation if checkbox is enabled
     if multi_wafer_boxplot_stats_var.get():
         for i, data in enumerate(boxplot_data):
-            mean_val = np.mean(data)
-            median_val = np.median(data)
+            basic_stats = calculate_basic_stats(np.array(data))
+            mean_val = basic_stats['mean']
+            median_val = basic_stats['median']
             # Position text slightly to the right of each boxplot
             x_pos = i + 1 + 0.35
             # Add mean and median as small text next to each box
@@ -19111,8 +19645,10 @@ def update_correlation_plot_display():
     # Linear regression fit using numpy (no scipy needed)
     # Calculate slope and intercept using least squares
     n = len(ref_values)
-    mean_x = np.mean(ref_values)
-    mean_y = np.mean(comp_values)
+    ref_stats = calculate_basic_stats(ref_values)
+    comp_stats = calculate_basic_stats(comp_values)
+    mean_x = ref_stats['mean']
+    mean_y = comp_stats['mean']
 
     # Calculate slope and intercept
     numerator = np.sum((ref_values - mean_x) * (comp_values - mean_y))
@@ -19254,7 +19790,7 @@ def update_correlation_stats(ref_values, comp_values, param_label):
             patch.set_facecolor('#E74C3C')
 
     ax_hist.axvline(x=0, color='#2C3E50', linewidth=1.5, linestyle='-')
-    ax_hist.axvline(x=np.mean(residuals), color='#E74C3C', linewidth=1.5, linestyle='--')
+    ax_hist.axvline(x=calculate_basic_stats(residuals)['mean'], color='#E74C3C', linewidth=1.5, linestyle='--')
 
     ax_hist.set_title("Residuals", fontsize=8, fontweight="bold", color='#2C3E50')
     ax_hist.set_xlabel("Comp - Ref", fontsize=7)
@@ -19599,8 +20135,9 @@ def update_diffmap_heatmap_display():
                 ax_hist.text(count + max_count * 0.02, bin_center, f'{int(count)}',
                            va='center', ha='left', fontsize=6, color='#333')
 
-        ax_hist.axhline(y=np.mean(all_values), color='red', linestyle='--', linewidth=1.5, label=f'Mean: {np.mean(all_values):.3f}')
-        ax_hist.axhline(y=np.median(all_values), color='green', linestyle='-', linewidth=1.5, label=f'Median: {np.median(all_values):.3f}')
+        hist_stats = calculate_basic_stats(all_values)
+        ax_hist.axhline(y=hist_stats['mean'], color='red', linestyle='--', linewidth=1.5, label=f'Mean: {hist_stats["mean"]:.3f}')
+        ax_hist.axhline(y=hist_stats['median'], color='green', linestyle='-', linewidth=1.5, label=f'Median: {hist_stats["median"]:.3f}')
         ax_hist.set_xlabel('Count', fontsize=9)
         ax_hist.set_ylabel(param_label, fontsize=9)
         ax_hist.legend(fontsize=7, loc='upper right')
@@ -19733,8 +20270,9 @@ def update_diffmap_stats(diff_values, param_label):
     )
 
     # Color based on mean (green if near zero, red/blue if positive/negative)
-    mean_val = np.mean(diff_values)
-    if abs(mean_val) < np.std(diff_values) * 0.1:
+    diff_stats = calculate_basic_stats(diff_values)
+    mean_val = diff_stats['mean']
+    if abs(mean_val) < diff_stats['std'] * 0.1:
         box_color = '#2ECC71'  # Green - near zero
     elif mean_val > 0:
         box_color = '#E74C3C'  # Red - positive diff
@@ -21151,7 +21689,7 @@ def plot_grr_graph():
         if valid_values:
             ax1.plot(valid_idx, valid_values, 'o-', label=f"Die ({die_coord[0]},{die_coord[1]})",
                     color=colors[i], linewidth=2, markersize=8)
-            ax1.axhline(y=np.mean(valid_values), color=colors[i], linestyle='--', alpha=0.5)
+            ax1.axhline(y=calculate_basic_stats(np.array(valid_values))['mean'], color=colors[i], linestyle='--', alpha=0.5)
 
     ax1.set_xticks(x_pos)
     ax1.set_xticklabels([f"Run {i+1}" for i in range(len(file_names))], fontsize=8, rotation=45, ha='right')
@@ -21165,8 +21703,9 @@ def plot_grr_graph():
     # Calculate overall stats for reference lines
     all_flat = [v for values in all_values for v in values if not np.isnan(v)]
     if all_flat:
-        overall_mean = np.mean(all_flat)
-        overall_std = np.std(all_flat)
+        all_flat_stats = calculate_basic_stats(np.array(all_flat))
+        overall_mean = all_flat_stats['mean']
+        overall_std = all_flat_stats['std']
 
         # Add reference lines (limits)
         ax1.axhline(y=overall_mean, color='green', linestyle='-', linewidth=2, alpha=0.7, label='Mean')
@@ -21198,8 +21737,9 @@ def plot_grr_graph():
     # Add Mean, Std, LSL/USL reference lines to boxplot
     all_flat_bp = [v for values in all_values for v in values if not np.isnan(v)]
     if all_flat_bp:
-        bp_mean = np.mean(all_flat_bp)
-        bp_std = np.std(all_flat_bp)
+        bp_stats = calculate_basic_stats(np.array(all_flat_bp))
+        bp_mean = bp_stats['mean']
+        bp_std = bp_stats['std']
 
         # Get LSL/USL from the limits configuration (auto or manual)
         bp_lsl, bp_usl = get_grr_limits(bp_mean, bp_std)
@@ -22344,10 +22884,10 @@ def run_plm_pixel_grr():
             if not region_results:
                 continue
 
-            avg_grr = np.mean([r['grr_pct'] for r in region_results])
-            avg_ndc = np.mean([r['ndc'] for r in region_results])
-            avg_rpt = np.mean([r['repeatability_pct'] for r in region_results])
-            avg_rpd = np.mean([r['reproducibility_pct'] for r in region_results])
+            avg_grr = float(np.mean([r['grr_pct'] for r in region_results]))
+            avg_ndc = float(np.mean([r['ndc'] for r in region_results]))
+            avg_rpt = float(np.mean([r['repeatability_pct'] for r in region_results]))
+            avg_rpd = float(np.mean([r['reproducibility_pct'] for r in region_results]))
 
             die_result = {
                 'die_coord': die_coord, 'plm_type': plm_type,
@@ -22378,7 +22918,7 @@ def run_plm_pixel_grr():
     all_grr = [r['grr_pct'] for r in all_die_results.values()]
     best_grr = min(all_grr)
     worst_grr = max(all_grr)
-    avg_grr = np.mean(all_grr)
+    avg_grr = float(np.mean(all_grr))
     types_analyzed = sorted(all_plm_types)
 
     if avg_grr < 10:
@@ -22815,10 +23355,14 @@ def generate_plm_gage_slides(prs, content_layout, raw_param, plm_type):
         title_para.font.bold = True
 
         # Calculate means
-        mean_grr = np.mean(all_grr)
-        mean_ndc = np.mean(all_ndc)
-        mean_repeat = np.mean(all_repeat)
-        mean_reprod = np.mean(all_reprod)
+        grr_stats = calculate_basic_stats(np.array(all_grr))
+        ndc_stats = calculate_basic_stats(np.array(all_ndc))
+        repeat_stats = calculate_basic_stats(np.array(all_repeat))
+        reprod_stats = calculate_basic_stats(np.array(all_reprod))
+        mean_grr = grr_stats['mean']
+        mean_ndc = ndc_stats['mean']
+        mean_repeat = repeat_stats['mean']
+        mean_reprod = reprod_stats['mean']
 
         # Status assessment
         if mean_grr < 10:
@@ -23299,7 +23843,7 @@ def generate_plm_gage_slides(prs, content_layout, raw_param, plm_type):
                 cell = s_table.cell(row_idx, s_cols - 1)
                 cell.text = ''
                 p = cell.text_frame.paragraphs[0]
-                avg_val = np.mean(grr_values) if grr_values else 0
+                avg_val = float(np.mean(grr_values)) if grr_values else 0
                 p.text = f"{avg_val:.1f}%"
                 p.font.size = Pt(7)
                 p.font.bold = True
@@ -23459,8 +24003,9 @@ def update_grr_multi_param_table(all_param_results, file_names, die_coords):
 
             # Calculate statistics for this die across files
             if values:
-                mean_val = np.mean(values)
-                std_val = np.std(values)
+                val_stats = calculate_basic_stats(np.array(values))
+                mean_val = val_stats['mean']
+                std_val = val_stats['std']
                 range_val = np.max(values) - np.min(values)
                 cv_val = (std_val / mean_val * 100) if mean_val != 0 else 0
                 row_data.extend([f"{mean_val:.4g}", f"{std_val:.4g}", f"{range_val:.4g}", f"{cv_val:.2f}%"])
@@ -25288,13 +25833,14 @@ def _build_plm_dataframe(folder_path, plm_type_filter=None):
         if len(valid_values) == 0:
             continue
 
+        plm_stats = calculate_basic_stats(valid_values)
         stats = {
-            f"{plm_type}_mean": float(np.mean(valid_values)),
-            f"{plm_type}_median": float(np.median(valid_values)),
-            f"{plm_type}_std": float(np.std(valid_values)),
-            f"{plm_type}_min": float(np.min(valid_values)),
-            f"{plm_type}_max": float(np.max(valid_values)),
-            f"{plm_type}_pixels": int(len(valid_values)),
+            f"{plm_type}_mean": float(plm_stats['mean']),
+            f"{plm_type}_median": float(plm_stats['median']),
+            f"{plm_type}_std": float(plm_stats['std']),
+            f"{plm_type}_min": float(plm_stats['min']),
+            f"{plm_type}_max": float(plm_stats['max']),
+            f"{plm_type}_pixels": int(plm_stats['count']),
         }
 
         if (x, y) not in die_data:
@@ -25565,10 +26111,11 @@ def _auto_integrate_plm_params(file_info, file_path):
         if len(valid_values) == 0:
             continue
 
+        plm_stats2 = calculate_basic_stats(valid_values)
         stats = {
-            f"PLM_{plm_type}_mean": float(np.mean(valid_values)),
-            f"PLM_{plm_type}_median": float(np.median(valid_values)),
-            f"PLM_{plm_type}_std": float(np.std(valid_values)),
+            f"PLM_{plm_type}_mean": float(plm_stats2['mean']),
+            f"PLM_{plm_type}_median": float(plm_stats2['median']),
+            f"PLM_{plm_type}_std": float(plm_stats2['std']),
             f"PLM_{plm_type}_min": float(np.min(valid_values)),
             f"PLM_{plm_type}_max": float(np.max(valid_values)),
         }
@@ -26810,10 +27357,11 @@ def create_grr_data_display(parent_frame, file_info, file_idx):
     cbar.set_label('Value', fontsize=8)
 
     # Add statistics text box (like Multi-Wafer)
+    valid_stats = calculate_basic_stats(valid_data) if len(valid_data) > 0 else {'mean': 0}
     stats_text = (
         f"Min: {global_min:.3g}\n"
         f"Max: {global_max:.3g}\n"
-        f"Mean: {np.mean(valid_data) if len(valid_data) > 0 else 0:.3g}"
+        f"Mean: {valid_stats['mean']:.3g}"
     )
     ax.text(0.02, 0.98, stats_text,
         transform=ax.transAxes,
@@ -29048,37 +29596,38 @@ def generate_stats_table():
                     values = df[param_column].dropna().values
                     if len(values) > 0:
                         try:
+                            val_stats = calculate_basic_stats(np.array(values))
                             if measure == "count":
                                 val = len(values)
                             elif measure == "mean":
-                                val = f"{np.mean(values):.4g}"
+                                val = f"{val_stats['mean']:.4g}"
                             elif measure == "median":
-                                val = f"{np.median(values):.4g}"
+                                val = f"{val_stats['median']:.4g}"
                             elif measure == "std":
-                                val = f"{np.std(values):.4g}"
+                                val = f"{val_stats['std']:.4g}"
                             elif measure == "min":
-                                val = f"{np.min(values):.4g}"
+                                val = f"{val_stats['min']:.4g}"
                             elif measure == "max":
-                                val = f"{np.max(values):.4g}"
+                                val = f"{val_stats['max']:.4g}"
                             elif measure == "range":
-                                val = f"{np.max(values) - np.min(values):.4g}"
+                                val = f"{val_stats['range']:.4g}"
                             elif measure == "cv":
-                                mean_val = np.mean(values)
+                                mean_val = val_stats['mean']
                                 if mean_val != 0:
-                                    val = f"{(np.std(values) / abs(mean_val)) * 100:.2f}%"
+                                    val = f"{(val_stats['std'] / abs(mean_val)) * 100:.2f}%"
                                 else:
                                     val = "N/A"
                             elif measure == "sigma1":
-                                mean_val = np.mean(values)
-                                std_val = np.std(values)
+                                mean_val = val_stats['mean']
+                                std_val = val_stats['std']
                                 val = f"{mean_val-std_val:.3g} - {mean_val+std_val:.3g}"
                             elif measure == "sigma2":
-                                mean_val = np.mean(values)
-                                std_val = np.std(values)
+                                mean_val = val_stats['mean']
+                                std_val = val_stats['std']
                                 val = f"{mean_val-2*std_val:.3g} - {mean_val+2*std_val:.3g}"
                             elif measure == "sigma3":
-                                mean_val = np.mean(values)
-                                std_val = np.std(values)
+                                mean_val = val_stats['mean']
+                                std_val = val_stats['std']
                                 val = f"{mean_val-3*std_val:.3g} - {mean_val+3*std_val:.3g}"
                             elif measure == "p25":
                                 val = f"{np.percentile(values, 25):.4g}"
@@ -29149,29 +29698,30 @@ def export_stats_table_to_excel():
                     values = df[param_column].dropna().values
                     if len(values) > 0:
                         try:
+                            val_stats2 = calculate_basic_stats(np.array(values))
                             if measure == "count":
                                 val = len(values)
                             elif measure == "mean":
-                                val = np.mean(values)
+                                val = val_stats2['mean']
                             elif measure == "median":
-                                val = np.median(values)
+                                val = val_stats2['median']
                             elif measure == "std":
-                                val = np.std(values)
+                                val = val_stats2['std']
                             elif measure == "min":
-                                val = np.min(values)
+                                val = val_stats2['min']
                             elif measure == "max":
-                                val = np.max(values)
+                                val = val_stats2['max']
                             elif measure == "range":
-                                val = np.max(values) - np.min(values)
+                                val = val_stats2['range']
                             elif measure == "cv":
-                                mean_val = np.mean(values)
-                                val = (np.std(values) / abs(mean_val)) * 100 if mean_val != 0 else None
+                                mean_val = val_stats2['mean']
+                                val = (val_stats2['std'] / abs(mean_val)) * 100 if mean_val != 0 else None
                             elif measure == "sigma1":
-                                val = f"{np.mean(values)-np.std(values):.6g} - {np.mean(values)+np.std(values):.6g}"
+                                val = f"{val_stats2['mean']-val_stats2['std']:.6g} - {val_stats2['mean']+val_stats2['std']:.6g}"
                             elif measure == "sigma2":
-                                val = f"{np.mean(values)-2*np.std(values):.6g} - {np.mean(values)+2*np.std(values):.6g}"
+                                val = f"{val_stats2['mean']-2*val_stats2['std']:.6g} - {val_stats2['mean']+2*val_stats2['std']:.6g}"
                             elif measure == "sigma3":
-                                val = f"{np.mean(values)-3*np.std(values):.6g} - {np.mean(values)+3*np.std(values):.6g}"
+                                val = f"{val_stats2['mean']-3*val_stats2['std']:.6g} - {val_stats2['mean']+3*val_stats2['std']:.6g}"
                             elif measure == "p25":
                                 val = np.percentile(values, 25)
                             elif measure == "p75":
@@ -31295,7 +31845,8 @@ def create_powerpoint_presentation(output_path=None):
                                 all_vals.extend(df[col_to_use].dropna().values)
 
                         if all_vals:
-                            stats_text = f"N={len(all_vals)} | Mean={np.mean(all_vals):.3g} | Std={np.std(all_vals):.3g} | Min={np.min(all_vals):.3g} | Max={np.max(all_vals):.3g}"
+                            all_stats = calculate_basic_stats(np.array(all_vals))
+                            stats_text = f"N={all_stats['count']} | Mean={all_stats['mean']:.3g} | Std={all_stats['std']:.3g} | Min={all_stats['min']:.3g} | Max={all_stats['max']:.3g}"
                             stats_box = slide.shapes.add_textbox(
                                 Inches(stats_cfg.get("x", 0.3)),
                                 Inches(stats_cfg.get("y", 6.8)),
@@ -31533,7 +32084,8 @@ def create_powerpoint_presentation(output_path=None):
 
                             # Add overall statistics annotation
                             all_arr = np.array(all_values)
-                            stats_text = f"Overall Stats:\nN={len(all_arr)}\nMean={np.mean(all_arr):.4g}\nStd={np.std(all_arr):.4g}\nMin={np.min(all_arr):.4g}\nMax={np.max(all_arr):.4g}"
+                            all_arr_stats = calculate_basic_stats(all_arr)
+                            stats_text = f"Overall Stats:\nN={all_arr_stats['count']}\nMean={all_arr_stats['mean']:.4g}\nStd={all_arr_stats['std']:.4g}\nMin={all_arr_stats['min']:.4g}\nMax={all_arr_stats['max']:.4g}"
                             ax.text(0.98, 0.98, stats_text, transform=ax.transAxes, fontsize=9,
                                    verticalalignment='top', horizontalalignment='right',
                                    bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
@@ -31570,14 +32122,15 @@ def create_powerpoint_presentation(output_path=None):
                                 values = df[param_column].dropna().values
                                 if len(values) > 0:
                                     short_label = str(wafer_id)[:20] + "..." if len(str(wafer_id)) > 20 else str(wafer_id)
+                                    wafer_stats = calculate_basic_stats(np.array(values))
                                     stats_rows.append({
                                         'Wafer': short_label,
-                                        'Count': len(values),
-                                        'Mean': np.mean(values),
-                                        'Std': np.std(values),
-                                        'Min': np.min(values),
-                                        'Max': np.max(values),
-                                        'Median': np.median(values)
+                                        'Count': wafer_stats['count'],
+                                        'Mean': wafer_stats['mean'],
+                                        'Std': wafer_stats['std'],
+                                        'Min': wafer_stats['min'],
+                                        'Max': wafer_stats['max'],
+                                        'Median': wafer_stats['median']
                                     })
 
                         if stats_rows:
@@ -31820,12 +32373,14 @@ def create_powerpoint_presentation(output_path=None):
                                 # Calculate and display statistics in top left corner
                                 # Combine all data for overall statistics
                                 combined_data = np.concatenate(all_data)
-                                stats_max = np.max(combined_data)
-                                stats_min = np.min(combined_data)
-                                stats_q1 = np.percentile(combined_data, 25)
-                                stats_q3 = np.percentile(combined_data, 75)
-                                stats_mean = np.mean(combined_data)
-                                stats_median = np.median(combined_data)
+                                combined_stats = calculate_basic_stats(combined_data)
+                                pct_stats = calculate_percentiles(combined_data, [25, 75])
+                                stats_max = combined_stats['max']
+                                stats_min = combined_stats['min']
+                                stats_q1 = pct_stats['p25']
+                                stats_q3 = pct_stats['p75']
+                                stats_mean = combined_stats['mean']
+                                stats_median = combined_stats['median']
 
                                 # Format statistics text
                                 stats_text = (
@@ -32542,8 +33097,8 @@ def create_powerpoint_presentation(output_path=None):
                         tf.word_wrap = True
 
                         # Find which component is dominant
-                        avg_repeat = np.mean(repeatability)
-                        avg_reprod = np.mean(reproducibility)
+                        avg_repeat = float(np.mean(repeatability))
+                        avg_reprod = float(np.mean(reproducibility))
 
                         p = tf.paragraphs[0]
                         p.text = "Interpretation:"
@@ -34529,5 +35084,1235 @@ settings_info_label.pack(pady=8, padx=10)
 
 # Initial load of job list
 refresh_job_list()
+
+# ================================================================================
+# PLM IMAGE ANALYSIS TAB (v6.0.0)
+# ================================================================================
+
+# Import PLM Analyzer
+try:
+    from src.stdf_analyzer.core.plm_analyzer import (
+        PLMAnalyzer, PLMImage, AnalysisResult, AnalysisThresholds,
+        DefectType, DEFECT_COLORS, DEFECT_NAMES
+    )
+    from matplotlib.figure import Figure
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+    PLM_ANALYZER_AVAILABLE = True
+    print("PLM Analyzer module loaded successfully")
+except ImportError as e:
+    PLM_ANALYZER_AVAILABLE = False
+    print(f"Warning: PLM Analyzer module not available: {e}")
+
+# Global state for PLM Analysis Tab
+plm_analysis_results = {}  # Dict[(die_x, die_y)] -> AnalysisResult
+plm_analysis_current_die = None  # Current selected die for analysis
+plm_analysis_thresholds = AnalysisThresholds() if PLM_ANALYZER_AVAILABLE else None
+plm_analyzer_instance = PLMAnalyzer(plm_analysis_thresholds) if PLM_ANALYZER_AVAILABLE else None
+
+# PLM Analysis Tab Layout
+plm_main_frame = tk.Frame(tab_plm_analysis)
+plm_main_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+# === CONTROL PANEL (Top) ===
+plm_control_frame = tk.LabelFrame(plm_main_frame, text="Analysis Controls", font=("Segoe UI", 10, "bold"))
+plm_control_frame.pack(fill=tk.X, padx=5, pady=5)
+
+plm_control_row1 = tk.Frame(plm_control_frame)
+plm_control_row1.pack(fill=tk.X, padx=5, pady=5)
+
+# Help Button (?) - Parameter explanation
+def plm_show_help():
+    """Show help dialog explaining all PLM analysis parameters"""
+    help_window = tk.Toplevel()
+    help_window.title("PLM Analysis - Parameter Help")
+    help_window.geometry("720x700")
+    help_window.resizable(True, True)
+
+    # Scrollable text
+    help_frame = tk.Frame(help_window)
+    help_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+    scrollbar = tk.Scrollbar(help_frame)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+    help_text = tk.Text(help_frame, wrap=tk.WORD, font=("Consolas", 10), yscrollcommand=scrollbar.set)
+    help_text.pack(fill=tk.BOTH, expand=True)
+    scrollbar.config(command=help_text.yview)
+
+    # Configure tags for formatting
+    help_text.tag_configure('title', font=('Segoe UI', 14, 'bold'), foreground='#1565C0')
+    help_text.tag_configure('section', font=('Segoe UI', 11, 'bold'), foreground='#2E7D32')
+    help_text.tag_configure('param', font=('Consolas', 10, 'bold'), foreground='#D32F2F')
+    help_text.tag_configure('desc', font=('Segoe UI', 10))
+
+    # Content
+    help_text.insert(tk.END, "PLM IMAGE ANALYSIS - PARAMETER HELP\n\n", 'title')
+
+    help_text.insert(tk.END, "=== MODE ===\n", 'section')
+    help_text.insert(tk.END, "Single Die: ", 'param')
+    help_text.insert(tk.END, "Analyze only the selected die (click on wafer first)\n", 'desc')
+    help_text.insert(tk.END, "Whole Wafer: ", 'param')
+    help_text.insert(tk.END, "Analyze all dies on the wafer (takes longer)\n\n", 'desc')
+
+    help_text.insert(tk.END, "=== SOURCE ===\n", 'section')
+    help_text.insert(tk.END, "Stitched (Raw): ", 'param')
+    help_text.insert(tk.END, "Use raw PLM image (576x768 pixels, brightness in nits)\n", 'desc')
+    help_text.insert(tk.END, "Pre-calculated: ", 'param')
+    help_text.insert(tk.END, "Use pre-calculated uniformity/bridged maps from tester\n\n", 'desc')
+
+    help_text.insert(tk.END, "=== ANALYSIS TYPE ===\n", 'section')
+    help_text.insert(tk.END, "All Defects: ", 'param')
+    help_text.insert(tk.END, "Run all defect detections (Uniformity + Bridged + Stuck)\n", 'desc')
+    help_text.insert(tk.END, "Uniformity Only: ", 'param')
+    help_text.insert(tk.END, "Detect only brightness deviation (hot/cold spots)\n", 'desc')
+    help_text.insert(tk.END, "Bridged Only: ", 'param')
+    help_text.insert(tk.END, "Detect only electrically connected pixels\n", 'desc')
+    help_text.insert(tk.END, "Stuck Only: ", 'param')
+    help_text.insert(tk.END, "Detect only pixels that don't switch (always on/off)\n\n", 'desc')
+
+    help_text.insert(tk.END, "═══════════════════════════════════════════════════════\n", 'section')
+    help_text.insert(tk.END, "=== CALCULATION METHODS ===\n\n", 'title')
+
+    help_text.insert(tk.END, "▸ UNIFORMITY ANALYSIS\n", 'section')
+    help_text.insert(tk.END, "  Algorithm: ", 'param')
+    help_text.insert(tk.END, "Global Z-Score based deviation detection\n", 'desc')
+    help_text.insert(tk.END, "  Formula:   ", 'param')
+    help_text.insert(tk.END, "deviation = |pixel_value - mean| / std\n", 'desc')
+    help_text.insert(tk.END, "  Steps:\n", 'param')
+    help_text.insert(tk.END, "    1. Calculate mean brightness: μ = Σ(pixels) / N\n", 'desc')
+    help_text.insert(tk.END, "    2. Calculate standard deviation: σ = √(Σ(pixel-μ)² / N)\n", 'desc')
+    help_text.insert(tk.END, "    3. For each pixel: Z = |pixel - μ| / σ\n", 'desc')
+    help_text.insert(tk.END, "    4. If Z > threshold_σ → UNIFORMITY DEFECT\n", 'desc')
+    help_text.insert(tk.END, "  Default σ threshold: 2.0 (detects ~5% outliers)\n\n", 'desc')
+
+    help_text.insert(tk.END, "▸ BRIDGED PIXEL DETECTION\n", 'section')
+    help_text.insert(tk.END, "  Algorithm: ", 'param')
+    help_text.insert(tk.END, "Connected Component Analysis (Flood-Fill)\n", 'desc')
+    help_text.insert(tk.END, "  Steps:\n", 'param')
+    help_text.insert(tk.END, "    1. Threshold bright pixels: pixel > (max_val × 0.8)\n", 'desc')
+    help_text.insert(tk.END, "    2. Find connected regions using 4-connectivity\n", 'desc')
+    help_text.insert(tk.END, "       (up, down, left, right neighbors)\n", 'desc')
+    help_text.insert(tk.END, "    3. If region size ≥ min_count → BRIDGED\n", 'desc')
+    help_text.insert(tk.END, "       - 3-4 pixels: BRIDGED_MINOR (light red)\n", 'desc')
+    help_text.insert(tk.END, "       - 5+ pixels: BRIDGED_MAJOR (dark red)\n", 'desc')
+    help_text.insert(tk.END, "  Default min_count: 3 pixels\n\n", 'desc')
+
+    help_text.insert(tk.END, "▸ STUCK PIXEL DETECTION\n", 'section')
+    help_text.insert(tk.END, "  Algorithm: ", 'param')
+    help_text.insert(tk.END, "Percentile-based extreme value detection\n", 'desc')
+    help_text.insert(tk.END, "  Formula:\n", 'param')
+    help_text.insert(tk.END, "    - Stuck ON:  pixel ≥ P99.5 (99.5th percentile)\n", 'desc')
+    help_text.insert(tk.END, "    - Stuck OFF: pixel ≤ P0.5  (0.5th percentile)\n", 'desc')
+    help_text.insert(tk.END, "  Why percentile:\n", 'param')
+    help_text.insert(tk.END, "    - Works for ANY data range (nits: 0-400,000)\n", 'desc')
+    help_text.insert(tk.END, "    - Identifies the most extreme 0.5% of pixels\n", 'desc')
+    help_text.insert(tk.END, "    - Robust against different brightness levels\n\n", 'desc')
+
+    help_text.insert(tk.END, "▸ CLUSTER DETECTION\n", 'section')
+    help_text.insert(tk.END, "  Algorithm: ", 'param')
+    help_text.insert(tk.END, "8-connectivity flood-fill on defect map\n", 'desc')
+    help_text.insert(tk.END, "  Steps:\n", 'param')
+    help_text.insert(tk.END, "    1. Find all defective pixels (any type)\n", 'desc')
+    help_text.insert(tk.END, "    2. Group adjacent defects (8-neighbors)\n", 'desc')
+    help_text.insert(tk.END, "    3. If group size ≥ 5 → mark as CLUSTER\n\n", 'desc')
+
+    help_text.insert(tk.END, "═══════════════════════════════════════════════════════\n\n", 'section')
+
+    help_text.insert(tk.END, "=== THRESHOLDS ===\n", 'section')
+    help_text.insert(tk.END, "Uniformity σ: ", 'param')
+    help_text.insert(tk.END, "Standard deviation multiplier for uniformity detection.\n", 'desc')
+    help_text.insert(tk.END, "  - Pixels deviating > σ*std from mean = UNIFORMITY defect\n", 'desc')
+    help_text.insert(tk.END, "  - Default: 2.0 (detects ~5% outliers in normal distribution)\n\n", 'desc')
+
+    help_text.insert(tk.END, "Bridged min: ", 'param')
+    help_text.insert(tk.END, "Minimum connected bright pixels to be considered 'bridged'.\n", 'desc')
+    help_text.insert(tk.END, "  - Default: 3 (3+ connected pixels = bridged)\n\n", 'desc')
+
+    help_text.insert(tk.END, "Stuck thresh: ", 'param')
+    help_text.insert(tk.END, "(Currently using percentile-based detection)\n", 'desc')
+    help_text.insert(tk.END, "  - Stuck ON: Pixels above 99.5th percentile\n", 'desc')
+    help_text.insert(tk.END, "  - Stuck OFF: Pixels below 0.5th percentile\n\n", 'desc')
+
+    help_text.insert(tk.END, "=== DEFECT COLORS ===\n", 'section')
+    help_text.insert(tk.END, "GREEN: ", 'param')
+    help_text.insert(tk.END, "OK - No defect detected\n", 'desc')
+    help_text.insert(tk.END, "RED: ", 'param')
+    help_text.insert(tk.END, "Bridged pixels (electrically connected)\n", 'desc')
+    help_text.insert(tk.END, "ORANGE: ", 'param')
+    help_text.insert(tk.END, "Uniformity defects (brightness deviation)\n", 'desc')
+    help_text.insert(tk.END, "BLUE: ", 'param')
+    help_text.insert(tk.END, "Stuck pixels (always on or always off)\n", 'desc')
+    help_text.insert(tk.END, "PURPLE: ", 'param')
+    help_text.insert(tk.END, "Cluster (group of adjacent defects)\n\n", 'desc')
+
+    help_text.insert(tk.END, "=== PASS/FAIL CRITERIA ===\n", 'section')
+    help_text.insert(tk.END, "A die FAILS if any of these limits is exceeded:\n", 'desc')
+    help_text.insert(tk.END, "  - Bridged pixels > 5\n", 'desc')
+    help_text.insert(tk.END, "  - Uniformity defects > 10\n", 'desc')
+    help_text.insert(tk.END, "  - Stuck pixels > 3\n", 'desc')
+
+    help_text.config(state=tk.DISABLED)  # Read-only
+
+    # Close button
+    tk.Button(help_window, text="Close", command=help_window.destroy,
+              font=("Segoe UI", 10), width=10).pack(pady=10)
+
+# ? Help button
+plm_help_btn = tk.Button(plm_control_row1, text="?", font=("Segoe UI", 10, "bold"),
+                          width=2, command=plm_show_help, bg="#E3F2FD", fg="#1565C0")
+plm_help_btn.pack(side=tk.RIGHT, padx=5)
+
+# Mode selection
+tk.Label(plm_control_row1, text="Mode:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(0, 5))
+plm_mode_var = tk.StringVar(value="single")
+tk.Radiobutton(plm_control_row1, text="Single Die", variable=plm_mode_var, value="single",
+               font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=2)
+tk.Radiobutton(plm_control_row1, text="Whole Wafer", variable=plm_mode_var, value="wafer",
+               font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=2)
+
+# Separator
+ttk.Separator(plm_control_row1, orient='vertical').pack(side=tk.LEFT, fill='y', padx=10)
+
+# PLM Source
+tk.Label(plm_control_row1, text="Source:", font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(0, 5))
+plm_source_var = tk.StringVar(value="stitched")
+plm_source_combo = ttk.Combobox(plm_control_row1, textvariable=plm_source_var,
+                                 values=["Stitched (Raw)", "Pre-calculated"],
+                                 state="readonly", width=15)
+plm_source_combo.pack(side=tk.LEFT, padx=2)
+plm_source_combo.current(0)
+
+# Separator
+ttk.Separator(plm_control_row1, orient='vertical').pack(side=tk.LEFT, fill='y', padx=10)
+
+# === ANALYSIS MODULES - variables defined here, UI shown in right panel sub-tab ===
+plm_modules_frame = tk.Frame(plm_main_frame)  # NOT packed - modules shown in right panel
+
+# Create 2 rows for modules
+plm_modules_row1 = tk.Frame(plm_modules_frame)
+plm_modules_row1.pack(fill=tk.X, padx=5, pady=2)
+
+plm_modules_row2 = tk.Frame(plm_modules_frame)
+plm_modules_row2.pack(fill=tk.X, padx=5, pady=2)
+
+# === Row 1: Original modules ===
+
+# Module 1: Uniformity
+plm_mod_uniformity_frame = tk.Frame(plm_modules_row1, bd=1, relief=tk.GROOVE)
+plm_mod_uniformity_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_uniformity_var = tk.BooleanVar(value=True)
+tk.Checkbutton(plm_mod_uniformity_frame, text="Uniformity", variable=plm_mod_uniformity_var,
+               font=("Segoe UI", 9, "bold"), fg="#FF8F00").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_uniformity_frame, text="σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_uniformity_sigma_var = tk.StringVar(value="2.0")
+tk.Entry(plm_mod_uniformity_frame, textvariable=plm_uniformity_sigma_var, width=4, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# Module 2: Bridged
+plm_mod_bridged_frame = tk.Frame(plm_modules_row1, bd=1, relief=tk.GROOVE)
+plm_mod_bridged_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_bridged_var = tk.BooleanVar(value=True)
+tk.Checkbutton(plm_mod_bridged_frame, text="Bridged", variable=plm_mod_bridged_var,
+               font=("Segoe UI", 9, "bold"), fg="#D32F2F").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_bridged_frame, text="min:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_bridged_min_var = tk.StringVar(value="3")
+tk.Entry(plm_mod_bridged_frame, textvariable=plm_bridged_min_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_bridged_frame, text="bright%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_bridged_bright_var = tk.StringVar(value="80")
+tk.Entry(plm_mod_bridged_frame, textvariable=plm_bridged_bright_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# Module 3: Stuck
+plm_mod_stuck_frame = tk.Frame(plm_modules_row1, bd=1, relief=tk.GROOVE)
+plm_mod_stuck_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_stuck_var = tk.BooleanVar(value=True)
+tk.Checkbutton(plm_mod_stuck_frame, text="Stuck", variable=plm_mod_stuck_var,
+               font=("Segoe UI", 9, "bold"), fg="#42A5F5").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_stuck_frame, text="ON%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_stuck_on_var = tk.StringVar(value="99.5")
+tk.Entry(plm_mod_stuck_frame, textvariable=plm_stuck_on_var, width=4, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_stuck_frame, text="OFF%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_stuck_off_var = tk.StringVar(value="0.5")
+tk.Entry(plm_mod_stuck_frame, textvariable=plm_stuck_off_var, width=4, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# === Row 2: NEW modules ===
+
+# Module 4: Ring Contours (NEW - Edge Detection für kreisförmige Strukturen)
+plm_mod_ring_frame = tk.Frame(plm_modules_row2, bd=1, relief=tk.GROOVE)
+plm_mod_ring_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_ring_var = tk.BooleanVar(value=False)
+tk.Checkbutton(plm_mod_ring_frame, text="Ring/Contour", variable=plm_mod_ring_var,
+               font=("Segoe UI", 9, "bold"), fg="#FF5722").pack(side=tk.LEFT, padx=2)
+# AUTO checkbox for automatic parameter detection
+plm_ring_auto_var = tk.BooleanVar(value=False)
+plm_ring_auto_cb = tk.Checkbutton(plm_mod_ring_frame, text="[AUTO]", variable=plm_ring_auto_var,
+               font=("Segoe UI", 9, "bold"), fg="#FFFFFF", bg="#FF5722",
+               selectcolor="#E64A19", activebackground="#FF7043",
+               activeforeground="#FFFFFF")
+plm_ring_auto_cb.pack(side=tk.LEFT, padx=3)
+tk.Label(plm_mod_ring_frame, text="blur:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_ring_blur_var = tk.StringVar(value="5.0")
+tk.Entry(plm_mod_ring_frame, textvariable=plm_ring_blur_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_ring_frame, text="edge%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_ring_edge_var = tk.StringVar(value="15")
+tk.Entry(plm_mod_ring_frame, textvariable=plm_ring_edge_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# Module 5: Gradient (NEW)
+plm_mod_gradient_frame = tk.Frame(plm_modules_row2, bd=1, relief=tk.GROOVE)
+plm_mod_gradient_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_gradient_var = tk.BooleanVar(value=False)
+tk.Checkbutton(plm_mod_gradient_frame, text="Gradient", variable=plm_mod_gradient_var,
+               font=("Segoe UI", 9, "bold"), fg="#00BCD4").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_gradient_frame, text="zone:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_gradient_zone_var = tk.StringVar(value="quadrants")
+ttk.Combobox(plm_mod_gradient_frame, textvariable=plm_gradient_zone_var,
+             values=["quadrants", "rings"], state="readonly", width=8, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_gradient_frame, text="thresh%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_gradient_thresh_var = tk.StringVar(value="5.0")
+tk.Entry(plm_mod_gradient_frame, textvariable=plm_gradient_thresh_var, width=4, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# Module 5: Mura (NEW)
+plm_mod_mura_frame = tk.Frame(plm_modules_row2, bd=1, relief=tk.GROOVE)
+plm_mod_mura_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_mura_var = tk.BooleanVar(value=False)
+tk.Checkbutton(plm_mod_mura_frame, text="Mura", variable=plm_mod_mura_var,
+               font=("Segoe UI", 9, "bold"), fg="#E91E63").pack(side=tk.LEFT, padx=2)
+# AUTO checkbox for automatic parameter detection - DEUTLICH SICHTBAR
+plm_mura_auto_var = tk.BooleanVar(value=False)
+plm_mura_auto_cb = tk.Checkbutton(plm_mod_mura_frame, text="[AUTO]", variable=plm_mura_auto_var,
+               font=("Segoe UI", 9, "bold"), fg="#FFFFFF", bg="#2196F3",
+               selectcolor="#1565C0", activebackground="#1976D2",
+               activeforeground="#FFFFFF")
+plm_mura_auto_cb.pack(side=tk.LEFT, padx=3)
+tk.Label(plm_mod_mura_frame, text="blur:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_mura_blur_var = tk.StringVar(value="10")
+tk.Entry(plm_mod_mura_frame, textvariable=plm_mura_blur_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_mura_frame, text="th%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_mura_thresh_var = tk.StringVar(value="3")
+tk.Entry(plm_mod_mura_frame, textvariable=plm_mura_thresh_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# Module 6: Line/Column (NEW)
+plm_mod_linecol_frame = tk.Frame(plm_modules_row2, bd=1, relief=tk.GROOVE)
+plm_mod_linecol_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_linecol_var = tk.BooleanVar(value=False)
+tk.Checkbutton(plm_mod_linecol_frame, text="Line/Column", variable=plm_mod_linecol_var,
+               font=("Segoe UI", 9, "bold"), fg="#795548").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_linecol_frame, text="σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_linecol_sigma_var = tk.StringVar(value="3.0")
+tk.Entry(plm_mod_linecol_frame, textvariable=plm_linecol_sigma_var, width=4, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# Module 7: Hot/Cold Spots (NEW)
+plm_mod_hotcold_frame = tk.Frame(plm_modules_row2, bd=1, relief=tk.GROOVE)
+plm_mod_hotcold_frame.pack(side=tk.LEFT, padx=3, pady=2)
+plm_mod_hotcold_var = tk.BooleanVar(value=False)
+tk.Checkbutton(plm_mod_hotcold_frame, text="Hot/Cold Spots", variable=plm_mod_hotcold_var,
+               font=("Segoe UI", 9, "bold"), fg="#FF5722").pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_hotcold_frame, text="min size:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_hotcold_size_var = tk.StringVar(value="10")
+tk.Entry(plm_mod_hotcold_frame, textvariable=plm_hotcold_size_var, width=3, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+tk.Label(plm_mod_hotcold_frame, text="σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+plm_hotcold_sigma_var = tk.StringVar(value="2.5")
+tk.Entry(plm_mod_hotcold_frame, textvariable=plm_hotcold_sigma_var, width=4, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
+
+# === BUTTONS ROW ===
+plm_buttons_row = tk.Frame(plm_main_frame)
+plm_buttons_row.pack(fill=tk.X, padx=5, pady=5)
+
+# Buttons
+plm_btn_frame = tk.Frame(plm_buttons_row)
+plm_btn_frame.pack(side=tk.LEFT, padx=5)
+
+def plm_run_analysis():
+    """Run PLM analysis based on current settings"""
+    global plm_analysis_results, plm_analysis_current_die
+
+    if not PLM_ANALYZER_AVAILABLE:
+        messagebox.showerror("Error", "PLM Analyzer module not available")
+        return
+
+    if not plm_file_directory or not os.path.exists(plm_file_directory):
+        messagebox.showwarning("Warning", "No PLM folder selected. Load a wafer with PLM files first.")
+        return
+
+    # Update thresholds from module checkboxes
+    try:
+        plm_analysis_thresholds.uniformity_sigma_minor = float(plm_uniformity_sigma_var.get())
+        plm_analysis_thresholds.uniformity_sigma_major = float(plm_uniformity_sigma_var.get()) + 1.0
+        plm_analysis_thresholds.bridged_min_count = int(plm_bridged_min_var.get())
+        plm_analysis_thresholds.bridged_brightness_threshold = float(plm_bridged_bright_var.get()) / 100.0
+        plm_analysis_thresholds.stuck_on_percentile = float(plm_stuck_on_var.get())
+        plm_analysis_thresholds.stuck_off_percentile = float(plm_stuck_off_var.get())
+    except ValueError:
+        messagebox.showerror("Error", "Invalid threshold values")
+        return
+
+    # Get enabled modules from checkboxes
+    enabled_modules = {
+        'uniformity': plm_mod_uniformity_var.get(),
+        'bridged': plm_mod_bridged_var.get(),
+        'stuck': plm_mod_stuck_var.get(),
+        'ring': plm_mod_ring_var.get(),
+        'gradient': plm_mod_gradient_var.get(),
+        'mura': plm_mod_mura_var.get(),
+        'linecol': plm_mod_linecol_var.get(),
+        'hotcold': plm_mod_hotcold_var.get(),
+    }
+
+    # Determine analysis type based on enabled modules
+    if all(enabled_modules[k] for k in ['uniformity', 'bridged', 'stuck']):
+        analysis_type = "all"
+    elif enabled_modules['uniformity'] and not enabled_modules['bridged'] and not enabled_modules['stuck']:
+        analysis_type = "uniformity"
+    elif enabled_modules['bridged'] and not enabled_modules['uniformity'] and not enabled_modules['stuck']:
+        analysis_type = "bridged"
+    elif enabled_modules['stuck'] and not enabled_modules['uniformity'] and not enabled_modules['bridged']:
+        analysis_type = "stuck"
+    else:
+        analysis_type = "all"  # Mixed selection = run all base analyzers
+
+    # Use pre-calculated or raw
+    use_precalculated = "Pre-calculated" in plm_source_var.get()
+
+    mode = plm_mode_var.get()
+
+    if mode == "single":
+        # Single die analysis
+        if selected_die_coords is None:
+            messagebox.showwarning("Warning", "Please select a die on the wafer heatmap first")
+            return
+
+        die_x, die_y = selected_die_coords
+        plm_analysis_current_die = (die_x, die_y)
+
+        # Find PLM files for this die
+        plm_files = plm_analyzer_instance._find_plm_files_for_die(plm_file_directory, die_x, die_y)
+
+        if not plm_files:
+            messagebox.showwarning("Warning", f"No PLM files found for die ({die_x}, {die_y})")
+            return
+
+        plm_status_var.set(f"Analyzing die ({die_x}, {die_y})...")
+        tab_plm_analysis.update()
+
+        result = plm_analyzer_instance.analyze_die(plm_files, die_x, die_y, analysis_type, use_precalculated)
+
+        # Run additional analysis modules if enabled
+        if result.raw_image is not None:
+            from src.stdf_analyzer.core.plm_analyzer import (
+                GradientAnalyzer, MuraDetector, LineColumnAnalyzer,
+                HotColdSpotAnalyzer, HomogenityCalculator, DefectType,
+                RingContourDetector
+            )
+
+            # Additional metrics storage
+            result.additional_metrics = {}
+
+            # Gradient Analysis
+            if enabled_modules.get('gradient', False):
+                try:
+                    gradient_analyzer = GradientAnalyzer(
+                        zone_type=plm_gradient_zone_var.get(),
+                        threshold_percent=float(plm_gradient_thresh_var.get())
+                    )
+                    gradient_map, gradient_metrics = gradient_analyzer.analyze(result.raw_image)
+                    # Merge into defect map
+                    result.defect_map = np.where(
+                        (gradient_map > 0) & (result.defect_map == 0),
+                        gradient_map, result.defect_map
+                    )
+                    result.additional_metrics['gradient'] = gradient_metrics
+                except Exception as e:
+                    print(f"Gradient analysis error: {e}")
+
+            # Mura Detection
+            if enabled_modules.get('mura', False):
+                try:
+                    # Check if AUTO mode is enabled
+                    auto_mode = plm_mura_auto_var.get()
+                    mura_detector = MuraDetector(
+                        blur_sigma=float(plm_mura_blur_var.get()),
+                        threshold_percent=float(plm_mura_thresh_var.get()),
+                        auto_detect=auto_mode  # Use auto detection if checkbox is checked
+                    )
+                    mura_map, mura_spots = mura_detector.analyze(result.raw_image)
+                    result.defect_map = np.where(
+                        (mura_map > 0) & (result.defect_map == 0),
+                        mura_map, result.defect_map
+                    )
+                    result.additional_metrics['mura'] = {'spots': mura_spots, 'count': len(mura_spots)}
+                except Exception as e:
+                    print(f"Mura analysis error: {e}")
+
+            # Line/Column Analysis
+            if enabled_modules.get('linecol', False):
+                try:
+                    linecol_analyzer = LineColumnAnalyzer(
+                        sigma_threshold=float(plm_linecol_sigma_var.get())
+                    )
+                    linecol_map, linecol_results = linecol_analyzer.analyze(result.raw_image)
+                    result.defect_map = np.where(
+                        (linecol_map > 0) & (result.defect_map == 0),
+                        linecol_map, result.defect_map
+                    )
+                    result.additional_metrics['linecol'] = linecol_results
+                except Exception as e:
+                    print(f"Line/Column analysis error: {e}")
+
+            # Hot/Cold Spot Analysis
+            if enabled_modules.get('hotcold', False):
+                try:
+                    hotcold_analyzer = HotColdSpotAnalyzer(
+                        min_spot_size=int(plm_hotcold_size_var.get()),
+                        threshold_sigma=float(plm_hotcold_sigma_var.get())
+                    )
+                    hotcold_map, hotcold_results = hotcold_analyzer.analyze(result.raw_image)
+                    result.defect_map = np.where(
+                        (hotcold_map > 0) & (result.defect_map == 0),
+                        hotcold_map, result.defect_map
+                    )
+                    result.additional_metrics['hotcold'] = hotcold_results
+                except Exception as e:
+                    print(f"Hot/Cold analysis error: {e}")
+
+            # Always calculate Homogenity
+            homogenity = HomogenityCalculator.calculate(result.raw_image)
+            result.additional_metrics['homogenity'] = homogenity
+
+            # Ring Contour Detection (NEW - Edge-based ring detection)
+            if enabled_modules.get('ring', False):
+                try:
+                    # Check if AUTO mode is enabled
+                    auto_mode = plm_ring_auto_var.get()
+                    ring_detector = RingContourDetector(
+                        blur_sigma=float(plm_ring_blur_var.get()),
+                        edge_threshold_low=float(plm_ring_edge_var.get()) / 100.0,
+                        edge_threshold_high=float(plm_ring_edge_var.get()) / 100.0 * 2.5,
+                        min_contour_length=30,
+                        auto_detect=auto_mode  # Use auto detection if checkbox is checked
+                    )
+                    contour_mask, contours, ring_metrics = ring_detector.analyze(result.raw_image)
+                    result.additional_metrics['ring_contours'] = {
+                        'contour_mask': contour_mask,
+                        'contours': contours,
+                        'metrics': ring_metrics
+                    }
+                    print(f"Ring Contour Detection: Found {ring_metrics.get('num_contours', 0)} contours")
+                except Exception as e:
+                    print(f"Ring Contour analysis error: {e}")
+
+        plm_analysis_results[(die_x, die_y)] = result
+
+        # Update display
+        plm_update_single_die_display(result)
+        plm_status_var.set(f"Analysis complete: {'PASS' if result.passed else 'FAIL'}")
+
+    else:
+        # Whole wafer analysis
+        if current_stdf_data is None or len(current_stdf_data) == 0:
+            messagebox.showwarning("Warning", "No wafer data loaded")
+            return
+
+        # Get all die coordinates
+        die_coords = list(zip(current_stdf_data['x'].values, current_stdf_data['y'].values))
+        die_coords = list(set(die_coords))  # Remove duplicates
+
+        plm_status_var.set(f"Analyzing {len(die_coords)} dies...")
+        tab_plm_analysis.update()
+
+        def progress_callback(current, total):
+            plm_status_var.set(f"Analyzing die {current}/{total}...")
+            plm_progress_var.set(int(100 * current / total) if total > 0 else 0)
+            tab_plm_analysis.update()
+
+        plm_analysis_results = plm_analyzer_instance.analyze_wafer(
+            plm_file_directory, die_coords, analysis_type, use_precalculated, progress_callback
+        )
+
+        # Update wafer display
+        plm_update_wafer_display()
+
+        # Count results
+        passed = sum(1 for r in plm_analysis_results.values() if r.passed)
+        failed = len(plm_analysis_results) - passed
+        plm_status_var.set(f"Analysis complete: {passed} PASS, {failed} FAIL")
+
+def plm_update_single_die_display(result):
+    """Update the single die view with analysis result - 3 equal zones with auto-scaling"""
+    global plm_selected_ax, plm_all_axes, plm_current_canvas, plm_current_fig
+
+    if result is None:
+        return
+
+    # Clear previous plots
+    for widget in plm_single_die_frame.winfo_children():
+        widget.destroy()
+
+    import matplotlib.patches as mpatches
+    from matplotlib.colors import ListedColormap, BoundaryNorm
+    from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
+
+    # Main container with 3 equal columns
+    zones_frame = tk.Frame(plm_single_die_frame)
+    zones_frame.pack(fill=tk.BOTH, expand=True)
+    zones_frame.columnconfigure(0, weight=1, uniform="plm_zone")
+    zones_frame.columnconfigure(1, weight=1, uniform="plm_zone")
+    zones_frame.columnconfigure(2, weight=1, uniform="plm_zone")
+    zones_frame.rowconfigure(0, weight=1)
+
+    # --- Helper: create a figure+canvas inside a parent frame ---
+    dpi = 100
+    all_canvases = []
+    all_figs = []
+
+    def _create_zone(parent):
+        fig = Figure(dpi=dpi, tight_layout=True)
+        ax = fig.add_subplot(111)
+        canvas = FigureCanvasTkAgg(fig, master=parent)
+        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        toolbar = NavigationToolbar2Tk(canvas, parent)
+        toolbar.update()
+        toolbar.pack(side=tk.BOTTOM, fill=tk.X)
+        all_canvases.append(canvas)
+        all_figs.append(fig)
+        return fig, ax, canvas
+
+    # ========== ZONE 1: Die Image (left) ==========
+    zone1 = tk.Frame(zones_frame, bd=1, relief=tk.GROOVE)
+    zone1.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
+    fig0, ax0, canvas0 = _create_zone(zone1)
+
+    die_image_loaded = False
+    if die_image_directory and os.path.exists(die_image_directory):
+        die_x, die_y = result.die_x, result.die_y
+        for img_file in os.listdir(die_image_directory):
+            if f"X{die_x}" in img_file and f"Y{die_y}" in img_file:
+                if img_file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif')):
+                    try:
+                        from PIL import Image
+                        img_path = os.path.join(die_image_directory, img_file)
+                        img = Image.open(img_path)
+                        img_array = np.array(img)
+                        # Crop: 30% links/rechts, 10% oben/unten
+                        h, w = img_array.shape[:2]
+                        y1, y2 = int(h * 0.10), int(h * 0.90)
+                        x1, x2 = int(w * 0.30), int(w * 0.70)
+                        img_array = img_array[y1:y2, x1:x2]
+                        ax0.imshow(img_array, aspect='auto')
+                        ax0.set_title(f"Die Image ({die_x}, {die_y})", fontsize=10, fontweight='bold')
+                        ax0.set_xlabel("Pixel X", fontsize=8)
+                        ax0.set_ylabel("Pixel Y", fontsize=8)
+                        die_image_loaded = True
+                        break
+                    except Exception as e:
+                        print(f"Error loading die image: {e}")
+
+    if not die_image_loaded:
+        ax0.text(0.5, 0.5, "No Die Image\nfound", ha='center', va='center',
+                 transform=ax0.transAxes, fontsize=12, color='gray')
+        ax0.set_title(f"Die Image ({result.die_x}, {result.die_y})", fontsize=10, fontweight='bold')
+        ax0.set_facecolor('#f0f0f0')
+        ax0.set_xticks([])
+        ax0.set_yticks([])
+
+    fig0.tight_layout(pad=0.5)
+    canvas0.draw()
+
+    # ========== ZONE 2: Original PLM (middle) ==========
+    zone2 = tk.Frame(zones_frame, bd=1, relief=tk.GROOVE)
+    zone2.grid(row=0, column=1, sticky="nsew", padx=2, pady=2)
+    fig1, ax1, canvas1 = _create_zone(zone2)
+
+    if result.raw_image is not None:
+        im1 = ax1.imshow(result.raw_image, cmap='gray', aspect='auto')
+        ax1.set_title(f"Original PLM ({result.die_x}, {result.die_y})", fontsize=10, fontweight='bold')
+        ax1.set_xlabel("Pixel X", fontsize=8)
+        ax1.set_ylabel("Pixel Y", fontsize=8)
+
+
+        # OVERLAY: Ring Contours if available
+        if hasattr(result, 'additional_metrics') and result.additional_metrics:
+            if 'ring_contours' in result.additional_metrics:
+                ring_data = result.additional_metrics['ring_contours']
+                contour_mask = ring_data.get('contour_mask', None)
+                contours = ring_data.get('contours', [])
+
+                if contour_mask is not None and len(contours) > 0:
+                    overlay_y, overlay_x = np.where(contour_mask > 0)
+                    if len(overlay_y) > 0:
+                        ax1.scatter(overlay_x, overlay_y, c='red', s=0.3, alpha=0.8, marker='.')
+                    num_contours = ring_data.get('metrics', {}).get('num_contours', 0)
+                    ax1.set_title(f"Original PLM ({result.die_x}, {result.die_y}) - {num_contours} Ring Contours", fontsize=10, fontweight='bold')
+    else:
+        ax1.text(0.5, 0.5, "No image data", ha='center', va='center', transform=ax1.transAxes)
+        ax1.set_title("Original PLM", fontsize=10, fontweight='bold')
+
+    fig1.tight_layout(pad=0.5)
+    canvas1.draw()
+
+    # ========== ZONE 3: Defect Map (right) ==========
+    zone3 = tk.Frame(zones_frame, bd=1, relief=tk.GROOVE)
+    zone3.grid(row=0, column=2, sticky="nsew", padx=2, pady=2)
+    fig2, ax2, canvas2 = _create_zone(zone3)
+
+    if result.defect_map is not None:
+        colors = ['#00C853',
+                  '#FF6B6B', '#FF6B6B',
+                  '#D32F2F', '#D32F2F',
+                  '#FFD54F', '#FF8F00',
+                  '#42A5F5', '#1565C0',
+                  '#424242',
+                  '#AB47BC',
+                  '#00BCD4',
+                  '#E91E63',
+                  '#795548', '#8D6E63',
+                  '#FF5722', '#3F51B5']
+        bounds = [0, 5, 10, 15, 20, 25, 30, 35, 40, 55, 65, 75, 80, 85, 90, 95, 100]
+        cmap = ListedColormap(colors[:len(bounds)-1])
+        norm = BoundaryNorm(bounds, cmap.N)
+
+        im2 = ax2.imshow(result.defect_map, cmap=cmap, norm=norm, aspect='auto')
+        ax2.set_title(f"Defect Map - {'PASS' if result.passed else 'FAIL'}", fontsize=10, fontweight='bold')
+        ax2.set_xlabel("Pixel X", fontsize=8)
+        ax2.set_ylabel("Pixel Y", fontsize=8)
+
+    else:
+        ax2.text(0.5, 0.5, "No defect data", ha='center', va='center', transform=ax2.transAxes)
+        ax2.set_title("Defect Map", fontsize=10, fontweight='bold')
+
+    fig2.tight_layout(pad=0.5)
+    canvas2.draw()
+
+    # Store references
+    plm_current_canvas = canvas0
+    plm_current_fig = fig0
+    plm_all_axes = [ax0, ax1, ax2]
+    axes_names = ["Die Image", "PLM", "Defect Map"]
+    axes_canvases = [canvas0, canvas1, canvas2]
+
+    # Click selection highlighting across all 3 zones
+    selected_ax_container = [None]
+
+    def _make_click_handler(canvas_ref, ax_ref, ax_name):
+        def on_axes_click(event):
+            if event.inaxes is None or event.inaxes != ax_ref:
+                return
+            # Remove previous selection highlight on all axes
+            for a, c in zip(plm_all_axes, axes_canvases):
+                for spine in a.spines.values():
+                    spine.set_edgecolor('black')
+                    spine.set_linewidth(0.5)
+                c.draw_idle()
+            # Highlight clicked axis
+            selected_ax_container[0] = ax_ref
+            for spine in ax_ref.spines.values():
+                spine.set_edgecolor('#2196F3')
+                spine.set_linewidth(3)
+            try:
+                plm_status_var.set(f"Selected: {ax_name} - Use toolbar to Zoom/Pan")
+            except:
+                pass
+            canvas_ref.draw_idle()
+        return on_axes_click
+
+    for c, a, name in zip(axes_canvases, plm_all_axes, axes_names):
+        c.mpl_connect('button_press_event', _make_click_handler(c, a, name))
+
+    # Update statistics
+    plm_update_statistics(result)
+
+def plm_update_wafer_display():
+    """Update the wafer-level view with analysis results"""
+    if not plm_analysis_results:
+        return
+
+    # Clear previous plots
+    for widget in plm_wafer_frame.winfo_children():
+        widget.destroy()
+
+    # Create figure
+    fig = Figure(figsize=(10, 8), dpi=100)
+    ax = fig.add_subplot(111)
+
+    # Get wafer data
+    if current_stdf_data is None:
+        return
+
+    x_coords = current_stdf_data['x'].values
+    y_coords = current_stdf_data['y'].values
+
+    # Create defect count map
+    defect_counts = []
+    colors = []
+
+    for i in range(len(x_coords)):
+        die_x, die_y = int(x_coords[i]), int(y_coords[i])
+        if (die_x, die_y) in plm_analysis_results:
+            result = plm_analysis_results[(die_x, die_y)]
+            total_defects = result.bridged_count + result.uniformity_count + result.stuck_count
+            defect_counts.append(total_defects)
+            if result.passed:
+                colors.append('#00C853')  # Green
+            else:
+                colors.append('#D32F2F')  # Red
+        else:
+            defect_counts.append(0)
+            colors.append('#BDBDBD')  # Gray - not analyzed
+
+    # Create scatter plot
+    scatter = ax.scatter(x_coords, y_coords, c=defect_counts, cmap='RdYlGn_r',
+                         s=50, edgecolors='black', linewidths=0.5)
+
+    ax.set_xlabel("Die X")
+    ax.set_ylabel("Die Y")
+    ax.set_title("PLM Analysis - Wafer Defect Map")
+    ax.set_aspect('equal')
+    ax.invert_yaxis()
+
+    cbar = fig.colorbar(scatter, ax=ax)
+    cbar.set_label("Defect Count")
+
+    fig.tight_layout()
+
+    # Embed in tkinter
+    canvas = FigureCanvasTkAgg(fig, master=plm_wafer_frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Update summary statistics
+    plm_update_wafer_statistics()
+
+def plm_update_statistics(result):
+    """Update statistics display for single die with colored defect summary"""
+    plm_stats_text.delete('1.0', tk.END)
+
+    # Configure color tags
+    plm_stats_text.tag_configure('header', font=('Consolas', 10, 'bold'))
+    plm_stats_text.tag_configure('pass', foreground='#00C853', font=('Consolas', 10, 'bold'))
+    plm_stats_text.tag_configure('fail', foreground='#D32F2F', font=('Consolas', 10, 'bold'))
+    plm_stats_text.tag_configure('bridged', foreground='#D32F2F', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('uniformity', foreground='#FF8F00', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('stuck', foreground='#42A5F5', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('cluster', foreground='#AB47BC', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('gradient', foreground='#00BCD4', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('mura', foreground='#E91E63', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('linecol', foreground='#795548', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('hotcold', foreground='#FF5722', font=('Consolas', 9, 'bold'))
+    plm_stats_text.tag_configure('normal', font=('Consolas', 9))
+
+    if result is None:
+        plm_stats_text.insert(tk.END, "No analysis results")
+        return
+
+    # Header
+    plm_stats_text.insert(tk.END, "+==============================================================+\n", 'header')
+    plm_stats_text.insert(tk.END, f"|  PLM ANALYSIS RESULT - Die ({result.die_x}, {result.die_y})\n", 'header')
+    plm_stats_text.insert(tk.END, "+==============================================================+\n", 'header')
+
+    # Status
+    plm_stats_text.insert(tk.END, "|  Status: ", 'normal')
+    if result.passed:
+        plm_stats_text.insert(tk.END, "[PASS]", 'pass')
+    else:
+        plm_stats_text.insert(tk.END, "[FAIL]", 'fail')
+    plm_stats_text.insert(tk.END, "\n", 'normal')
+
+    if not result.passed:
+        plm_stats_text.insert(tk.END, f"|  Reason: {result.fail_reason}\n", 'fail')
+
+    # Homogenity Score (if available)
+    if hasattr(result, 'additional_metrics') and result.additional_metrics:
+        if 'homogenity' in result.additional_metrics:
+            h = result.additional_metrics['homogenity']
+            plm_stats_text.insert(tk.END, f"|  Homogenity: {h.get('homogenity_percent', 0):.1f}%  (CV: {h.get('cv_percent', 0):.2f}%)\n", 'header')
+
+    # Image Statistics
+    plm_stats_text.insert(tk.END, "+--------------------------------------------------------------+\n", 'normal')
+    plm_stats_text.insert(tk.END, "|  IMAGE STATISTICS:\n", 'header')
+    plm_stats_text.insert(tk.END, f"|  +- Total Pixels:    {result.total_pixels:,}\n", 'normal')
+    plm_stats_text.insert(tk.END, f"|  +- Mean Brightness: {result.mean_brightness:.2f} nits\n", 'normal')
+    plm_stats_text.insert(tk.END, f"|  +- Std Deviation:   {result.std_brightness:.2f}\n", 'normal')
+
+    # Defect Summary with colors
+    plm_stats_text.insert(tk.END, "+--------------------------------------------------------------+\n", 'normal')
+    plm_stats_text.insert(tk.END, "|  DEFECT SUMMARY:\n", 'header')
+
+    # Bridged (red)
+    plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+    plm_stats_text.insert(tk.END, "[RED] Bridged:", 'bridged')
+    plm_stats_text.insert(tk.END, f"      {result.bridged_count:,} pixels\n", 'normal')
+
+    # Uniformity (orange)
+    plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+    plm_stats_text.insert(tk.END, "[YEL] Uniformity:", 'uniformity')
+    plm_stats_text.insert(tk.END, f"   {result.uniformity_count:,} pixels\n", 'normal')
+
+    # Stuck (blue)
+    plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+    plm_stats_text.insert(tk.END, "[BLU] Stuck:", 'stuck')
+    plm_stats_text.insert(tk.END, f"        {result.stuck_count:,} pixels\n", 'normal')
+
+    # Cluster (purple)
+    plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+    plm_stats_text.insert(tk.END, "[PUR] Clusters:", 'cluster')
+    plm_stats_text.insert(tk.END, f"     {result.cluster_count}\n", 'normal')
+
+    # NEW: Additional analysis results
+    if hasattr(result, 'additional_metrics') and result.additional_metrics:
+        plm_stats_text.insert(tk.END, "+--------------------------------------------------------------+\n", 'normal')
+        plm_stats_text.insert(tk.END, "|  ADDITIONAL ANALYSIS:\n", 'header')
+
+        # Gradient
+        if 'gradient' in result.additional_metrics:
+            g = result.additional_metrics['gradient']
+            plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+            plm_stats_text.insert(tk.END, "[CYN] Gradient:", 'gradient')
+            has_grad = g.get('has_gradient', False)
+            if has_grad:
+                plm_stats_text.insert(tk.END, f"     DETECTED ({g.get('max_deviation_percent', 0):.1f}%)\n", 'fail')
+            else:
+                plm_stats_text.insert(tk.END, f"     OK ({g.get('max_deviation_percent', 0):.1f}%)\n", 'normal')
+
+        # Mura
+        if 'mura' in result.additional_metrics:
+            m = result.additional_metrics['mura']
+            plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+            plm_stats_text.insert(tk.END, "[PNK] Mura:", 'mura')
+            mura_count = m.get('count', 0)
+            plm_stats_text.insert(tk.END, f"          {mura_count} spots\n", 'normal')
+
+        # Line/Column
+        if 'linecol' in result.additional_metrics:
+            lc = result.additional_metrics['linecol']
+            plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+            plm_stats_text.insert(tk.END, "[BRN] Line/Col:", 'linecol')
+            row_count = lc.get('row_count', 0)
+            col_count = lc.get('col_count', 0)
+            plm_stats_text.insert(tk.END, f"     {row_count} rows, {col_count} cols\n", 'normal')
+
+        # Hot/Cold Spots
+        if 'hotcold' in result.additional_metrics:
+            hc = result.additional_metrics['hotcold']
+            hot_count = len(hc.get('hot_spots', []))
+            cold_count = len(hc.get('cold_spots', []))
+            plm_stats_text.insert(tk.END, "|  +- ", 'normal')
+            plm_stats_text.insert(tk.END, "[ORG] Hot/Cold:", 'hotcold')
+            plm_stats_text.insert(tk.END, f"     {hot_count} hot, {cold_count} cold\n", 'normal')
+
+    # Total
+    total_defects = result.bridged_count + result.uniformity_count + result.stuck_count
+    plm_stats_text.insert(tk.END, "+--------------------------------------------------------------+\n", 'normal')
+    plm_stats_text.insert(tk.END, f"|  Total Defects:      {total_defects:,} ({result.get_defect_percentage():.4f}%)\n", 'normal')
+    plm_stats_text.insert(tk.END, "+==============================================================+\n", 'header')
+
+def plm_update_wafer_statistics():
+    """Update statistics for wafer-level analysis"""
+    plm_stats_text.delete('1.0', tk.END)
+
+    if not plm_analysis_results:
+        plm_stats_text.insert(tk.END, "No wafer analysis results")
+        return
+
+    total_dies = len(plm_analysis_results)
+    passed = sum(1 for r in plm_analysis_results.values() if r.passed)
+    failed = total_dies - passed
+
+    total_bridged = sum(r.bridged_count for r in plm_analysis_results.values())
+    total_uniformity = sum(r.uniformity_count for r in plm_analysis_results.values())
+    total_stuck = sum(r.stuck_count for r in plm_analysis_results.values())
+
+    stats = f"""
++==============================================================+
+|  PLM WAFER ANALYSIS SUMMARY
++==============================================================+
+|  Dies Analyzed:   {total_dies}
+|  +- [PASS]:       {passed} ({100*passed/total_dies:.1f}%)
+|  +- [FAIL]:       {failed} ({100*failed/total_dies:.1f}%)
++--------------------------------------------------------------+
+|  TOTAL DEFECTS ACROSS WAFER:
+|  +- [RED] Bridged:      {total_bridged:,} pixels
+|  +- [YEL] Uniformity:   {total_uniformity:,} pixels
+|  +- [BLU] Stuck:        {total_stuck:,} pixels
++--------------------------------------------------------------+
+|  YIELD IMPACT:
+|  +- PLM Yield:    {100*passed/total_dies:.2f}%
++==============================================================+
+"""
+    plm_stats_text.insert(tk.END, stats)
+
+def plm_apply_to_wafer():
+    """Apply PLM analysis results to wafer binning"""
+    global current_stdf_data
+
+    if not plm_analysis_results:
+        messagebox.showwarning("Warning", "No analysis results to apply")
+        return
+
+    if current_stdf_data is None:
+        messagebox.showwarning("Warning", "No wafer data loaded")
+        return
+
+    # Generate binning from results
+    binning = plm_analyzer_instance.generate_wafer_binning(plm_analysis_results)
+
+    # Add PLM_Bin column to dataframe
+    plm_bins = []
+    for i in range(len(current_stdf_data)):
+        die_x = int(current_stdf_data.iloc[i]['x'])
+        die_y = int(current_stdf_data.iloc[i]['y'])
+        plm_bins.append(binning.get((die_x, die_y), 0))
+
+    current_stdf_data['PLM_Bin'] = plm_bins
+
+    # Update group combobox
+    update_group_combobox()
+
+    messagebox.showinfo("Success", f"PLM binning applied to {len(binning)} dies.\nNew column 'PLM_Bin' added.")
+    plm_status_var.set("PLM binning applied to wafer data")
+
+def plm_export_csv():
+    """Export PLM analysis results to CSV"""
+    if not plm_analysis_results:
+        messagebox.showwarning("Warning", "No analysis results to export")
+        return
+
+    file_path = filedialog.asksaveasfilename(
+        title="Export PLM Analysis Results",
+        defaultextension=".csv",
+        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+    )
+
+    if not file_path:
+        return
+
+    # Create dataframe
+    data = []
+    for (die_x, die_y), result in plm_analysis_results.items():
+        data.append({
+            'Die_X': die_x,
+            'Die_Y': die_y,
+            'Passed': result.passed,
+            'Bridged_Count': result.bridged_count,
+            'Uniformity_Count': result.uniformity_count,
+            'Stuck_Count': result.stuck_count,
+            'Cluster_Count': result.cluster_count,
+            'Mean_Brightness': result.mean_brightness,
+            'Std_Brightness': result.std_brightness,
+            'Defect_Percentage': result.get_defect_percentage(),
+            'Fail_Reason': result.fail_reason
+        })
+
+    df = pd.DataFrame(data)
+    df.to_csv(file_path, index=False)
+
+    messagebox.showinfo("Success", f"Exported {len(data)} results to:\n{file_path}")
+
+# Run Analysis button
+plm_run_btn = tk.Button(plm_btn_frame, text="🔍 Run Analysis", font=("Segoe UI", 9, "bold"),
+                         bg="#2E7D32", fg="white", command=plm_run_analysis)
+plm_run_btn.pack(side=tk.LEFT, padx=2)
+
+# Apply to Wafer button
+plm_apply_btn = tk.Button(plm_btn_frame, text="📊 Apply to Wafer", font=("Segoe UI", 9),
+                           bg="#1565C0", fg="white", command=plm_apply_to_wafer)
+plm_apply_btn.pack(side=tk.LEFT, padx=2)
+
+# Export CSV button
+plm_export_btn = tk.Button(plm_btn_frame, text="📄 Export CSV", font=("Segoe UI", 9),
+                            command=plm_export_csv)
+plm_export_btn.pack(side=tk.LEFT, padx=2)
+
+# === MAIN CONTENT AREA ===
+plm_content_frame = tk.Frame(plm_main_frame)
+plm_content_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+# RIGHT PANEL FIRST (must be packed before viz frame so it claims space)
+plm_right_panel = tk.Frame(plm_content_frame, width=340)
+plm_right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(5, 0))
+plm_right_panel.pack_propagate(False)
+
+# Sub-Tab Buttons
+plm_right_tab_btn_frame = tk.Frame(plm_right_panel)
+plm_right_tab_btn_frame.pack(fill=tk.X)
+
+plm_right_stats_frame = tk.Frame(plm_right_panel)
+plm_right_modules_frame = tk.Frame(plm_right_panel)
+
+def plm_switch_right_tab(tab_name):
+    plm_right_stats_frame.pack_forget()
+    plm_right_modules_frame.pack_forget()
+    if tab_name == "statistics":
+        plm_right_stats_frame.pack(fill=tk.BOTH, expand=True)
+        plm_right_stats_btn.config(bg="#1565C0", fg="white", relief=tk.SUNKEN)
+        plm_right_modules_btn.config(bg="#E0E0E0", fg="black", relief=tk.RAISED)
+    else:
+        plm_right_modules_frame.pack(fill=tk.BOTH, expand=True)
+        plm_right_modules_btn.config(bg="#1565C0", fg="white", relief=tk.SUNKEN)
+        plm_right_stats_btn.config(bg="#E0E0E0", fg="black", relief=tk.RAISED)
+
+plm_right_stats_btn = tk.Button(plm_right_tab_btn_frame, text="📊 Statistics",
+    font=("Segoe UI", 9, "bold"), bg="#1565C0", fg="white", relief=tk.SUNKEN,
+    command=lambda: plm_switch_right_tab("statistics"))
+plm_right_stats_btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+plm_right_modules_btn = tk.Button(plm_right_tab_btn_frame, text="⚙ Modules",
+    font=("Segoe UI", 9, "bold"), bg="#E0E0E0", fg="black", relief=tk.RAISED,
+    command=lambda: plm_switch_right_tab("modules"))
+plm_right_modules_btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+# --- Tab 1: Analysis Statistics ---
+plm_stats_text = tk.Text(plm_right_stats_frame, width=45, height=25, font=("Consolas", 9))
+plm_stats_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+# --- Tab 2: Analysis Modules (vertical layout with scroll) ---
+plm_mod_canvas = tk.Canvas(plm_right_modules_frame, highlightthickness=0)
+plm_mod_scrollbar = ttk.Scrollbar(plm_right_modules_frame, orient="vertical", command=plm_mod_canvas.yview)
+plm_mod_inner = tk.Frame(plm_mod_canvas)
+
+plm_mod_inner.bind("<Configure>", lambda e: plm_mod_canvas.configure(scrollregion=plm_mod_canvas.bbox("all")))
+plm_mod_canvas.create_window((0, 0), window=plm_mod_inner, anchor="nw")
+plm_mod_canvas.configure(yscrollcommand=plm_mod_scrollbar.set)
+plm_mod_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+plm_mod_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+def _on_plm_mod_mousewheel(event):
+    plm_mod_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+plm_mod_canvas.bind("<MouseWheel>", _on_plm_mod_mousewheel)
+plm_mod_inner.bind("<MouseWheel>", _on_plm_mod_mousewheel)
+
+# Module 1: Uniformity
+m1 = tk.LabelFrame(plm_mod_inner, text="Uniformity", font=("Segoe UI", 9, "bold"), fg="#FF8F00")
+m1.pack(fill=tk.X, padx=5, pady=3)
+tk.Checkbutton(m1, text="Enable", variable=plm_mod_uniformity_var, font=("Segoe UI", 9)).pack(anchor=tk.W, padx=5)
+f1 = tk.Frame(m1)
+f1.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f1, text="σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f1, textvariable=plm_uniformity_sigma_var, width=6, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=5)
+
+# Module 2: Bridged
+m2 = tk.LabelFrame(plm_mod_inner, text="Bridged", font=("Segoe UI", 9, "bold"), fg="#D32F2F")
+m2.pack(fill=tk.X, padx=5, pady=3)
+tk.Checkbutton(m2, text="Enable", variable=plm_mod_bridged_var, font=("Segoe UI", 9)).pack(anchor=tk.W, padx=5)
+f2 = tk.Frame(m2)
+f2.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f2, text="min:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f2, textvariable=plm_bridged_min_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+tk.Label(f2, text="bright%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f2, textvariable=plm_bridged_bright_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+
+# Module 3: Stuck
+m3 = tk.LabelFrame(plm_mod_inner, text="Stuck", font=("Segoe UI", 9, "bold"), fg="#42A5F5")
+m3.pack(fill=tk.X, padx=5, pady=3)
+tk.Checkbutton(m3, text="Enable", variable=plm_mod_stuck_var, font=("Segoe UI", 9)).pack(anchor=tk.W, padx=5)
+f3 = tk.Frame(m3)
+f3.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f3, text="ON%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f3, textvariable=plm_stuck_on_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+tk.Label(f3, text="OFF%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f3, textvariable=plm_stuck_off_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+
+# Module 4: Ring/Contour
+m4 = tk.LabelFrame(plm_mod_inner, text="Ring/Contour", font=("Segoe UI", 9, "bold"), fg="#FF5722")
+m4.pack(fill=tk.X, padx=5, pady=3)
+f4a = tk.Frame(m4)
+f4a.pack(fill=tk.X, padx=5, pady=1)
+tk.Checkbutton(f4a, text="Enable", variable=plm_mod_ring_var, font=("Segoe UI", 9)).pack(side=tk.LEFT)
+tk.Checkbutton(f4a, text="[AUTO]", variable=plm_ring_auto_var,
+               font=("Segoe UI", 8, "bold"), fg="#FFFFFF", bg="#FF5722",
+               selectcolor="#E64A19").pack(side=tk.LEFT, padx=5)
+f4b = tk.Frame(m4)
+f4b.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f4b, text="blur:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f4b, textvariable=plm_ring_blur_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+tk.Label(f4b, text="edge%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f4b, textvariable=plm_ring_edge_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+
+# Module 5: Gradient
+m5 = tk.LabelFrame(plm_mod_inner, text="Gradient", font=("Segoe UI", 9, "bold"), fg="#00BCD4")
+m5.pack(fill=tk.X, padx=5, pady=3)
+tk.Checkbutton(m5, text="Enable", variable=plm_mod_gradient_var, font=("Segoe UI", 9)).pack(anchor=tk.W, padx=5)
+f5 = tk.Frame(m5)
+f5.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f5, text="zone:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+ttk.Combobox(f5, textvariable=plm_gradient_zone_var,
+             values=["quadrants", "rings"], state="readonly", width=9, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+tk.Label(f5, text="thresh%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f5, textvariable=plm_gradient_thresh_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+
+# Module 6: Mura
+m6 = tk.LabelFrame(plm_mod_inner, text="Mura", font=("Segoe UI", 9, "bold"), fg="#E91E63")
+m6.pack(fill=tk.X, padx=5, pady=3)
+f6a = tk.Frame(m6)
+f6a.pack(fill=tk.X, padx=5, pady=1)
+tk.Checkbutton(f6a, text="Enable", variable=plm_mod_mura_var, font=("Segoe UI", 9)).pack(side=tk.LEFT)
+tk.Checkbutton(f6a, text="[AUTO]", variable=plm_mura_auto_var,
+               font=("Segoe UI", 8, "bold"), fg="#FFFFFF", bg="#2196F3",
+               selectcolor="#1565C0").pack(side=tk.LEFT, padx=5)
+f6b = tk.Frame(m6)
+f6b.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f6b, text="blur:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f6b, textvariable=plm_mura_blur_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+tk.Label(f6b, text="th%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f6b, textvariable=plm_mura_thresh_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+
+# Module 7: Line/Column
+m7 = tk.LabelFrame(plm_mod_inner, text="Line/Column", font=("Segoe UI", 9, "bold"), fg="#795548")
+m7.pack(fill=tk.X, padx=5, pady=3)
+tk.Checkbutton(m7, text="Enable", variable=plm_mod_linecol_var, font=("Segoe UI", 9)).pack(anchor=tk.W, padx=5)
+f7 = tk.Frame(m7)
+f7.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f7, text="σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f7, textvariable=plm_linecol_sigma_var, width=6, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=5)
+
+# Module 8: Hot/Cold Spots
+m8 = tk.LabelFrame(plm_mod_inner, text="Hot/Cold Spots", font=("Segoe UI", 9, "bold"), fg="#FF5722")
+m8.pack(fill=tk.X, padx=5, pady=3)
+tk.Checkbutton(m8, text="Enable", variable=plm_mod_hotcold_var, font=("Segoe UI", 9)).pack(anchor=tk.W, padx=5)
+f8 = tk.Frame(m8)
+f8.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f8, text="min size:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f8, textvariable=plm_hotcold_size_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+tk.Label(f8, text="σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f8, textvariable=plm_hotcold_sigma_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+
+# Show Statistics tab by default
+plm_switch_right_tab("statistics")
+
+# LEFT: Visualizations (packed AFTER right panel so it fills remaining space)
+plm_viz_frame = tk.LabelFrame(plm_content_frame, text="Visualization", font=("Segoe UI", 10, "bold"))
+plm_viz_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+
+# Single die view frame
+plm_single_die_frame = tk.Frame(plm_viz_frame)
+plm_single_die_frame.pack(fill=tk.BOTH, expand=True)
+
+# Wafer view frame (hidden by default)
+plm_wafer_frame = tk.Frame(plm_viz_frame)
+
+# Placeholder text
+plm_placeholder = tk.Label(plm_single_die_frame,
+                            text="Select a die and click 'Run Analysis' to start\n\n"
+                                 "1. Load a wafer with PLM files\n"
+                                 "2. Click on a die in the Wafer tab\n"
+                                 "3. Return here and click 'Run Analysis'",
+                            font=("Segoe UI", 12), fg="gray")
+plm_placeholder.pack(expand=True)
+
+# === STATUS BAR ===
+plm_status_frame = tk.Frame(plm_main_frame, bg='#E3F2FD', relief='ridge', bd=1)
+plm_status_frame.pack(fill=tk.X, pady=(5, 0))
+
+plm_status_var = tk.StringVar(value="Ready - Load wafer and select die to analyze")
+plm_status_label = tk.Label(plm_status_frame, textvariable=plm_status_var,
+                             font=("Segoe UI", 9), bg='#E3F2FD', fg='#1565C0')
+plm_status_label.pack(side=tk.LEFT, padx=10, pady=5)
+
+plm_progress_var = tk.IntVar(value=0)
+plm_progress_bar = ttk.Progressbar(plm_status_frame, variable=plm_progress_var,
+                                    length=200, mode='determinate')
+plm_progress_bar.pack(side=tk.RIGHT, padx=10, pady=5)
+
+print("PLM Image Analysis Tab initialized (v6.0.0)")
+
+# ================================================================================
+# END PLM IMAGE ANALYSIS TAB
+# ================================================================================
 
 main_win.mainloop()
