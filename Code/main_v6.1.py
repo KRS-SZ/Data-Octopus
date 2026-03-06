@@ -828,7 +828,7 @@ main_win.geometry("1200x800")
 print("Main window created successfully")
 
 style = ttk.Style(main_win)
-style.configure("TNotebook.Tab", font=("Helvetica", 20, "bold"))
+style.configure("TNotebook.Tab", font=("Helvetica", 18, "bold"))
 
 # Top bar for language selection
 top_bar = tk.Frame(main_win)
@@ -35690,6 +35690,11 @@ def plm_update_single_die_display(result):
                         img_path = os.path.join(die_image_directory, img_file)
                         img = Image.open(img_path)
                         img_array = np.array(img)
+                        # Crop: 30% links/rechts, 10% oben/unten
+                        h, w = img_array.shape[:2]
+                        y1, y2 = int(h * 0.10), int(h * 0.90)
+                        x1, x2 = int(w * 0.30), int(w * 0.70)
+                        img_array = img_array[y1:y2, x1:x2]
                         ax0.imshow(img_array, aspect='auto')
                         ax0.set_title(f"Die Image ({die_x}, {die_y})", fontsize=10, fontweight='bold')
                         ax0.set_xlabel("Pixel X", fontsize=8)
