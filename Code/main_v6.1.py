@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "6.1.6"  # Zoom/Pan Toolbar + Klick-Auswahl mit blauer Umrandung
+APP_VERSION = "6.1.7"  # FINAL: 3-Spalten Layout, Zoom/Pan Toolbar, blaue Klick-Auswahl
 
 import sys
 
@@ -4427,6 +4427,41 @@ wafer_select_all_btn = tk.Button(
 )
 wafer_select_all_btn.pack(side=tk.LEFT, padx=2)
 
+def unload_single_wafer():
+    """Unload the currently selected wafer"""
+    global multiple_stdf_data, multiple_wafer_ids, current_stdf_data, current_wafer_id
+    global test_parameters, grouped_parameters, test_limits
+
+    if not multiple_wafer_ids:
+        print("No wafers loaded")
+        return
+
+    idx = wafer_tab_selected_var.get()
+    if idx < 0 or idx >= len(multiple_wafer_ids):
+        print("No wafer selected")
+        return
+
+    removed_id = multiple_wafer_ids[idx]
+    del multiple_stdf_data[idx]
+    del multiple_wafer_ids[idx]
+
+    if not multiple_wafer_ids:
+        current_stdf_data = None
+        current_wafer_id = None
+        test_parameters.clear()
+        grouped_parameters.clear()
+        test_limits.clear()
+    else:
+        new_idx = min(idx, len(multiple_wafer_ids) - 1)
+        wafer_tab_selected_var.set(new_idx)
+        current_stdf_data = multiple_stdf_data[new_idx]
+        current_wafer_id = multiple_wafer_ids[new_idx]
+
+    update_wafer_tab_selection_list()
+    update_group_combobox()
+    refresh_heatmap_display()
+    print(f"Wafer unloaded: {removed_id}")
+
 def unload_all_wafers():
     """Unload all wafers and reset everything"""
     global multiple_stdf_data, multiple_wafer_ids, current_stdf_data, current_wafer_id
@@ -4444,6 +4479,12 @@ def unload_all_wafers():
     update_group_combobox()
     refresh_heatmap_display()
     print("All wafers unloaded")
+
+wafer_unload_single_btn = tk.Button(
+    wafer_select_btn_frame, text="Unload", command=unload_single_wafer,
+    font=("Helvetica", 7), bg="#FF9800", fg="white"
+)
+wafer_unload_single_btn.pack(side=tk.LEFT, padx=2)
 
 wafer_unload_all_btn = tk.Button(
     wafer_select_btn_frame, text="Unload All", command=unload_all_wafers,
@@ -35244,16 +35285,8 @@ plm_source_combo.current(0)
 # Separator
 ttk.Separator(plm_control_row1, orient='vertical').pack(side=tk.LEFT, fill='y', padx=10)
 
-# Checkbox: Show Die Image
-plm_show_die_image_var = tk.BooleanVar(value=False)
-plm_show_die_image_cb = tk.Checkbutton(plm_control_row1, text="Show Die Image",
-                                        variable=plm_show_die_image_var,
-                                        font=("Segoe UI", 9))
-plm_show_die_image_cb.pack(side=tk.LEFT, padx=5)
-
-# === ANALYSIS MODULES PANEL (replaces old "Analysis type" dropdown) ===
-plm_modules_frame = tk.LabelFrame(plm_main_frame, text="📊 Analysis Modules", font=("Segoe UI", 10, "bold"))
-plm_modules_frame.pack(fill=tk.X, padx=5, pady=5)
+# === ANALYSIS MODULES - variables defined here, UI shown in right panel sub-tab ===
+plm_modules_frame = tk.Frame(plm_main_frame)  # NOT packed - modules shown in right panel
 
 # Create 2 rows for modules
 plm_modules_row1 = tk.Frame(plm_modules_frame)
@@ -35602,7 +35635,7 @@ def plm_run_analysis():
         plm_status_var.set(f"Analysis complete: {passed} PASS, {failed} FAIL")
 
 def plm_update_single_die_display(result):
-    """Update the single die view with analysis result - Auto-scaling layout with ZOOM support"""
+    """Update the single die view with analysis result - 3 equal zones with auto-scaling"""
     global plm_selected_ax, plm_all_axes, plm_current_canvas, plm_current_fig
 
     if result is None:
@@ -35612,88 +35645,84 @@ def plm_update_single_die_display(result):
     for widget in plm_single_die_frame.winfo_children():
         widget.destroy()
 
-    # Check if Die Image should be shown
-    show_die_image = plm_show_die_image_var.get()
-
-    # Get frame size for auto-scaling
-    plm_single_die_frame.update_idletasks()
-    frame_width = plm_single_die_frame.winfo_width()
-    frame_height = plm_single_die_frame.winfo_height()
-
-    # Calculate figure size based on available space
-    dpi = 100
-    fig_width = max(12, frame_width / dpi - 1)
-    fig_height = max(6, frame_height / dpi - 1)
-
-    from matplotlib.gridspec import GridSpec
     import matplotlib.patches as mpatches
     from matplotlib.colors import ListedColormap, BoundaryNorm
+    from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 
-    if show_die_image:
-        # 3 EQUAL images: Die Image | PLM | Defect Map - alle GLEICH GROSS
-        # Platz durch 3 teilen! Jedes Bild = 1 Einheit
-        fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
-        # 3 gleiche Bildfelder (je 1.0) + winzige Colorbar (0.02) + winzige Legend (0.08)
-        gs = GridSpec(1, 5, figure=fig, width_ratios=[1.0, 1.0, 0.02, 1.0, 0.08], wspace=0.03)
+    # Main container with 3 equal columns
+    zones_frame = tk.Frame(plm_single_die_frame)
+    zones_frame.pack(fill=tk.BOTH, expand=True)
+    zones_frame.columnconfigure(0, weight=1, uniform="plm_zone")
+    zones_frame.columnconfigure(1, weight=1, uniform="plm_zone")
+    zones_frame.columnconfigure(2, weight=1, uniform="plm_zone")
+    zones_frame.rowconfigure(0, weight=1)
 
-        # Column 0: Die Image - EXAKT GLEICHE GRÖSSE wie PLM und Defect Map
-        ax0 = fig.add_subplot(gs[0, 0])
-        die_image_loaded = False
-        if die_image_directory and os.path.exists(die_image_directory):
-            die_x, die_y = result.die_x, result.die_y
-            for img_file in os.listdir(die_image_directory):
-                if f"X{die_x}" in img_file and f"Y{die_y}" in img_file:
-                    if img_file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif')):
-                        try:
-                            from PIL import Image
-                            img_path = os.path.join(die_image_directory, img_file)
-                            img = Image.open(img_path)
-                            img_array = np.array(img)
-                            # Use aspect='auto' to fill the subplot and match PLM size
-                            ax0.imshow(img_array, aspect='auto')
-                            ax0.set_title(f"Die Image ({die_x}, {die_y})", fontsize=9)
-                            ax0.set_xlabel("Pixel X", fontsize=8)
-                            ax0.set_ylabel("Pixel Y", fontsize=8)
-                            die_image_loaded = True
-                            break
-                        except Exception as e:
-                            print(f"Error loading die image: {e}")
+    # --- Helper: create a figure+canvas inside a parent frame ---
+    dpi = 100
+    all_canvases = []
+    all_figs = []
 
-        if not die_image_loaded:
-            ax0.text(0.5, 0.5, "No Die Image\nfound", ha='center', va='center',
-                     transform=ax0.transAxes, fontsize=11, color='gray')
-            ax0.set_title(f"Die Image ({result.die_x}, {result.die_y})", fontsize=9)
-            ax0.set_facecolor('#f0f0f0')
-            ax0.set_xticks([])
-            ax0.set_yticks([])
+    def _create_zone(parent):
+        fig = Figure(dpi=dpi, tight_layout=True)
+        ax = fig.add_subplot(111)
+        canvas = FigureCanvasTkAgg(fig, master=parent)
+        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        toolbar = NavigationToolbar2Tk(canvas, parent)
+        toolbar.update()
+        toolbar.pack(side=tk.BOTTOM, fill=tk.X)
+        all_canvases.append(canvas)
+        all_figs.append(fig)
+        return fig, ax, canvas
 
-        # Column 1: PLM, Column 2: Colorbar (klein!), Column 3: Defect Map, Column 4: Legend
-        ax1 = fig.add_subplot(gs[0, 1])
-        ax1_cbar = fig.add_subplot(gs[0, 2])
-        ax2 = fig.add_subplot(gs[0, 3])
-        ax_legend = fig.add_subplot(gs[0, 4])
-    else:
-        # 2 EQUAL images: PLM + cbar | Defect Map + Legend
-        fig = Figure(figsize=(fig_width, fig_height), dpi=dpi)
-        gs = GridSpec(1, 4, figure=fig, width_ratios=[1, 0.05, 1, 0.15], wspace=0.08)
+    # ========== ZONE 1: Die Image (left) ==========
+    zone1 = tk.Frame(zones_frame, bd=1, relief=tk.GROOVE)
+    zone1.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
+    fig0, ax0, canvas0 = _create_zone(zone1)
 
-        ax1 = fig.add_subplot(gs[0, 0])
-        ax1_cbar = fig.add_subplot(gs[0, 1])
-        ax2 = fig.add_subplot(gs[0, 2])
-        ax_legend = fig.add_subplot(gs[0, 3])
+    die_image_loaded = False
+    if die_image_directory and os.path.exists(die_image_directory):
+        die_x, die_y = result.die_x, result.die_y
+        for img_file in os.listdir(die_image_directory):
+            if f"X{die_x}" in img_file and f"Y{die_y}" in img_file:
+                if img_file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif')):
+                    try:
+                        from PIL import Image
+                        img_path = os.path.join(die_image_directory, img_file)
+                        img = Image.open(img_path)
+                        img_array = np.array(img)
+                        ax0.imshow(img_array, aspect='auto')
+                        ax0.set_title(f"Die Image ({die_x}, {die_y})", fontsize=10, fontweight='bold')
+                        ax0.set_xlabel("Pixel X", fontsize=8)
+                        ax0.set_ylabel("Pixel Y", fontsize=8)
+                        die_image_loaded = True
+                        break
+                    except Exception as e:
+                        print(f"Error loading die image: {e}")
 
-    # PLM Image with SEPARATE colorbar axis (same size as defect map!)
+    if not die_image_loaded:
+        ax0.text(0.5, 0.5, "No Die Image\nfound", ha='center', va='center',
+                 transform=ax0.transAxes, fontsize=12, color='gray')
+        ax0.set_title(f"Die Image ({result.die_x}, {result.die_y})", fontsize=10, fontweight='bold')
+        ax0.set_facecolor('#f0f0f0')
+        ax0.set_xticks([])
+        ax0.set_yticks([])
+
+    fig0.tight_layout(pad=0.5)
+    canvas0.draw()
+
+    # ========== ZONE 2: Original PLM (middle) ==========
+    zone2 = tk.Frame(zones_frame, bd=1, relief=tk.GROOVE)
+    zone2.grid(row=0, column=1, sticky="nsew", padx=2, pady=2)
+    fig1, ax1, canvas1 = _create_zone(zone2)
+
     if result.raw_image is not None:
-        im1 = ax1.imshow(result.raw_image, cmap='gray', aspect='equal')
-        ax1.set_title(f"Original PLM ({result.die_x}, {result.die_y})", fontsize=9)
+        im1 = ax1.imshow(result.raw_image, cmap='gray', aspect='auto')
+        ax1.set_title(f"Original PLM ({result.die_x}, {result.die_y})", fontsize=10, fontweight='bold')
         ax1.set_xlabel("Pixel X", fontsize=8)
         ax1.set_ylabel("Pixel Y", fontsize=8)
-        # Colorbar in separate axis (ax1_cbar)
-        cbar1 = fig.colorbar(im1, cax=ax1_cbar)
-        cbar1.set_label("nits", fontsize=7)
-        cbar1.ax.tick_params(labelsize=6)
 
-        # OVERLAY: Ring Contours (red dashed lines) if available
+
+        # OVERLAY: Ring Contours if available
         if hasattr(result, 'additional_metrics') and result.additional_metrics:
             if 'ring_contours' in result.additional_metrics:
                 ring_data = result.additional_metrics['ring_contours']
@@ -35701,167 +35730,85 @@ def plm_update_single_die_display(result):
                 contours = ring_data.get('contours', [])
 
                 if contour_mask is not None and len(contours) > 0:
-                    # Draw contour pixels as red overlay on PLM image
-                    # Create RGBA overlay
                     overlay_y, overlay_x = np.where(contour_mask > 0)
                     if len(overlay_y) > 0:
                         ax1.scatter(overlay_x, overlay_y, c='red', s=0.3, alpha=0.8, marker='.')
-
-                    # Add contour count to title
                     num_contours = ring_data.get('metrics', {}).get('num_contours', 0)
-                    ax1.set_title(f"Original PLM ({result.die_x}, {result.die_y}) - {num_contours} Ring Contours", fontsize=9)
+                    ax1.set_title(f"Original PLM ({result.die_x}, {result.die_y}) - {num_contours} Ring Contours", fontsize=10, fontweight='bold')
     else:
         ax1.text(0.5, 0.5, "No image data", ha='center', va='center', transform=ax1.transAxes)
-        ax1.set_title("Original PLM", fontsize=9)
-        ax1_cbar.axis('off')
+        ax1.set_title("Original PLM", fontsize=10, fontweight='bold')
 
-    # Defect map
+    fig1.tight_layout(pad=0.5)
+    canvas1.draw()
+
+    # ========== ZONE 3: Defect Map (right) ==========
+    zone3 = tk.Frame(zones_frame, bd=1, relief=tk.GROOVE)
+    zone3.grid(row=0, column=2, sticky="nsew", padx=2, pady=2)
+    fig2, ax2, canvas2 = _create_zone(zone3)
+
     if result.defect_map is not None:
-        # Extended color mapping for all defect types
-        colors = ['#00C853',  # 0: OK
-                  '#FF6B6B', '#FF6B6B',  # 5-10: placeholder
-                  '#D32F2F', '#D32F2F',  # 10-15: Bridged
-                  '#FFD54F', '#FF8F00',  # 15-25: Uniformity
-                  '#42A5F5', '#1565C0',  # 25-35: Stuck
-                  '#424242',             # 35-40: Dead
-                  '#AB47BC',             # 40-55: Cluster
-                  '#00BCD4',             # 55-65: Gradient
-                  '#E91E63',             # 65-75: Mura
-                  '#795548', '#8D6E63',  # 75-85: Line/Column
-                  '#FF5722', '#3F51B5']  # 85-100: Hot/Cold
+        colors = ['#00C853',
+                  '#FF6B6B', '#FF6B6B',
+                  '#D32F2F', '#D32F2F',
+                  '#FFD54F', '#FF8F00',
+                  '#42A5F5', '#1565C0',
+                  '#424242',
+                  '#AB47BC',
+                  '#00BCD4',
+                  '#E91E63',
+                  '#795548', '#8D6E63',
+                  '#FF5722', '#3F51B5']
         bounds = [0, 5, 10, 15, 20, 25, 30, 35, 40, 55, 65, 75, 80, 85, 90, 95, 100]
         cmap = ListedColormap(colors[:len(bounds)-1])
         norm = BoundaryNorm(bounds, cmap.N)
 
-        im2 = ax2.imshow(result.defect_map, cmap=cmap, norm=norm, aspect='equal')
-        ax2.set_title(f"Defect Map - {'PASS' if result.passed else 'FAIL'}", fontsize=9)
+        im2 = ax2.imshow(result.defect_map, cmap=cmap, norm=norm, aspect='auto')
+        ax2.set_title(f"Defect Map - {'PASS' if result.passed else 'FAIL'}", fontsize=10, fontweight='bold')
         ax2.set_xlabel("Pixel X", fontsize=8)
         ax2.set_ylabel("Pixel Y", fontsize=8)
 
-        # DYNAMIC Legend based on active modules and found defects
-        ax_legend.axis('off')
-        legend_elements = [
-            mpatches.Patch(facecolor='#00C853', edgecolor='black', label='OK'),
-        ]
-
-        # Add base defects if module active and count > 0
-        if plm_mod_bridged_var.get():
-            legend_elements.append(
-                mpatches.Patch(facecolor='#D32F2F', edgecolor='black', label=f'Bridged: {result.bridged_count}'))
-        if plm_mod_uniformity_var.get():
-            legend_elements.append(
-                mpatches.Patch(facecolor='#FF8F00', edgecolor='black', label=f'Uniform: {result.uniformity_count}'))
-        if plm_mod_stuck_var.get():
-            legend_elements.append(
-                mpatches.Patch(facecolor='#42A5F5', edgecolor='black', label=f'Stuck: {result.stuck_count}'))
-
-        # Always show clusters if they exist
-        if result.cluster_count > 0:
-            legend_elements.append(
-                mpatches.Patch(facecolor='#AB47BC', edgecolor='black', label=f'Cluster: {result.cluster_count}'))
-
-        # NEW: Add additional analysis types if active
-        if hasattr(result, 'additional_metrics') and result.additional_metrics:
-            if plm_mod_gradient_var.get() and 'gradient' in result.additional_metrics:
-                g = result.additional_metrics['gradient']
-                if g.get('has_gradient', False):
-                    legend_elements.append(
-                        mpatches.Patch(facecolor='#00BCD4', edgecolor='black', label=f"Gradient: {g.get('max_deviation_percent', 0):.1f}%"))
-
-            if plm_mod_mura_var.get() and 'mura' in result.additional_metrics:
-                m = result.additional_metrics['mura']
-                mura_count = m.get('count', 0)
-                if mura_count > 0:
-                    legend_elements.append(
-                        mpatches.Patch(facecolor='#E91E63', edgecolor='black', label=f'Mura: {mura_count} spots'))
-
-            if plm_mod_linecol_var.get() and 'linecol' in result.additional_metrics:
-                lc = result.additional_metrics['linecol']
-                total_lc = lc.get('row_count', 0) + lc.get('col_count', 0)
-                if total_lc > 0:
-                    legend_elements.append(
-                        mpatches.Patch(facecolor='#795548', edgecolor='black', label=f"Line/Col: {lc.get('row_count', 0)}R/{lc.get('col_count', 0)}C"))
-
-            if plm_mod_hotcold_var.get() and 'hotcold' in result.additional_metrics:
-                hc = result.additional_metrics['hotcold']
-                hot_count = len(hc.get('hot_spots', []))
-                cold_count = len(hc.get('cold_spots', []))
-                if hot_count > 0 or cold_count > 0:
-                    legend_elements.append(
-                        mpatches.Patch(facecolor='#FF5722', edgecolor='black', label=f'Hot: {hot_count}'))
-                    legend_elements.append(
-                        mpatches.Patch(facecolor='#3F51B5', edgecolor='black', label=f'Cold: {cold_count}'))
-
-        ax_legend.legend(handles=legend_elements, loc='upper left', fontsize=7,
-                         framealpha=0.9, handlelength=1.2, handleheight=0.8)
     else:
         ax2.text(0.5, 0.5, "No defect data", ha='center', va='center', transform=ax2.transAxes)
-        ax2.set_title("Defect Map", fontsize=9)
-        ax_legend.axis('off')
+        ax2.set_title("Defect Map", fontsize=10, fontweight='bold')
 
-    fig.tight_layout(pad=1.0)
+    fig2.tight_layout(pad=0.5)
+    canvas2.draw()
 
-    # Embed in tkinter with Navigation Toolbar for ZOOM
-    from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
+    # Store references
+    plm_current_canvas = canvas0
+    plm_current_fig = fig0
+    plm_all_axes = [ax0, ax1, ax2]
+    axes_names = ["Die Image", "PLM", "Defect Map"]
+    axes_canvases = [canvas0, canvas1, canvas2]
 
-    # Create container frame
-    container = tk.Frame(plm_single_die_frame)
-    container.pack(fill=tk.BOTH, expand=True)
-
-    canvas = FigureCanvasTkAgg(fig, master=container)
-    canvas.draw()
-    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
-    # Add Navigation Toolbar (Zoom, Pan, Home, Save)
-    toolbar = NavigationToolbar2Tk(canvas, container)
-    toolbar.update()
-    toolbar.pack(side=tk.BOTTOM, fill=tk.X)
-
-    # Store references for selection highlighting
-    plm_current_canvas = canvas
-    plm_current_fig = fig
-    
-    # Collect all axes for click selection
-    if show_die_image:
-        plm_all_axes = [ax0, ax1, ax2]
-        axes_names = ["Die Image", "PLM", "Defect Map"]
-    else:
-        plm_all_axes = [ax1, ax2]
-        axes_names = ["PLM", "Defect Map"]
-    
-    # Selected axis tracker (mutable container for closure)
+    # Click selection highlighting across all 3 zones
     selected_ax_container = [None]
-    
-    def on_axes_click(event):
-        """Handle click on axes - highlight selected axis with blue border"""
-        if event.inaxes is None:
-            return
-        
-        # Remove previous selection highlight
-        for ax in plm_all_axes:
-            for spine in ax.spines.values():
-                spine.set_edgecolor('black')
-                spine.set_linewidth(0.5)
-        
-        # Highlight clicked axis with blue border
-        if event.inaxes in plm_all_axes:
-            selected_ax_container[0] = event.inaxes
-            for spine in event.inaxes.spines.values():
-                spine.set_edgecolor('#2196F3')  # Blue
+
+    def _make_click_handler(canvas_ref, ax_ref, ax_name):
+        def on_axes_click(event):
+            if event.inaxes is None or event.inaxes != ax_ref:
+                return
+            # Remove previous selection highlight on all axes
+            for a, c in zip(plm_all_axes, axes_canvases):
+                for spine in a.spines.values():
+                    spine.set_edgecolor('black')
+                    spine.set_linewidth(0.5)
+                c.draw_idle()
+            # Highlight clicked axis
+            selected_ax_container[0] = ax_ref
+            for spine in ax_ref.spines.values():
+                spine.set_edgecolor('#2196F3')
                 spine.set_linewidth(3)
-            
-            # Find axis name
             try:
-                idx = plm_all_axes.index(event.inaxes)
-                ax_name = axes_names[idx]
                 plm_status_var.set(f"Selected: {ax_name} - Use toolbar to Zoom/Pan")
             except:
                 pass
-            
-            canvas.draw_idle()
-    
-    # Connect click event
-    canvas.mpl_connect('button_press_event', on_axes_click)
+            canvas_ref.draw_idle()
+        return on_axes_click
+
+    for c, a, name in zip(axes_canvases, plm_all_axes, axes_names):
+        c.mpl_connect('button_press_event', _make_click_handler(c, a, name))
 
     # Update statistics
     plm_update_statistics(result)
@@ -36171,7 +36118,159 @@ plm_export_btn.pack(side=tk.LEFT, padx=2)
 plm_content_frame = tk.Frame(plm_main_frame)
 plm_content_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-# Left: Visualizations
+# RIGHT PANEL FIRST (must be packed before viz frame so it claims space)
+plm_right_panel = tk.Frame(plm_content_frame, width=340)
+plm_right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(5, 0))
+plm_right_panel.pack_propagate(False)
+
+# Sub-Tab Buttons
+plm_right_tab_btn_frame = tk.Frame(plm_right_panel)
+plm_right_tab_btn_frame.pack(fill=tk.X)
+
+plm_right_stats_frame = tk.Frame(plm_right_panel)
+plm_right_modules_frame = tk.Frame(plm_right_panel)
+
+def plm_switch_right_tab(tab_name):
+    plm_right_stats_frame.pack_forget()
+    plm_right_modules_frame.pack_forget()
+    if tab_name == "statistics":
+        plm_right_stats_frame.pack(fill=tk.BOTH, expand=True)
+        plm_right_stats_btn.config(bg="#1565C0", fg="white", relief=tk.SUNKEN)
+        plm_right_modules_btn.config(bg="#E0E0E0", fg="black", relief=tk.RAISED)
+    else:
+        plm_right_modules_frame.pack(fill=tk.BOTH, expand=True)
+        plm_right_modules_btn.config(bg="#1565C0", fg="white", relief=tk.SUNKEN)
+        plm_right_stats_btn.config(bg="#E0E0E0", fg="black", relief=tk.RAISED)
+
+plm_right_stats_btn = tk.Button(plm_right_tab_btn_frame, text="📊 Statistics",
+    font=("Segoe UI", 9, "bold"), bg="#1565C0", fg="white", relief=tk.SUNKEN,
+    command=lambda: plm_switch_right_tab("statistics"))
+plm_right_stats_btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+plm_right_modules_btn = tk.Button(plm_right_tab_btn_frame, text="⚙ Modules",
+    font=("Segoe UI", 9, "bold"), bg="#E0E0E0", fg="black", relief=tk.RAISED,
+    command=lambda: plm_switch_right_tab("modules"))
+plm_right_modules_btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+# --- Tab 1: Analysis Statistics ---
+plm_stats_text = tk.Text(plm_right_stats_frame, width=45, height=25, font=("Consolas", 9))
+plm_stats_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+# --- Tab 2: Analysis Modules (vertical layout with scroll) ---
+plm_mod_canvas = tk.Canvas(plm_right_modules_frame, highlightthickness=0)
+plm_mod_scrollbar = ttk.Scrollbar(plm_right_modules_frame, orient="vertical", command=plm_mod_canvas.yview)
+plm_mod_inner = tk.Frame(plm_mod_canvas)
+
+plm_mod_inner.bind("<Configure>", lambda e: plm_mod_canvas.configure(scrollregion=plm_mod_canvas.bbox("all")))
+plm_mod_canvas.create_window((0, 0), window=plm_mod_inner, anchor="nw")
+plm_mod_canvas.configure(yscrollcommand=plm_mod_scrollbar.set)
+plm_mod_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+plm_mod_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+def _on_plm_mod_mousewheel(event):
+    plm_mod_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+plm_mod_canvas.bind("<MouseWheel>", _on_plm_mod_mousewheel)
+plm_mod_inner.bind("<MouseWheel>", _on_plm_mod_mousewheel)
+
+# Module 1: Uniformity
+m1 = tk.LabelFrame(plm_mod_inner, text="Uniformity", font=("Segoe UI", 9, "bold"), fg="#FF8F00")
+m1.pack(fill=tk.X, padx=5, pady=3)
+tk.Checkbutton(m1, text="Enable", variable=plm_mod_uniformity_var, font=("Segoe UI", 9)).pack(anchor=tk.W, padx=5)
+f1 = tk.Frame(m1)
+f1.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f1, text="σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f1, textvariable=plm_uniformity_sigma_var, width=6, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=5)
+
+# Module 2: Bridged
+m2 = tk.LabelFrame(plm_mod_inner, text="Bridged", font=("Segoe UI", 9, "bold"), fg="#D32F2F")
+m2.pack(fill=tk.X, padx=5, pady=3)
+tk.Checkbutton(m2, text="Enable", variable=plm_mod_bridged_var, font=("Segoe UI", 9)).pack(anchor=tk.W, padx=5)
+f2 = tk.Frame(m2)
+f2.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f2, text="min:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f2, textvariable=plm_bridged_min_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+tk.Label(f2, text="bright%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f2, textvariable=plm_bridged_bright_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+
+# Module 3: Stuck
+m3 = tk.LabelFrame(plm_mod_inner, text="Stuck", font=("Segoe UI", 9, "bold"), fg="#42A5F5")
+m3.pack(fill=tk.X, padx=5, pady=3)
+tk.Checkbutton(m3, text="Enable", variable=plm_mod_stuck_var, font=("Segoe UI", 9)).pack(anchor=tk.W, padx=5)
+f3 = tk.Frame(m3)
+f3.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f3, text="ON%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f3, textvariable=plm_stuck_on_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+tk.Label(f3, text="OFF%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f3, textvariable=plm_stuck_off_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+
+# Module 4: Ring/Contour
+m4 = tk.LabelFrame(plm_mod_inner, text="Ring/Contour", font=("Segoe UI", 9, "bold"), fg="#FF5722")
+m4.pack(fill=tk.X, padx=5, pady=3)
+f4a = tk.Frame(m4)
+f4a.pack(fill=tk.X, padx=5, pady=1)
+tk.Checkbutton(f4a, text="Enable", variable=plm_mod_ring_var, font=("Segoe UI", 9)).pack(side=tk.LEFT)
+tk.Checkbutton(f4a, text="[AUTO]", variable=plm_ring_auto_var,
+               font=("Segoe UI", 8, "bold"), fg="#FFFFFF", bg="#FF5722",
+               selectcolor="#E64A19").pack(side=tk.LEFT, padx=5)
+f4b = tk.Frame(m4)
+f4b.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f4b, text="blur:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f4b, textvariable=plm_ring_blur_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+tk.Label(f4b, text="edge%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f4b, textvariable=plm_ring_edge_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+
+# Module 5: Gradient
+m5 = tk.LabelFrame(plm_mod_inner, text="Gradient", font=("Segoe UI", 9, "bold"), fg="#00BCD4")
+m5.pack(fill=tk.X, padx=5, pady=3)
+tk.Checkbutton(m5, text="Enable", variable=plm_mod_gradient_var, font=("Segoe UI", 9)).pack(anchor=tk.W, padx=5)
+f5 = tk.Frame(m5)
+f5.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f5, text="zone:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+ttk.Combobox(f5, textvariable=plm_gradient_zone_var,
+             values=["quadrants", "rings"], state="readonly", width=9, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+tk.Label(f5, text="thresh%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f5, textvariable=plm_gradient_thresh_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+
+# Module 6: Mura
+m6 = tk.LabelFrame(plm_mod_inner, text="Mura", font=("Segoe UI", 9, "bold"), fg="#E91E63")
+m6.pack(fill=tk.X, padx=5, pady=3)
+f6a = tk.Frame(m6)
+f6a.pack(fill=tk.X, padx=5, pady=1)
+tk.Checkbutton(f6a, text="Enable", variable=plm_mod_mura_var, font=("Segoe UI", 9)).pack(side=tk.LEFT)
+tk.Checkbutton(f6a, text="[AUTO]", variable=plm_mura_auto_var,
+               font=("Segoe UI", 8, "bold"), fg="#FFFFFF", bg="#2196F3",
+               selectcolor="#1565C0").pack(side=tk.LEFT, padx=5)
+f6b = tk.Frame(m6)
+f6b.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f6b, text="blur:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f6b, textvariable=plm_mura_blur_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+tk.Label(f6b, text="th%:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f6b, textvariable=plm_mura_thresh_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+
+# Module 7: Line/Column
+m7 = tk.LabelFrame(plm_mod_inner, text="Line/Column", font=("Segoe UI", 9, "bold"), fg="#795548")
+m7.pack(fill=tk.X, padx=5, pady=3)
+tk.Checkbutton(m7, text="Enable", variable=plm_mod_linecol_var, font=("Segoe UI", 9)).pack(anchor=tk.W, padx=5)
+f7 = tk.Frame(m7)
+f7.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f7, text="σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f7, textvariable=plm_linecol_sigma_var, width=6, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=5)
+
+# Module 8: Hot/Cold Spots
+m8 = tk.LabelFrame(plm_mod_inner, text="Hot/Cold Spots", font=("Segoe UI", 9, "bold"), fg="#FF5722")
+m8.pack(fill=tk.X, padx=5, pady=3)
+tk.Checkbutton(m8, text="Enable", variable=plm_mod_hotcold_var, font=("Segoe UI", 9)).pack(anchor=tk.W, padx=5)
+f8 = tk.Frame(m8)
+f8.pack(fill=tk.X, padx=10, pady=2)
+tk.Label(f8, text="min size:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f8, textvariable=plm_hotcold_size_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+tk.Label(f8, text="σ:", font=("Segoe UI", 8)).pack(side=tk.LEFT)
+tk.Entry(f8, textvariable=plm_hotcold_sigma_var, width=5, font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=3)
+
+# Show Statistics tab by default
+plm_switch_right_tab("statistics")
+
+# LEFT: Visualizations (packed AFTER right panel so it fills remaining space)
 plm_viz_frame = tk.LabelFrame(plm_content_frame, text="Visualization", font=("Segoe UI", 10, "bold"))
 plm_viz_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
 
@@ -36190,13 +36289,6 @@ plm_placeholder = tk.Label(plm_single_die_frame,
                                  "3. Return here and click 'Run Analysis'",
                             font=("Segoe UI", 12), fg="gray")
 plm_placeholder.pack(expand=True)
-
-# Right: Statistics
-plm_stats_frame = tk.LabelFrame(plm_content_frame, text="Analysis Statistics", font=("Segoe UI", 10, "bold"))
-plm_stats_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=(5, 0), ipadx=5)
-
-plm_stats_text = tk.Text(plm_stats_frame, width=50, height=25, font=("Consolas", 9))
-plm_stats_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
 # === STATUS BAR ===
 plm_status_frame = tk.Frame(plm_main_frame, bg='#E3F2FD', relief='ridge', bd=1)
