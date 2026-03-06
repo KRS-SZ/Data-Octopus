@@ -17965,89 +17965,31 @@ diffmap_test_params = {}
 diffmap_canvas = None
 diffmap_wafer_config = None  # Wafer configuration (notch orientation) for diffmap
 
-# Control frame for diffmap
+# Control frame for diffmap - Row 1: Group | Parameter | Mode | Calculate | View | Subtype
 diffmap_control_frame = tk.Frame(tab_diffmap)
-diffmap_control_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
+diffmap_control_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=(5, 2))
 
-# Reference file section
-ref_frame = tk.LabelFrame(diffmap_control_frame, text="Reference File", font=("Helvetica", 10, "bold"))
-ref_frame.pack(side=tk.LEFT, fill=tk.X, padx=5, pady=5)
+# Analysis Mode variable
+diffmap_analysis_mode_var = tk.StringVar(value="Diffmap")
 
-diffmap_ref_btn = tk.Button(
-    ref_frame,
-    text="Select Reference STDF",
-    command=lambda: select_diffmap_reference(),
-    font=("Helvetica", 10),
-    bg="#4CAF50",
-    fg="white"
+# Mode dropdown + Calculate button (packed LEFT)
+tk.Label(diffmap_control_frame, text="Mode:", font=("Helvetica", 10)).pack(side=tk.LEFT, padx=(5, 2))
+diffmap_mode_combo = ttk.Combobox(
+    diffmap_control_frame, textvariable=diffmap_analysis_mode_var,
+    values=["Diffmap", "Quotient"], state="readonly", width=10, font=("Helvetica", 9)
 )
-diffmap_ref_btn.pack(side=tk.LEFT, padx=5, pady=5)
+diffmap_mode_combo.pack(side=tk.LEFT, padx=2)
 
-diffmap_ref_csv_btn = tk.Button(
-    ref_frame,
-    text="Select Reference CSV",
-    command=lambda: select_diffmap_reference_csv(),
-    font=("Helvetica", 10),
-    bg="#FF9800",
-    fg="white"
-)
-diffmap_ref_csv_btn.pack(side=tk.LEFT, padx=5, pady=5)
-
-diffmap_ref_label = tk.Label(
-    ref_frame,
-    text="No file selected",
-    font=("Helvetica", 9),
-    fg="gray",
-    width=30,
-    anchor="w"
-)
-diffmap_ref_label.pack(side=tk.LEFT, padx=5, pady=5)
-
-# Comparison file section
-comp_frame = tk.LabelFrame(diffmap_control_frame, text="Comparison File", font=("Helvetica", 10, "bold"))
-comp_frame.pack(side=tk.LEFT, fill=tk.X, padx=5, pady=5)
-
-diffmap_comp_btn = tk.Button(
-    comp_frame,
-    text="Select Comparison STDF",
-    command=lambda: select_diffmap_comparison(),
-    font=("Helvetica", 10),
-    bg="#2196F3",
-    fg="white"
-)
-diffmap_comp_btn.pack(side=tk.LEFT, padx=5, pady=5)
-
-diffmap_comp_csv_btn = tk.Button(
-    comp_frame,
-    text="Select Comparison CSV",
-    command=lambda: select_diffmap_comparison_csv(),
-    font=("Helvetica", 10),
-    bg="#E91E63",
-    fg="white"
-)
-diffmap_comp_csv_btn.pack(side=tk.LEFT, padx=5, pady=5)
-
-diffmap_comp_label = tk.Label(
-    comp_frame,
-    text="No file selected",
-    font=("Helvetica", 9),
-    fg="gray",
-    width=30,
-    anchor="w"
-)
-diffmap_comp_label.pack(side=tk.LEFT, padx=5, pady=5)
-
-# Calculate button
 diffmap_calc_btn = tk.Button(
-    diffmap_control_frame,
-    text="Calculate Diff",
+    diffmap_control_frame, text="Calculate",
     command=lambda: calculate_diffmap(),
-    font=("Helvetica", 11, "bold"),
-    bg="#FF9800",
-    fg="white",
-    state=tk.DISABLED
+    font=("Helvetica", 10, "bold"), bg="#FF9800", fg="white"
 )
-diffmap_calc_btn.pack(side=tk.LEFT, padx=10, pady=5)
+diffmap_calc_btn.pack(side=tk.LEFT, padx=5)
+
+# Dummy labels for removed widgets (referenced elsewhere)
+diffmap_ref_label = tk.Label(diffmap_control_frame)
+diffmap_comp_label = tk.Label(diffmap_control_frame)
 
 # Status frame for offset and notch orientation warnings - NEW ROW
 diffmap_status_row = tk.Frame(tab_diffmap)
@@ -18321,7 +18263,11 @@ def recalculate_diffmap_only():
         return
 
     print(f"\n{'='*60}")
-    print("Recalculating Difference Map (Reference - Comparison)")
+    mode = diffmap_analysis_mode_var.get() if 'diffmap_analysis_mode_var' in dir() else "Diffmap"
+    if mode == "Quotient":
+        print("Recalculating Quotient Map (Reference / Comparison)")
+    else:
+        print("Recalculating Difference Map (Reference - Comparison)")
     print(f"{'='*60}")
 
     calc_start = time.time()
@@ -18361,7 +18307,12 @@ def recalculate_diffmap_only():
 
         if ref_col in merged.columns and comp_col in merged.columns:
             try:
-                result_data[col] = merged[ref_col].values - merged[comp_col].values
+                if mode == "Quotient":
+                    comp_vals = merged[comp_col].values.astype(float)
+                    comp_vals[comp_vals == 0] = np.nan
+                    result_data[col] = merged[ref_col].values.astype(float) / comp_vals
+                else:
+                    result_data[col] = merged[ref_col].values - merged[comp_col].values
                 diff_count += 1
             except Exception as e:
                 pass  # Skip silently for speed
@@ -18679,9 +18630,168 @@ diffmap_left_title = tk.Label(
 )
 diffmap_left_title.pack(fill=tk.X, pady=(0, 2))
 
-# Sub-notebook for left panel with 2 tabs: Wafer Overview, Statistics
+# Sub-notebook for left panel with 3 tabs: Wafer Selection, Wafer Overview, Statistics
 diffmap_left_notebook = ttk.Notebook(diffmap_left_panel, style="LargeTab.TNotebook")
 diffmap_left_notebook.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+
+# === Sub-Tab 0: Wafer Selection (NEW - like Multi-Wafer Tab) ===
+diffmap_left_tab_selection = ttk.Frame(diffmap_left_notebook)
+diffmap_left_notebook.add(diffmap_left_tab_selection, text="Waferselection")
+
+# Load Wafer Dialog for Diffmap (same as Multi-Wafer)
+def show_diffmap_load_dialog():
+    parent = main_win
+    dialog = tk.Toplevel(parent)
+    dialog.title("Load Wafer")
+    dialog.geometry("520x480")
+    dialog.transient(parent)
+    dialog.grab_set()
+    dialog.resizable(False, False)
+    dialog.update_idletasks()
+    x = parent.winfo_x() + (parent.winfo_width() - 520) // 2
+    y = parent.winfo_y() + (parent.winfo_height() - 480) // 2
+    dialog.geometry(f"+{x}+{y}")
+    def on_close():
+        dialog.destroy()
+    dialog.protocol("WM_DELETE_WINDOW", on_close)
+    tk.Label(dialog, text="📂 Load Wafer Data", font=("Segoe UI", 14, "bold")).pack(pady=(15, 10))
+    tk.Label(dialog, text="Choose data source:", font=("Segoe UI", 10)).pack(pady=(0, 15))
+    btn_frame = tk.Frame(dialog)
+    btn_frame.pack(fill=tk.BOTH, expand=True, padx=20)
+    local_frame = tk.Frame(btn_frame, bg="#E3F2FD", relief=tk.RIDGE, bd=1)
+    local_frame.pack(fill=tk.X, pady=5)
+    tk.Label(local_frame, text="💻 Load lokal", font=("Segoe UI", 11, "bold"), bg="#E3F2FD", fg="#1565C0").pack(anchor=tk.W, padx=10, pady=(8,2))
+    tk.Label(local_frame, text="Load STDF/CSV/MC-300 from local file system", font=("Segoe UI", 9), bg="#E3F2FD", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
+    tk.Button(local_frame, text="Select File...", command=lambda: [on_close(), diffmap_load_csv_files()],
+              bg="#1976D2", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2").pack(side=tk.RIGHT, padx=10, pady=8)
+    fast_frame = tk.Frame(btn_frame, bg="#FFF3E0", relief=tk.RIDGE, bd=1)
+    fast_frame.pack(fill=tk.X, pady=5)
+    tk.Label(fast_frame, text="⚡ Manifold (fast)", font=("Segoe UI", 11, "bold"), bg="#FFF3E0", fg="#E65100").pack(anchor=tk.W, padx=10, pady=(8,2))
+    tk.Label(fast_frame, text="Download ZIP + extract CSV only (no PLM images)", font=("Segoe UI", 9), bg="#FFF3E0", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
+    tk.Button(fast_frame, text="Browse Manifold...", command=lambda: [on_close(), load_manifold_fast()],
+              bg="#F57C00", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2").pack(side=tk.RIGHT, padx=10, pady=8)
+    full_frame = tk.Frame(btn_frame, bg="#E8F5E9", relief=tk.RIDGE, bd=1)
+    full_frame.pack(fill=tk.X, pady=5)
+    tk.Label(full_frame, text="📦 Manifold (complete)", font=("Segoe UI", 11, "bold"), bg="#E8F5E9", fg="#2E7D32").pack(anchor=tk.W, padx=10, pady=(8,2))
+    tk.Label(full_frame, text="Download full ZIP (CSV + PLM images)", font=("Segoe UI", 9), bg="#E8F5E9", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
+    tk.Button(full_frame, text="Browse Manifold...", command=lambda: [on_close(), load_manifold_complete()],
+              bg="#388E3C", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2").pack(side=tk.RIGHT, padx=10, pady=8)
+    tk.Button(dialog, text="Cancel", command=on_close, font=("Segoe UI", 9)).pack(pady=15)
+
+# Diffmap CSV loader - loads 2 files for Reference + Comparison
+def diffmap_load_csv_files():
+    global diffmap_reference_data, diffmap_reference_id, diffmap_reference_path
+    global diffmap_compare_data, diffmap_compare_id, diffmap_compare_path
+    global diffmap_compare_data_original, diffmap_aligned
+
+    # Dialog 1: Reference
+    ref_path = filedialog.askopenfilename(
+        title="Select REFERENCE CSV file (Wafer 1)",
+        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+    )
+    if not ref_path:
+        return
+
+    # Dialog 2: Comparison
+    comp_path = filedialog.askopenfilename(
+        title="Select COMPARISON CSV file (Wafer 2)",
+        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+    )
+    if not comp_path:
+        return
+
+    diffmap_reference_path = ref_path
+    diffmap_compare_path = comp_path
+    diffmap_compare_data_original = None
+    diffmap_aligned = False
+    diffmap_reference_id = os.path.basename(ref_path).replace('.csv', '').replace('.CSV', '')
+    diffmap_compare_id = os.path.basename(comp_path).replace('.csv', '').replace('.CSV', '')
+    diffmap_calc_btn.config(state=tk.NORMAL)
+    print(f"DEBUG diffmap_load: ref_id={diffmap_reference_id}")
+    print(f"DEBUG diffmap_load: comp_id={diffmap_compare_id}")
+    print(f"DEBUG diffmap_load: calling update_diffmap_wafer_list")
+    update_diffmap_wafer_list()
+    print(f"DEBUG diffmap_load: calling calculate_diffmap")
+    try:
+        calculate_diffmap()
+        print(f"DEBUG diffmap_load: calculate_diffmap done")
+    except Exception as e:
+        import traceback
+        print(f"DEBUG diffmap_load: calculate_diffmap ERROR: {e}")
+        traceback.print_exc()
+
+def update_diffmap_wafer_list():
+    """Update wafer list in diffmap selection tab"""
+    for widget in diffmap_wafer_list_frame.winfo_children():
+        widget.destroy()
+
+    import re as _re
+    wafer_colors = ['#1565C0', '#2E7D32']
+    labels = ["🔵 Reference", "🟠 Comparison"]
+    wafer_ids = []
+    if diffmap_reference_id:
+        wafer_ids.append(diffmap_reference_id)
+    if diffmap_compare_id:
+        wafer_ids.append(diffmap_compare_id)
+
+    for idx, wafer_id in enumerate(wafer_ids):
+        wafer_name = str(wafer_id) if wafer_id else f"Wafer {idx+1}"
+        color = wafer_colors[idx % len(wafer_colors)]
+        parts = wafer_name.split('_')
+        product = ""
+        lot = ""
+        slot = ""
+        date_str = ""
+        for p in parts:
+            if p.startswith('P0') or p.startswith('P1') or p.startswith('P2'):
+                product = p
+            elif p.startswith('UNAV') or p.startswith('LOT'):
+                lot = p
+            elif p.startswith('Slot') or _re.match(r'^Slot\d+$', p):
+                slot = p
+        date_match = _re.search(r'(\d{8})[_\-]?(\d{6})?', wafer_name)
+        if date_match:
+            d = date_match.group(1)
+            date_str = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+            if date_match.group(2):
+                t = date_match.group(2)
+                date_str += f" {t[:2]}:{t[2:4]}"
+        line1 = labels[idx]
+        if slot:
+            line1 += f" ({slot})"
+        if product:
+            line1 += f" | {product}"
+        line2_parts = []
+        if lot:
+            line2_parts.append(f"Lot: {lot}")
+        if date_str:
+            line2_parts.append(date_str)
+        line2 = " | ".join(line2_parts) if line2_parts else wafer_name[:40]
+
+        cb_frame = tk.Frame(diffmap_wafer_list_frame, bg="white", relief=tk.RIDGE, bd=1)
+        cb_frame.pack(fill=tk.X, padx=2, pady=2)
+        info_frame = tk.Frame(cb_frame, bg="white")
+        info_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=8, pady=4)
+        tk.Label(info_frame, text=line1, font=("Segoe UI", 9, "bold"), fg=color, bg="white", anchor="w").pack(fill=tk.X)
+        tk.Label(info_frame, text=line2, font=("Segoe UI", 7), fg="#888", bg="white", anchor="w").pack(fill=tk.X)
+
+    dm_wafer_count_label.config(text=f"{len(wafer_ids)} Wafer")
+
+# Load Wafer Button
+dm_load_wafer_btn = tk.Button(
+    diffmap_left_tab_selection, text="📂 Load Wafer",
+    font=("Segoe UI", 10, "bold"), bg="#1565C0", fg="white", cursor="hand2",
+    command=show_diffmap_load_dialog
+)
+dm_load_wafer_btn.pack(fill=tk.X, padx=5, pady=(8, 5))
+
+# Wafer count label
+dm_wafer_count_label = tk.Label(diffmap_left_tab_selection, text="0 Wafer", font=("Helvetica", 8), fg="gray")
+dm_wafer_count_label.pack(fill=tk.X, padx=5)
+
+# Scrollable frame for wafer list
+diffmap_wafer_list_frame = tk.Frame(diffmap_left_tab_selection)
+diffmap_wafer_list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
 # === Sub-Tab 1: Wafer Overview ===
 diffmap_left_tab_wafers = ttk.Frame(diffmap_left_notebook)
