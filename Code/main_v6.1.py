@@ -12319,37 +12319,137 @@ multi_wafer_left_notebook.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 multi_wafer_left_tab_selection = ttk.Frame(multi_wafer_left_notebook)
 multi_wafer_left_notebook.add(multi_wafer_left_tab_selection, text="Waferselection")
 
-# Buttons for Select All / Deselect All in Waferselection tab
-wafer_select_btn_frame = tk.Frame(multi_wafer_left_tab_selection)
-wafer_select_btn_frame.pack(fill=tk.X, padx=5, pady=2)
+# Load Wafer Button - syncs to both Wafer Tab and Multi-Wafer Tab
+def mw_load_wafer():
+    show_load_wafer_dialog()
+    # Sync: copy loaded wafers into Multi-Wafer data structures
+    if multiple_stdf_data and multiple_wafer_ids:
+        multi_wafer_stdf_data.clear()
+        multi_wafer_wafer_ids.clear()
+        for data, wid in zip(multiple_stdf_data, multiple_wafer_ids):
+            if data is not None and wid not in multi_wafer_wafer_ids:
+                multi_wafer_stdf_data.append(data)
+                multi_wafer_wafer_ids.append(wid)
+        update_wafer_selection_list()
+        on_wafer_selection_changed()
+        mw_wafer_count_label.config(text=f"{len(multi_wafer_wafer_ids)} Wafer")
 
-def select_all_wafers():
+mw_load_wafer_btn = tk.Button(
+    multi_wafer_left_tab_selection,
+    text="📂 Load Wafer",
+    font=("Segoe UI", 10, "bold"),
+    bg="#1565C0",
+    fg="white",
+    cursor="hand2",
+    command=mw_load_wafer
+)
+mw_load_wafer_btn.pack(fill=tk.X, padx=5, pady=(8, 5))
+
+# Buttons for wafer navigation in Waferselection tab (same as Wafer Tab)
+mw_wafer_select_btn_frame = tk.Frame(multi_wafer_left_tab_selection)
+mw_wafer_select_btn_frame.pack(fill=tk.X, padx=5, pady=2)
+
+mw_selected_var = tk.IntVar(value=0)
+
+def mw_select_prev_wafer():
+    current = mw_selected_var.get()
+    if current > 0:
+        mw_selected_var.set(current - 1)
+        for i, var in enumerate(multi_wafer_checkbox_vars):
+            var.set(i == current - 1)
+        on_wafer_selection_changed()
+
+def mw_select_next_wafer():
+    current = mw_selected_var.get()
+    max_idx = len(multi_wafer_checkbox_vars) - 1
+    if current < max_idx:
+        mw_selected_var.set(current + 1)
+        for i, var in enumerate(multi_wafer_checkbox_vars):
+            var.set(i == current + 1)
+        on_wafer_selection_changed()
+
+def mw_select_all_wafers():
     for var in multi_wafer_checkbox_vars:
         var.set(True)
     on_wafer_selection_changed()
 
-def deselect_all_wafers():
+def mw_deselect_all_wafers():
     for var in multi_wafer_checkbox_vars:
         var.set(False)
     on_wafer_selection_changed()
 
-wafer_select_all_btn = tk.Button(
-    wafer_select_btn_frame,
-    text="Select All",
-    command=select_all_wafers,
-    font=("Helvetica", 8),
-    width=10
-)
-wafer_select_all_btn.pack(side=tk.LEFT, padx=2)
+def mw_unload_single_wafer():
+    global multiple_stdf_data, multiple_wafer_ids, current_stdf_data, current_wafer_id
+    if not multiple_wafer_ids:
+        return
+    idx = mw_selected_var.get()
+    if idx < 0 or idx >= len(multiple_wafer_ids):
+        return
+    removed_id = multiple_wafer_ids[idx]
+    del multiple_stdf_data[idx]
+    del multiple_wafer_ids[idx]
+    if not multiple_wafer_ids:
+        current_stdf_data = None
+        current_wafer_id = None
+    else:
+        new_idx = min(idx, len(multiple_wafer_ids) - 1)
+        mw_selected_var.set(new_idx)
+        current_stdf_data = multiple_stdf_data[new_idx]
+        current_wafer_id = multiple_wafer_ids[new_idx]
+    update_wafer_tab_selection_list()
+    update_group_combobox()
+    refresh_heatmap_display()
+    print(f"Multi-Wafer: Unloaded {removed_id}")
 
-wafer_deselect_all_btn = tk.Button(
-    wafer_select_btn_frame,
-    text="Deselect All",
-    command=deselect_all_wafers,
-    font=("Helvetica", 8),
-    width=10
+def mw_unload_all_wafers():
+    global multiple_stdf_data, multiple_wafer_ids, current_stdf_data, current_wafer_id
+    global test_parameters, grouped_parameters, test_limits
+    multiple_stdf_data.clear()
+    multiple_wafer_ids.clear()
+    current_stdf_data = None
+    current_wafer_id = None
+    test_parameters.clear()
+    grouped_parameters.clear()
+    test_limits.clear()
+    update_wafer_tab_selection_list()
+    update_group_combobox()
+    refresh_heatmap_display()
+    print("Multi-Wafer: All wafers unloaded")
+
+tk.Button(
+    mw_wafer_select_btn_frame, text="◀ Prev", command=mw_select_prev_wafer,
+    font=("Helvetica", 8), bg="#2196F3", fg="white"
+).pack(side=tk.LEFT, padx=2)
+
+tk.Button(
+    mw_wafer_select_btn_frame, text="Next ▶", command=mw_select_next_wafer,
+    font=("Helvetica", 8), bg="#2196F3", fg="white"
+).pack(side=tk.LEFT, padx=2)
+
+tk.Button(
+    mw_wafer_select_btn_frame, text="All", command=mw_select_all_wafers,
+    font=("Helvetica", 7), bg="#4CAF50", fg="white"
+).pack(side=tk.LEFT, padx=2)
+
+tk.Button(
+    mw_wafer_select_btn_frame, text="Deselect", command=mw_deselect_all_wafers,
+    font=("Helvetica", 7), bg="#9E9E9E", fg="white"
+).pack(side=tk.LEFT, padx=2)
+
+tk.Button(
+    mw_wafer_select_btn_frame, text="Unload", command=mw_unload_single_wafer,
+    font=("Helvetica", 7), bg="#FF9800", fg="white"
+).pack(side=tk.LEFT, padx=2)
+
+tk.Button(
+    mw_wafer_select_btn_frame, text="Unload All", command=mw_unload_all_wafers,
+    font=("Helvetica", 7), bg="#f44336", fg="white"
+).pack(side=tk.LEFT, padx=2)
+
+mw_wafer_count_label = tk.Label(
+    mw_wafer_select_btn_frame, text="0 Wafer", font=("Helvetica", 8), fg="gray"
 )
-wafer_deselect_all_btn.pack(side=tk.LEFT, padx=2)
+mw_wafer_count_label.pack(side=tk.RIGHT, padx=5)
 
 # Scrollable frame for wafer checkboxes (in Waferselection tab)
 wafer_list_canvas = tk.Canvas(multi_wafer_left_tab_selection, highlightthickness=0)
