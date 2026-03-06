@@ -12985,73 +12985,9 @@ def update_multi_wafer_statistics():
 multi_wafer_right_panel = tk.Frame(multi_wafer_main_container)
 multi_wafer_right_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-# === View Type Selection Frame (Data / Images / PLM) - like in Wafermap Tab ===
-multi_wafer_view_frame = tk.Frame(multi_wafer_right_panel, bg="#e0e0e0", relief=tk.RAISED, borderwidth=1)
-multi_wafer_view_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=(0, 5))
-
-# View type label
-tk.Label(
-    multi_wafer_view_frame,
-    text="View:",
-    font=("Helvetica", 10, "bold"),
-    bg="#e0e0e0"
-).pack(side=tk.LEFT, padx=5, pady=3)
-
-# View type selection
+# (View/Subtype/Group are now in Row 1 control frame)
 multi_wafer_view_type_var = tk.StringVar(value="Data")
-multi_wafer_view_type_combo = ttk.Combobox(
-    multi_wafer_view_frame,
-    textvariable=multi_wafer_view_type_var,
-    values=["Data", "Images", "PLM Files"],
-    state="readonly",
-    width=12,
-    font=("Helvetica", 10)
-)
-multi_wafer_view_type_combo.pack(side=tk.LEFT, padx=5, pady=3)
-multi_wafer_view_type_combo.bind("<<ComboboxSelected>>", lambda e: on_multi_wafer_view_changed())
-
-# View subtype selection (for Images: image type filter)
-tk.Label(
-    multi_wafer_view_frame,
-    text="Subtype:",
-    font=("Helvetica", 10),
-    bg="#e0e0e0"
-).pack(side=tk.LEFT, padx=5, pady=3)
-
 multi_wafer_view_subtype_var = tk.StringVar(value="Heatmap")
-multi_wafer_view_subtype_combo = ttk.Combobox(
-    multi_wafer_view_frame,
-    textvariable=multi_wafer_view_subtype_var,
-    values=["Heatmap", "Multi-Plot"],
-    state="readonly",
-    width=12,
-    font=("Helvetica", 10)
-)
-multi_wafer_view_subtype_combo.pack(side=tk.LEFT, padx=5, pady=3)
-multi_wafer_view_subtype_combo.bind("<<ComboboxSelected>>", lambda e: on_multi_wafer_view_changed())
-
-# Separator
-ttk.Separator(multi_wafer_view_frame, orient='vertical').pack(side=tk.LEFT, fill='y', padx=10, pady=3)
-
-# Group selection
-tk.Label(
-    multi_wafer_view_frame,
-    text="Group:",
-    font=("Helvetica", 10),
-    bg="#e0e0e0"
-).pack(side=tk.LEFT, padx=5, pady=3)
-
-multi_wafer_group_var = tk.StringVar(value="All Groups")
-multi_wafer_group_combo = ttk.Combobox(
-    multi_wafer_view_frame,
-    textvariable=multi_wafer_group_var,
-    values=["All Groups"],
-    state="readonly",
-    width=18,
-    font=("Helvetica", 10)
-)
-multi_wafer_group_combo.pack(side=tk.LEFT, padx=5, pady=3)
-multi_wafer_group_combo.bind("<<ComboboxSelected>>", lambda e: on_multi_wafer_group_changed())
 
 def on_multi_wafer_view_changed():
     """Called when view type changes in multiwafer tab"""
@@ -13112,110 +13048,64 @@ def update_multi_wafer_param_by_group():
         multi_wafer_param_combobox.set(param_options[0])
         on_multi_wafer_param_changed()
 
-# Control frame for multiple wafermaps - Row 1 (File operations)
+# === ROW 1: Group | Parameter | Load Binning | Show Bins | → right: View | Subtype ===
 multi_wafer_control_frame = tk.Frame(multi_wafer_right_panel)
 multi_wafer_control_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=(5, 2))
 
-# Format selection dropdown
-multi_wafer_format_label = tk.Label(
-    multi_wafer_control_frame,
-    text="Format:",
-    font=("Helvetica", 10)
-)
-multi_wafer_format_label.pack(side=tk.LEFT, padx=5)
+# Group label + combobox
+tk.Label(multi_wafer_control_frame, text="Group:", font=("Helvetica", 10)).pack(side=tk.LEFT, padx=(5, 2))
 
-multi_wafer_format_var = tk.StringVar(value="CSV")
-multi_wafer_format_combobox = ttk.Combobox(
-    multi_wafer_control_frame,
-    textvariable=multi_wafer_format_var,
-    values=["CSV", "STDF"],
-    state="readonly",
-    width=8,
-    font=("Helvetica", 10)
+multi_wafer_group_var = tk.StringVar(value="All Groups")
+multi_wafer_group_combo = ttk.Combobox(
+    multi_wafer_control_frame, textvariable=multi_wafer_group_var,
+    values=["All Groups"], state="readonly", width=14, font=("Helvetica", 9)
 )
-multi_wafer_format_combobox.pack(side=tk.LEFT, padx=5)
+multi_wafer_group_combo.pack(side=tk.LEFT, padx=2)
+multi_wafer_group_combo.bind("<<ComboboxSelected>>", lambda e: update_multi_wafer_param_by_group())
 
-# Button to add files (appends to existing)
-multi_wafer_add_btn = tk.Button(
-    multi_wafer_control_frame,
-    text="Add Files",
-    command=lambda: add_multi_wafer_files(),
-    font=("Helvetica", 10),
-    bg="#4CAF50",
-    fg="white"
+# Parameter label + combobox
+tk.Label(multi_wafer_control_frame, text="Parameter:", font=("Helvetica", 10)).pack(side=tk.LEFT, padx=(10, 2))
+
+multi_wafer_param_combobox = ttk.Combobox(
+    multi_wafer_control_frame, state="readonly", width=30, font=("Helvetica", 9)
 )
-multi_wafer_add_btn.pack(side=tk.LEFT, padx=5)
+multi_wafer_param_combobox.pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+multi_wafer_param_combobox.bind("<<ComboboxSelected>>", lambda e: on_multi_wafer_param_changed())
 
-# Button to clear all loaded files
-multi_wafer_clear_btn = tk.Button(
-    multi_wafer_control_frame,
-    text="Clear All",
-    command=lambda: clear_multi_wafer_files(),
-    font=("Helvetica", 10),
-    bg="#f44336",
-    fg="white"
-)
-multi_wafer_clear_btn.pack(side=tk.LEFT, padx=5)
-
-# Info label
-multi_wafer_info_label = tk.Label(
-    multi_wafer_control_frame,
-    text="No wafermaps loaded",
-    font=("Helvetica", 9),
-    fg="gray"
-)
-multi_wafer_info_label.pack(side=tk.LEFT, padx=10)
-
-# Separator before binning controls
+# Separator
 ttk.Separator(multi_wafer_control_frame, orient='vertical').pack(side=tk.LEFT, fill='y', padx=5, pady=2)
 
-# Load Binning Excel button (Multi-Wafer)
+# Load Binning button
 multi_wafer_load_binning_btn = tk.Button(
-    multi_wafer_control_frame,
-    text="📋 Load Binning",
-    command=lambda: load_binning_file(),
-    font=("Helvetica", 9),
-    bg="#9C27B0",
-    fg="white",
+    multi_wafer_control_frame, text="📋 Load Binning", command=lambda: load_binning_file(),
+    font=("Helvetica", 9), bg="#9C27B0", fg="white"
 )
 multi_wafer_load_binning_btn.pack(side=tk.LEFT, padx=2)
 
-# Show Bin Legend button (Multi-Wafer)
+# Show Bins button
 multi_wafer_show_bins_btn = tk.Button(
-    multi_wafer_control_frame,
-    text="📊 Show Bins",
-    command=show_bin_legend,
-    font=("Helvetica", 9),
-    bg="#607D8B",
-    fg="white",
+    multi_wafer_control_frame, text="📊 Show Bins", command=show_bin_legend,
+    font=("Helvetica", 9), bg="#607D8B", fg="white"
 )
 multi_wafer_show_bins_btn.pack(side=tk.LEFT, padx=2)
 
-# Binning status label (Multi-Wafer) - linked to same variable
-multi_wafer_binning_status_label = tk.Label(
-    multi_wafer_control_frame,
-    textvariable=binning_status_var,
-    font=("Helvetica", 8),
-    fg="gray"
+multi_wafer_view_type_combo = ttk.Combobox(
+    multi_wafer_control_frame, textvariable=multi_wafer_view_type_var,
+    values=["Data", "Images", "PLM Files"], state="readonly", width=10, font=("Helvetica", 9)
 )
-multi_wafer_binning_status_label.pack(side=tk.LEFT, padx=5)
+multi_wafer_view_type_combo.bind("<<ComboboxSelected>>", lambda e: on_multi_wafer_view_changed())
 
-# Parameter selection
-multi_wafer_param_label = tk.Label(
-    multi_wafer_control_frame,
-    text="Parameter:",
-    font=("Helvetica", 10)
+multi_wafer_view_subtype_combo = ttk.Combobox(
+    multi_wafer_control_frame, textvariable=multi_wafer_view_subtype_var,
+    values=["Heatmap", "Multi-Plot"], state="readonly", width=10, font=("Helvetica", 9)
 )
-multi_wafer_param_label.pack(side=tk.LEFT, padx=5)
+multi_wafer_view_subtype_combo.bind("<<ComboboxSelected>>", lambda e: on_multi_wafer_view_changed())
 
-multi_wafer_param_combobox = ttk.Combobox(
-    multi_wafer_control_frame,
-    state="readonly",
-    width=120,
-    font=("Helvetica", 10)
-)
-multi_wafer_param_combobox.pack(side=tk.LEFT, padx=5)
-multi_wafer_param_combobox.bind("<<ComboboxSelected>>", lambda e: on_multi_wafer_param_changed())
+# Pack View + Subtype to RIGHT side of Row 1
+multi_wafer_view_subtype_combo.pack(side=tk.RIGHT, padx=2)
+tk.Label(multi_wafer_control_frame, text="Subtype:", font=("Helvetica", 10)).pack(side=tk.RIGHT, padx=(5, 2))
+multi_wafer_view_type_combo.pack(side=tk.RIGHT, padx=2)
+tk.Label(multi_wafer_control_frame, text="View:", font=("Helvetica", 10, "bold")).pack(side=tk.RIGHT, padx=(5, 2))
 
 # Tooltip for parameter combobox to show full parameter name
 class ToolTip:
@@ -13681,10 +13571,10 @@ def on_compare_independent_changed():
         if hasattr(create_independent_param_selectors, 'selector_frame') and create_independent_param_selectors.selector_frame:
             create_independent_param_selectors.selector_frame.destroy()
             create_independent_param_selectors.selector_frame = None
-        # Re-show global parameter selection (after info label)
-        multi_wafer_param_label.pack(side=tk.LEFT, padx=5, after=multi_wafer_info_label)
+        # Re-show global parameter selection
+        multi_wafer_param_label.pack(side=tk.LEFT, padx=5)
         multi_wafer_param_combobox.pack(side=tk.LEFT, padx=5, after=multi_wafer_param_label)
-        multi_wafer_param_label.pack(side=tk.LEFT, padx=5, after=multi_wafer_info_label)
+        multi_wafer_param_label.pack(side=tk.LEFT, padx=5)
         multi_wafer_param_combobox.pack(side=tk.LEFT, padx=5, after=multi_wafer_param_label)
         update_multi_wafer_display()
 
@@ -15107,7 +14997,7 @@ def clear_multi_wafer_files():
     multi_wafer_header_summary_label.config(text="No wafermaps loaded", fg="gray")
 
     # Update info label
-    multi_wafer_info_label.config(text="No wafermaps loaded", fg="gray")
+    pass
 
     # Clear wafer selection list
     update_wafer_selection_list()
@@ -15317,10 +15207,7 @@ def add_multi_wafer_csv_files():
         # Update Charac.-Curve dropdowns for Multi-Wafer tab
         update_mw_charac_params()
 
-        multi_wafer_info_label.config(
-            text=f"Total: {len(multi_wafer_stdf_data)} wafermaps (added {num_added})",
-            fg="green"
-        )
+        print(f"Total: {len(multi_wafer_stdf_data)} wafermaps (added {num_added})")
 
         # Update wafer selection list
         update_wafer_selection_list()
@@ -15524,10 +15411,7 @@ def add_multi_wafer_stdf_files():
             if not multi_wafer_param_combobox.get():
                 multi_wafer_param_combobox.current(0)
 
-        multi_wafer_info_label.config(
-            text=f"Total: {len(multi_wafer_stdf_data)} wafermaps (added {num_added} in {elapsed:.1f}s)",
-            fg="green"
-        )
+        print(f"Total: {len(multi_wafer_stdf_data)} wafermaps (added {num_added} in {elapsed:.1f}s)")
 
         print(f"Added {num_added} wafermaps in {elapsed:.1f}s (Total: {len(multi_wafer_stdf_data)})")
 
