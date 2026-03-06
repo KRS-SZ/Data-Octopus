@@ -12319,20 +12319,58 @@ multi_wafer_left_notebook.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 multi_wafer_left_tab_selection = ttk.Frame(multi_wafer_left_notebook)
 multi_wafer_left_notebook.add(multi_wafer_left_tab_selection, text="Waferselection")
 
-# Load Wafer Button - syncs to both Wafer Tab and Multi-Wafer Tab
-def mw_load_wafer():
-    show_load_wafer_dialog()
-    # Sync: copy loaded wafers into Multi-Wafer data structures
-    if multiple_stdf_data and multiple_wafer_ids:
-        multi_wafer_stdf_data.clear()
-        multi_wafer_wafer_ids.clear()
-        for data, wid in zip(multiple_stdf_data, multiple_wafer_ids):
-            if data is not None and wid not in multi_wafer_wafer_ids:
-                multi_wafer_stdf_data.append(data)
-                multi_wafer_wafer_ids.append(wid)
-        update_wafer_selection_list()
-        on_wafer_selection_changed()
-        mw_wafer_count_label.config(text=f"{len(multi_wafer_wafer_ids)} Wafer")
+# Load Wafer Dialog (same as Wafer Tab)
+def show_mw_load_wafer_dialog():
+    """Same dialog as Wafer Tab but loads into Multi-Wafer structures"""
+    parent = main_win
+    dialog = tk.Toplevel(parent)
+    dialog.title("Load Wafer")
+    dialog.geometry("520x480")
+    dialog.transient(parent)
+    dialog.grab_set()
+    dialog.resizable(False, False)
+
+    dialog.update_idletasks()
+    x = parent.winfo_x() + (parent.winfo_width() - 520) // 2
+    y = parent.winfo_y() + (parent.winfo_height() - 480) // 2
+    dialog.geometry(f"+{x}+{y}")
+
+    def on_close():
+        dialog.destroy()
+
+    dialog.protocol("WM_DELETE_WINDOW", on_close)
+
+    tk.Label(dialog, text="📂 Load Wafer Data", font=("Segoe UI", 14, "bold")).pack(pady=(15, 10))
+    tk.Label(dialog, text="Choose data source:", font=("Segoe UI", 10)).pack(pady=(0, 15))
+
+    btn_frame = tk.Frame(dialog)
+    btn_frame.pack(fill=tk.BOTH, expand=True, padx=20)
+
+    # Option 1: Load lokal
+    local_frame = tk.Frame(btn_frame, bg="#E3F2FD", relief=tk.RIDGE, bd=1)
+    local_frame.pack(fill=tk.X, pady=5)
+    tk.Label(local_frame, text="💻 Load lokal", font=("Segoe UI", 11, "bold"), bg="#E3F2FD", fg="#1565C0").pack(anchor=tk.W, padx=10, pady=(8,2))
+    tk.Label(local_frame, text="Load STDF/CSV/MC-300 from local file system", font=("Segoe UI", 9), bg="#E3F2FD", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
+    tk.Button(local_frame, text="Select File...", command=lambda: [on_close(), add_multi_wafer_csv_files()],
+              bg="#1976D2", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2").pack(side=tk.RIGHT, padx=10, pady=8)
+
+    # Option 2: Manifold (fast)
+    fast_frame = tk.Frame(btn_frame, bg="#FFF3E0", relief=tk.RIDGE, bd=1)
+    fast_frame.pack(fill=tk.X, pady=5)
+    tk.Label(fast_frame, text="⚡ Manifold (fast)", font=("Segoe UI", 11, "bold"), bg="#FFF3E0", fg="#E65100").pack(anchor=tk.W, padx=10, pady=(8,2))
+    tk.Label(fast_frame, text="Download ZIP + extract CSV only (no PLM images)", font=("Segoe UI", 9), bg="#FFF3E0", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
+    tk.Button(fast_frame, text="Browse Manifold...", command=lambda: [on_close(), load_manifold_fast()],
+              bg="#F57C00", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2").pack(side=tk.RIGHT, padx=10, pady=8)
+
+    # Option 3: Manifold (complete)
+    full_frame = tk.Frame(btn_frame, bg="#E8F5E9", relief=tk.RIDGE, bd=1)
+    full_frame.pack(fill=tk.X, pady=5)
+    tk.Label(full_frame, text="📦 Manifold (complete)", font=("Segoe UI", 11, "bold"), bg="#E8F5E9", fg="#2E7D32").pack(anchor=tk.W, padx=10, pady=(8,2))
+    tk.Label(full_frame, text="Download full ZIP (CSV + PLM images)", font=("Segoe UI", 9), bg="#E8F5E9", fg="#666").pack(anchor=tk.W, padx=10, pady=(0,8))
+    tk.Button(full_frame, text="Browse Manifold...", command=lambda: [on_close(), load_manifold_complete()],
+              bg="#388E3C", fg="white", font=("Segoe UI", 9, "bold"), cursor="hand2").pack(side=tk.RIGHT, padx=10, pady=8)
+
+    tk.Button(dialog, text="Cancel", command=on_close, font=("Segoe UI", 9)).pack(pady=15)
 
 mw_load_wafer_btn = tk.Button(
     multi_wafer_left_tab_selection,
@@ -12341,7 +12379,7 @@ mw_load_wafer_btn = tk.Button(
     bg="#1565C0",
     fg="white",
     cursor="hand2",
-    command=mw_load_wafer
+    command=show_mw_load_wafer_dialog
 )
 mw_load_wafer_btn.pack(fill=tk.X, padx=5, pady=(8, 5))
 
@@ -14835,7 +14873,7 @@ def get_selected_wafer_indices():
     return [i for i, var in enumerate(multi_wafer_checkbox_vars) if var.get()]
 
 def update_wafer_selection_list():
-    """Update the wafer selection checkboxes based on loaded data"""
+    """Update the wafer selection checkboxes based on loaded data - formatted like Wafer Tab"""
     global multi_wafer_checkbox_vars, multi_wafer_checkbox_widgets
 
     # Clear existing checkboxes
@@ -14844,25 +14882,75 @@ def update_wafer_selection_list():
     multi_wafer_checkbox_vars.clear()
     multi_wafer_checkbox_widgets.clear()
 
-    # Create checkboxes for each loaded wafer
+    wafer_colors = ['#1565C0', '#2E7D32', '#E65100', '#6A1B9A', '#C62828',
+                    '#00838F', '#4E342E', '#283593', '#558B2F', '#AD1457']
+
+    import re as _re
     for idx, wafer_id in enumerate(multi_wafer_wafer_ids):
-        var = tk.BooleanVar(value=True)  # Default selected
+        wafer_name = str(wafer_id) if wafer_id else f"Wafer {idx+1}"
+        color = wafer_colors[idx % len(wafer_colors)]
+
+        # Parse wafer ID into meaningful info
+        parts = wafer_name.split('_')
+        product = ""
+        lot = ""
+        slot = ""
+        date_str = ""
+
+        for p in parts:
+            if p.startswith('P0') or p.startswith('P1') or p.startswith('P2'):
+                product = p
+            elif p.startswith('UNAV') or p.startswith('LOT'):
+                lot = p
+            elif p.startswith('Slot') or _re.match(r'^Slot\d+$', p):
+                slot = p
+        date_match = _re.search(r'(\d{8})[_\-]?(\d{6})?', wafer_name)
+        if date_match:
+            d = date_match.group(1)
+            date_str = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+            if date_match.group(2):
+                t = date_match.group(2)
+                date_str += f" {t[:2]}:{t[2:4]}"
+
+        line1 = f"Wafer {idx+1}"
+        if slot:
+            line1 += f" ({slot})"
+        if product:
+            line1 += f" | {product}"
+        line2_parts = []
+        if lot:
+            line2_parts.append(f"Lot: {lot}")
+        if date_str:
+            line2_parts.append(date_str)
+        line2 = " | ".join(line2_parts) if line2_parts else wafer_name[:40]
+
+        var = tk.BooleanVar(value=True)
         multi_wafer_checkbox_vars.append(var)
 
-        # Truncate long wafer IDs
-        short_id = str(wafer_id)[:25] + "..." if len(str(wafer_id)) > 25 else str(wafer_id)
+        cb_frame = tk.Frame(wafer_list_frame, bg="white", relief=tk.RIDGE, bd=1)
+        cb_frame.pack(fill=tk.X, padx=2, pady=2)
 
-        cb = tk.Checkbutton(
-            wafer_list_frame,
-            text=f"{idx+1}. {short_id}",
-            variable=var,
-            command=on_wafer_selection_changed,
-            font=("Helvetica", 9),
-            anchor="w"
-        )
-        cb.pack(fill=tk.X, padx=2, pady=1)
-        cb.bind("<MouseWheel>", on_wafer_list_mousewheel)
-        multi_wafer_checkbox_widgets.append(cb)
+        cb = tk.Checkbutton(cb_frame, variable=var, command=on_wafer_selection_changed,
+                            bg="white", selectcolor="#4CAF50", activebackground="white")
+        cb.pack(side=tk.LEFT, padx=(4, 0))
+
+        info_frame = tk.Frame(cb_frame, bg="white")
+        info_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=4)
+
+        tk.Label(info_frame, text=line1, font=("Segoe UI", 9, "bold"),
+                 fg=color, bg="white", anchor="w").pack(fill=tk.X)
+        tk.Label(info_frame, text=line2, font=("Segoe UI", 7),
+                 fg="#888", bg="white", anchor="w").pack(fill=tk.X)
+
+        cb_frame.bind("<MouseWheel>", on_wafer_list_mousewheel)
+        info_frame.bind("<MouseWheel>", on_wafer_list_mousewheel)
+        multi_wafer_checkbox_widgets.append(cb_frame)
+
+    # Update count label
+    try:
+        mw_wafer_count_label.config(text=f"{len(multi_wafer_wafer_ids)} Wafer")
+    except:
+        pass
 
 def on_wafer_selection_changed():
     """Called when wafer selection changes - update displays"""
