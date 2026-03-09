@@ -4824,12 +4824,12 @@ def update_wafer_tab_selection_list():
         )
         cb.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        # Yellow "Inf." button for wafer info popup
+        # "Inf." button for wafer info popup
         inf_btn = tk.Label(
             top_row,
             text="Inf.",
             font=("Helvetica", 7, "bold"),
-            bg="#FFD600", fg="#333",
+            bg="#2196F3", fg="white",
             relief=tk.RIDGE, bd=1,
             padx=4, pady=1,
             cursor="hand2"
@@ -15095,12 +15095,12 @@ def update_wafer_selection_list():
         tk.Label(info_frame, text=line2, font=("Segoe UI", 7),
                  fg="#888", bg="white", anchor="w").pack(fill=tk.X)
 
-        # Yellow "Inf." button for wafer info popup
+        # "Inf." button for wafer info popup
         inf_btn = tk.Label(
             cb_frame,
             text="Inf.",
             font=("Helvetica", 7, "bold"),
-            bg="#FFD600", fg="#333",
+            bg="#2196F3", fg="white",
             relief=tk.RIDGE, bd=1,
             padx=4, pady=1,
             cursor="hand2"
@@ -19060,12 +19060,12 @@ def update_diffmap_wafer_list():
         tk.Label(info_frame, text=line1, font=("Segoe UI", 9, "bold"), fg=color, bg=bg_color, anchor="w").pack(fill=tk.X)
         tk.Label(info_frame, text=line2, font=("Segoe UI", 7), fg="#888", bg=bg_color, anchor="w").pack(fill=tk.X)
 
-        # Yellow "Inf." button for wafer info popup
+        # "Inf." button for wafer info popup
         inf_btn = tk.Label(
             top_row,
             text="Inf.",
             font=("Helvetica", 7, "bold"),
-            bg="#FFD600", fg="#333",
+            bg="#2196F3", fg="white",
             relief=tk.RIDGE, bd=1,
             padx=4, pady=1,
             cursor="hand2"
@@ -21969,12 +21969,12 @@ def grr_refresh_wafer_list():
         )
         cb.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        # Yellow "Inf." button for wafer info popup
+        # "Inf." button for wafer info popup
         inf_btn = tk.Label(
             top_row,
             text="Inf.",
             font=("Helvetica", 7, "bold"),
-            bg="#FFD600", fg="#333",
+            bg="#2196F3", fg="white",
             relief=tk.RIDGE, bd=1,
             padx=4, pady=1,
             cursor="hand2"
@@ -21993,7 +21993,7 @@ def grr_refresh_wafer_list():
         )
         info_label.pack(fill=tk.X, padx=2)
 
-        grr_wafer_checkbox_widgets.append((cb_frame, cb))
+        grr_wafer_checkbox_widgets
 
         cb.bind("<MouseWheel>", on_grr_wafer_list_mousewheel)
         cb_frame.bind("<MouseWheel>", on_grr_wafer_list_mousewheel)
