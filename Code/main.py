@@ -19787,17 +19787,109 @@ def _dm_update_comparison():
     canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
     NavigationToolbar2Tk(canvas, _dm_comp_plot).update()
 
-# --- Charac.-Curve placeholder ---
-tk.Label(_dm_charac_frame, text="Charac.-Curve for Diffmap data\n\nSelect parameter and plot characteristic curves of the difference values",
-         font=("Helvetica", 11), fg="gray", bg="white", justify="center").pack(expand=True)
+# --- Charac.-Curve content (with X/Y param selection like Wafer Tab) ---
+_dm_cc_ctrl = tk.Frame(_dm_charac_frame, bg="#f0f0f0")
+_dm_cc_ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+tk.Label(_dm_cc_ctrl, text="X:", font=("Helvetica", 9, "bold"), bg="#f0f0f0").pack(side=tk.LEFT, padx=(5, 2))
+_dm_cc_x_var = tk.StringVar()
+_dm_cc_x_combo = ttk.Combobox(_dm_cc_ctrl, textvariable=_dm_cc_x_var, state="readonly", width=35, font=("Helvetica", 9))
+_dm_cc_x_combo.pack(side=tk.LEFT, padx=2)
+tk.Label(_dm_cc_ctrl, text="Y:", font=("Helvetica", 9, "bold"), bg="#f0f0f0").pack(side=tk.LEFT, padx=(10, 2))
+_dm_cc_y_var = tk.StringVar()
+_dm_cc_y_combo = ttk.Combobox(_dm_cc_ctrl, textvariable=_dm_cc_y_var, state="readonly", width=35, font=("Helvetica", 9))
+_dm_cc_y_combo.pack(side=tk.LEFT, padx=2)
+tk.Button(_dm_cc_ctrl, text="Plot", command=lambda: _dm_update_charac(), font=("Helvetica", 9, "bold"), bg="#4CAF50", fg="white", padx=10).pack(side=tk.LEFT, padx=10)
+tk.Button(_dm_cc_ctrl, text="Clear", command=lambda: _dm_clear_charac(), font=("Helvetica", 9), padx=5).pack(side=tk.LEFT, padx=2)
+_dm_cc_plot = tk.Frame(_dm_charac_frame, bg="white")
+_dm_cc_plot.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-# --- Boxplot content ---
+def _dm_update_charac_params():
+    if diffmap_result_data is None:
+        return
+    exclude = {'x', 'y', 'bin', 'sbin'}
+    params = [str(c) for c in diffmap_result_data.columns if str(c).lower() not in exclude and pd.api.types.is_numeric_dtype(diffmap_result_data[c])]
+    _dm_cc_x_combo["values"] = params
+    _dm_cc_y_combo["values"] = params
+    if len(params) >= 2:
+        _dm_cc_x_combo.current(0)
+        _dm_cc_y_combo.current(1)
+
+def _dm_update_charac():
+    for w in _dm_cc_plot.winfo_children():
+        w.destroy()
+    if diffmap_result_data is None or len(diffmap_result_data) == 0:
+        tk.Label(_dm_cc_plot, text="Calculate Diffmap first", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    xp = _dm_cc_x_var.get()
+    yp = _dm_cc_y_var.get()
+    if not xp or not yp or xp not in diffmap_result_data.columns or yp not in diffmap_result_data.columns:
+        tk.Label(_dm_cc_plot, text="Select X and Y parameters", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    xd = pd.to_numeric(diffmap_result_data[xp], errors='coerce').dropna()
+    yd = pd.to_numeric(diffmap_result_data[yp], errors='coerce').dropna()
+    common = xd.index.intersection(yd.index)
+    xd, yd = xd[common], yd[common]
+    if len(xd) < 2:
+        return
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(xd, yd, s=8, alpha=0.6, c='#1565C0')
+    ax.set_title(f"Charac.-Curve (Diff): {xp[:30]} vs {yp[:30]}", fontsize=12, fontweight='bold')
+    ax.set_xlabel(str(xp)[:50], fontsize=10)
+    ax.set_ylabel(str(yp)[:50], fontsize=10)
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    canvas = FigureCanvasTkAgg(fig, master=_dm_cc_plot)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    NavigationToolbar2Tk(canvas, _dm_cc_plot).update()
+
+def _dm_clear_charac():
+    for w in _dm_cc_plot.winfo_children():
+        w.destroy()
+
+# --- Boxplot content (with group/param selection) ---
 _dm_bp_ctrl = tk.Frame(_dm_boxplot_frame, bg="#f0f0f0")
 _dm_bp_ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-tk.Label(_dm_bp_ctrl, text="Shows boxplot of difference values for selected parameter", font=("Helvetica", 10), fg="#666", bg="#f0f0f0").pack(side=tk.LEFT, padx=10)
-tk.Button(_dm_bp_ctrl, text="Update Boxplot", command=lambda: _dm_update_boxplot(), font=("Helvetica", 9, "bold"), bg="#2196F3", fg="white", padx=10).pack(side=tk.RIGHT, padx=10)
+tk.Label(_dm_bp_ctrl, text="Group:", font=("Helvetica", 9, "bold"), bg="#f0f0f0").pack(side=tk.LEFT, padx=(5, 2))
+_dm_bp_group_var = tk.StringVar(value="All Groups")
+_dm_bp_group_combo = ttk.Combobox(_dm_bp_ctrl, textvariable=_dm_bp_group_var, state="readonly", width=18, font=("Helvetica", 9))
+_dm_bp_group_combo.pack(side=tk.LEFT, padx=2)
+tk.Label(_dm_bp_ctrl, text="Param:", font=("Helvetica", 9, "bold"), bg="#f0f0f0").pack(side=tk.LEFT, padx=(10, 2))
+_dm_bp_param_var = tk.StringVar()
+_dm_bp_param_combo = ttk.Combobox(_dm_bp_ctrl, textvariable=_dm_bp_param_var, state="readonly", width=40, font=("Helvetica", 9))
+_dm_bp_param_combo.pack(side=tk.LEFT, padx=2)
+_dm_bp_show_stats_var = tk.BooleanVar(value=True)
+tk.Checkbutton(_dm_bp_ctrl, text="Show Statistics (Mean/Median)", variable=_dm_bp_show_stats_var, font=("Helvetica", 9), bg="#f0f0f0").pack(side=tk.LEFT, padx=10)
+tk.Button(_dm_bp_ctrl, text="Plot", command=lambda: _dm_update_boxplot(), font=("Helvetica", 9, "bold"), bg="#4CAF50", fg="white", padx=10).pack(side=tk.RIGHT, padx=10)
 _dm_bp_plot = tk.Frame(_dm_boxplot_frame, bg="white")
 _dm_bp_plot.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+def _dm_bp_update_params(event=None):
+    if diffmap_result_data is None:
+        return
+    group = _dm_bp_group_var.get()
+    exclude = {'x', 'y', 'bin', 'sbin'}
+    if group == "All Groups":
+        params = [str(c) for c in diffmap_result_data.columns if str(c).lower() not in exclude and pd.api.types.is_numeric_dtype(diffmap_result_data[c])]
+    else:
+        params = [str(c) for c in diffmap_result_data.columns if str(c).lower() not in exclude and pd.api.types.is_numeric_dtype(diffmap_result_data[c]) and extract_group_from_column(str(c)) == group]
+    _dm_bp_param_combo["values"] = params
+    if params:
+        _dm_bp_param_combo.current(0)
+
+def _dm_bp_update_groups():
+    if diffmap_result_data is None:
+        return
+    exclude = {'x', 'y', 'bin', 'sbin'}
+    groups = set()
+    for c in diffmap_result_data.columns:
+        if str(c).lower() not in exclude and pd.api.types.is_numeric_dtype(diffmap_result_data[c]):
+            groups.add(extract_group_from_column(str(c)))
+    _dm_bp_group_combo["values"] = ["All Groups"] + sorted(groups)
+    _dm_bp_update_params()
+
+_dm_bp_group_combo.bind("<<ComboboxSelected>>", _dm_bp_update_params)
+_dm_bp_param_combo.bind("<<ComboboxSelected>>", lambda e: _dm_update_boxplot())
 
 def _dm_update_boxplot():
     for w in _dm_bp_plot.winfo_children():
@@ -19805,9 +19897,9 @@ def _dm_update_boxplot():
     if diffmap_result_data is None or len(diffmap_result_data) == 0:
         tk.Label(_dm_bp_plot, text="Calculate Diffmap first", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
         return
-    param = get_diffmap_selected_param()
+    param = _dm_bp_param_var.get()
     if not param or param not in diffmap_result_data.columns:
-        tk.Label(_dm_bp_plot, text="Select a parameter", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        tk.Label(_dm_bp_plot, text="Select a parameter from the dropdown above", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
         return
     values = diffmap_result_data[param].dropna()
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -19825,13 +19917,39 @@ def _dm_update_boxplot():
     canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
     NavigationToolbar2Tk(canvas, _dm_bp_plot).update()
 
-# --- Distribution content ---
+# --- Distribution content (with group/param selection) ---
 _dm_dist_ctrl = tk.Frame(_dm_distribution_frame, bg="#f0f0f0")
 _dm_dist_ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-tk.Label(_dm_dist_ctrl, text="Histogram / distribution of difference values", font=("Helvetica", 10), fg="#666", bg="#f0f0f0").pack(side=tk.LEFT, padx=10)
-tk.Button(_dm_dist_ctrl, text="Update Distribution", command=lambda: _dm_update_distribution(), font=("Helvetica", 9, "bold"), bg="#2196F3", fg="white", padx=10).pack(side=tk.RIGHT, padx=10)
+tk.Label(_dm_dist_ctrl, text="Group:", font=("Helvetica", 9, "bold"), bg="#f0f0f0").pack(side=tk.LEFT, padx=(5, 2))
+_dm_dist_group_var = tk.StringVar(value="All Groups")
+_dm_dist_group_combo = ttk.Combobox(_dm_dist_ctrl, textvariable=_dm_dist_group_var, state="readonly", width=18, font=("Helvetica", 9))
+_dm_dist_group_combo.pack(side=tk.LEFT, padx=2)
+tk.Label(_dm_dist_ctrl, text="Param:", font=("Helvetica", 9, "bold"), bg="#f0f0f0").pack(side=tk.LEFT, padx=(10, 2))
+_dm_dist_param_var = tk.StringVar()
+_dm_dist_param_combo = ttk.Combobox(_dm_dist_ctrl, textvariable=_dm_dist_param_var, state="readonly", width=40, font=("Helvetica", 9))
+_dm_dist_param_combo.pack(side=tk.LEFT, padx=2)
+tk.Label(_dm_dist_ctrl, text="Type:", font=("Helvetica", 9), bg="#f0f0f0").pack(side=tk.LEFT, padx=(10, 2))
+_dm_dist_type_var = tk.StringVar(value="Histogram")
+ttk.Combobox(_dm_dist_ctrl, textvariable=_dm_dist_type_var, values=["Histogram", "CDF", "PDF"], state="readonly", width=10, font=("Helvetica", 9)).pack(side=tk.LEFT, padx=2)
+tk.Button(_dm_dist_ctrl, text="Plot", command=lambda: _dm_update_distribution(), font=("Helvetica", 9, "bold"), bg="#4CAF50", fg="white", padx=10).pack(side=tk.RIGHT, padx=10)
 _dm_dist_plot = tk.Frame(_dm_distribution_frame, bg="white")
 _dm_dist_plot.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+def _dm_dist_update_params(event=None):
+    if diffmap_result_data is None:
+        return
+    group = _dm_dist_group_var.get()
+    exclude = {'x', 'y', 'bin', 'sbin'}
+    if group == "All Groups":
+        params = [str(c) for c in diffmap_result_data.columns if str(c).lower() not in exclude and pd.api.types.is_numeric_dtype(diffmap_result_data[c])]
+    else:
+        params = [str(c) for c in diffmap_result_data.columns if str(c).lower() not in exclude and pd.api.types.is_numeric_dtype(diffmap_result_data[c]) and extract_group_from_column(str(c)) == group]
+    _dm_dist_param_combo["values"] = params
+    if params:
+        _dm_dist_param_combo.current(0)
+
+_dm_dist_group_combo.bind("<<ComboboxSelected>>", _dm_dist_update_params)
+_dm_dist_param_combo.bind("<<ComboboxSelected>>", lambda e: _dm_update_distribution())
 
 def _dm_update_distribution():
     for w in _dm_dist_plot.winfo_children():
@@ -19839,9 +19957,9 @@ def _dm_update_distribution():
     if diffmap_result_data is None or len(diffmap_result_data) == 0:
         tk.Label(_dm_dist_plot, text="Calculate Diffmap first", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
         return
-    param = get_diffmap_selected_param()
+    param = _dm_dist_param_var.get()
     if not param or param not in diffmap_result_data.columns:
-        tk.Label(_dm_dist_plot, text="Select a parameter", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        tk.Label(_dm_dist_plot, text="Select a parameter from the dropdown above", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
         return
     values = diffmap_result_data[param].dropna()
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -19989,6 +20107,19 @@ def _switch_dm_tab(tab_key, event=None):
         _dm_update_testheader()
     elif tab_key == "comparison":
         _dm_update_comparison()
+    elif tab_key == "boxplot":
+        _dm_bp_update_groups()
+    elif tab_key == "distribution":
+        if diffmap_result_data is not None:
+            exclude = {'x', 'y', 'bin', 'sbin'}
+            groups = set()
+            for c in diffmap_result_data.columns:
+                if str(c).lower() not in exclude and pd.api.types.is_numeric_dtype(diffmap_result_data[c]):
+                    groups.add(extract_group_from_column(str(c)))
+            _dm_dist_group_combo["values"] = ["All Groups"] + sorted(groups)
+            _dm_dist_update_params()
+    elif tab_key == "charac":
+        _dm_update_charac_params()
     elif tab_key == "correlation":
         if diffmap_result_data is not None:
             exclude = {'x', 'y', 'bin', 'sbin'}
