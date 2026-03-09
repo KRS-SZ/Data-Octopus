@@ -3874,31 +3874,50 @@ folder_status_label = tk.Label(
 # PLM folder directory
 plm_file_directory = None
 
-# ============== TAB BAR (Heatmap / Charac.-Curve / Statistics) ==============
+# ============== TAB BAR (Testheader / Comparison / Wafermap / Charac.-Curve / Boxplot / Distribution / Correlation / Statistik-Tabelle) ==============
 _display_tab_bar = tk.Frame(tab6, bg="#e0e0e0")
 _display_tab_bar.pack(side=tk.TOP, fill=tk.X, padx=5, pady=(2, 0))
 
-_active_display_tab = "heatmap"  # "heatmap", "charac", "statistics"
+_active_display_tab = "wafermap"
 
 _TAB_ACTIVE = {"bg": "white", "fg": "#333", "relief": tk.FLAT, "bd": 0}
 _TAB_INACTIVE = {"bg": "#d0d0d0", "fg": "#666", "relief": tk.FLAT, "bd": 0}
 
-_tab_heatmap = tk.Label(
-    _display_tab_bar, text="  Heatmap  ", font=("Helvetica", 10, "bold"),
-    cursor="hand2", padx=12, pady=4, **_TAB_ACTIVE
+_tab_testheader = tk.Label(
+    _display_tab_bar, text="  Testheader  ", font=("Helvetica", 10, "bold"),
+    cursor="hand2", padx=8, pady=4, **_TAB_INACTIVE
 )
-_tab_heatmap.pack(side=tk.LEFT, padx=(2, 0))
+_tab_testheader.pack(side=tk.LEFT, padx=(2, 0))
+
+_tab_heatmap = tk.Label(
+    _display_tab_bar, text="  Wafermap  ", font=("Helvetica", 10, "bold"),
+    cursor="hand2", padx=8, pady=4, **_TAB_ACTIVE
+)
+_tab_heatmap.pack(side=tk.LEFT, padx=(1, 0))
 
 _tab_charac = tk.Label(
     _display_tab_bar, text="  Charac.-Curve  ", font=("Helvetica", 10, "bold"),
-    cursor="hand2", padx=12, pady=4, **_TAB_INACTIVE
+    cursor="hand2", padx=8, pady=4, **_TAB_INACTIVE
 )
 _tab_charac.pack(side=tk.LEFT, padx=(1, 0))
 
-_tab_statistics = tk.Label(
-    _display_tab_bar, text="  Statistics  ", font=("Helvetica", 10, "bold"),
-    cursor="hand2", padx=12, pady=4, **_TAB_INACTIVE
+_tab_boxplot = tk.Label(
+    _display_tab_bar, text="  Boxplot  ", font=("Helvetica", 10, "bold"),
+    cursor="hand2", padx=8, pady=4, **_TAB_INACTIVE
 )
+_tab_boxplot.pack(side=tk.LEFT, padx=(1, 0))
+
+_tab_distribution = tk.Label(
+    _display_tab_bar, text="  Distribution  ", font=("Helvetica", 10, "bold"),
+    cursor="hand2", padx=8, pady=4, **_TAB_INACTIVE
+)
+_tab_distribution.pack(side=tk.LEFT, padx=(1, 0))
+
+_tab_statistics = tk.Label(
+    _display_tab_bar, text="  📊 Statistik-Tabelle  ", font=("Helvetica", 10, "bold"),
+    cursor="hand2", padx=8, pady=4, **_TAB_INACTIVE
+)
+_tab_statistics.pack(side=tk.LEFT, padx=(1, 0))
 _tab_statistics.pack(side=tk.LEFT, padx=(1, 0))
 
 _tab_sep = tk.Frame(_display_tab_bar, height=2, bg="#4CAF50")
@@ -3913,26 +3932,42 @@ def _switch_display_tab(tab_name, event=None):
     # Hide all content frames
     heatmap_display_frame.pack_forget()
     charac_curve_frame.pack_forget()
+    _stats_boxplot_container.pack_forget()
+    _stats_dist_container.pack_forget()
     statistics_display_frame.pack_forget()
+    _testheader_frame.pack_forget()
     # Reset all tab styles
     _tab_heatmap.config(**_TAB_INACTIVE)
     _tab_charac.config(**_TAB_INACTIVE)
+    _tab_boxplot.config(**_TAB_INACTIVE)
+    _tab_distribution.config(**_TAB_INACTIVE)
     _tab_statistics.config(**_TAB_INACTIVE)
+    _tab_testheader.config(**_TAB_INACTIVE)
     # Show selected
-    if tab_name == "heatmap":
+    if tab_name == "wafermap":
         heatmap_display_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         _tab_heatmap.config(**_TAB_ACTIVE)
     elif tab_name == "charac":
         charac_curve_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         _tab_charac.config(**_TAB_ACTIVE)
+    elif tab_name == "boxplot":
+        _stats_boxplot_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        _tab_boxplot.config(**_TAB_ACTIVE)
+    elif tab_name == "distribution":
+        _stats_dist_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        _tab_distribution.config(**_TAB_ACTIVE)
     elif tab_name == "statistics":
         statistics_display_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         _tab_statistics.config(**_TAB_ACTIVE)
+        _update_statistic_table()
+    elif tab_name == "testheader":
+        _testheader_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        _tab_testheader.config(**_TAB_ACTIVE)
+        _update_testheader_content()
     # Update wafer selection mode
     try:
         _update_wafer_mode_label()
-        # When switching to Heatmap, enforce single selection
-        if tab_name == "heatmap":
+        if tab_name == "wafermap":
             sel_idx = wafer_tab_selected_var.get()
             for i, var in enumerate(wafer_tab_checkbox_vars):
                 var.set(i == sel_idx)
@@ -3941,8 +3976,11 @@ def _switch_display_tab(tab_name, event=None):
         pass
 
 
-_tab_heatmap.bind("<Button-1>", lambda e: _switch_display_tab("heatmap"))
+_tab_testheader.bind("<Button-1>", lambda e: _switch_display_tab("testheader"))
+_tab_heatmap.bind("<Button-1>", lambda e: _switch_display_tab("wafermap"))
 _tab_charac.bind("<Button-1>", lambda e: _switch_display_tab("charac"))
+_tab_boxplot.bind("<Button-1>", lambda e: _switch_display_tab("boxplot"))
+_tab_distribution.bind("<Button-1>", lambda e: _switch_display_tab("distribution"))
 _tab_statistics.bind("<Button-1>", lambda e: _switch_display_tab("statistics"))
 
 # Keep backward compat
@@ -5007,6 +5045,205 @@ available_image_types = ["All"]
 heatmap_display_frame = tk.Frame(heatmap_main_container)
 heatmap_display_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
+# ============== TESTHEADER FRAME (NOT packed at startup) ==============
+_testheader_frame = tk.Frame(heatmap_main_container, bg="white")
+
+def _update_testheader_content():
+    for widget in _testheader_frame.winfo_children():
+        widget.destroy()
+    if not multiple_stdf_data or not multiple_wafer_ids:
+        tk.Label(_testheader_frame, text="No wafer data loaded", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    idx = wafer_tab_selected_var.get() if wafer_tab_selected_var.get() < len(multiple_stdf_data) else 0
+    meta = wafer_metadata[idx] if idx < len(wafer_metadata) else {}
+    wafer_id = multiple_wafer_ids[idx]
+    df = multiple_stdf_data[idx]
+    # Scrollable content
+    canvas = tk.Canvas(_testheader_frame, highlightthickness=0, bg="white")
+    scrollbar = ttk.Scrollbar(_testheader_frame, orient="vertical", command=canvas.yview)
+    content = tk.Frame(canvas, bg="white")
+    content.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+    canvas.create_window((0, 0), window=content, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+    canvas.bind("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1 * (e.delta / 120)), "units"))
+
+    def add_section(title, color="#1565C0"):
+        sec = tk.LabelFrame(content, text=title, font=("Segoe UI", 10, "bold"), fg=color, bg="white")
+        sec.pack(fill=tk.X, padx=10, pady=(8, 2))
+        return sec
+    def add_row(parent, label, value, row):
+        tk.Label(parent, text=label, font=("Segoe UI", 9, "bold"), anchor="w", bg="white").grid(row=row, column=0, sticky="w", padx=(10, 8), pady=2)
+        display = str(value).strip() if value and str(value).strip() and str(value) != 'nan' else "-"
+        tk.Label(parent, text=display, font=("Segoe UI", 9), anchor="w", fg="#333", bg="white", wraplength=500).grid(row=row, column=1, sticky="w", padx=(0, 10), pady=2)
+
+    sec = add_section("📂 Data Source", "#E65100")
+    add_row(sec, "Format:", meta.get('format', 'Unknown'), 0)
+    add_row(sec, "Source:", "🌐 Manifold" if meta.get('source') == "manifold" else "💻 Local", 1)
+    fp = meta.get('file_path', '')
+    add_row(sec, "Filename:", os.path.basename(fp) if fp else "-", 2)
+    add_row(sec, "Directory:", os.path.dirname(fp) if fp else "-", 3)
+
+    sec = add_section("🔵 Wafer Identification", "#1565C0")
+    add_row(sec, "Wafer ID:", meta.get('wafer_id', wafer_id), 0)
+    add_row(sec, "Product:", meta.get('product'), 1)
+    add_row(sec, "Lot ID:", meta.get('lot_id'), 2)
+    add_row(sec, "Insertion:", meta.get('insertion'), 3)
+    add_row(sec, "Type (ENG/PROD):", meta.get('test_type'), 4)
+
+    sec = add_section("🔧 Test Configuration", "#2E7D32")
+    add_row(sec, "Test Program:", meta.get('test_program'), 0)
+    add_row(sec, "Program Version:", meta.get('program_version'), 1)
+    add_row(sec, "Tester Name:", meta.get('tester_name'), 2)
+    add_row(sec, "Tester Type:", meta.get('tester_type'), 3)
+    add_row(sec, "Temperature:", meta.get('temperature'), 4)
+    add_row(sec, "Color Zone:", meta.get('color_zone'), 5)
+
+    sec = add_section("📍 Location", "#6A1B9A")
+    add_row(sec, "Facility:", meta.get('facility'), 0)
+    add_row(sec, "Floor:", meta.get('floor_id'), 1)
+    add_row(sec, "Operator:", meta.get('operator'), 2)
+
+    sec = add_section("📊 Measurement Data", "#00838F")
+    add_row(sec, "Date/Time:", meta.get('datetime'), 0)
+    add_row(sec, "Die Count:", str(len(df)), 1)
+    param_count = len([c for c in df.columns if c not in ('x', 'y', 'bin', 'sbin')])
+    add_row(sec, "Parameter Count:", str(param_count), 2)
+    if 'x' in df.columns:
+        add_row(sec, "X Range:", f"{df['x'].min()} – {df['x'].max()}", 3)
+    if 'y' in df.columns:
+        add_row(sec, "Y Range:", f"{df['y'].min()} – {df['y'].max()}", 4)
+
+    hw_info = meta.get('hardware_info', {})
+    if hw_info:
+        sec = add_section("🔧 Hardware", "#37474F")
+        for ri, (hw_name, hw_val) in enumerate(hw_info.items()):
+            add_row(sec, f"{hw_name}:", hw_val, ri)
+
+# ============== COMPARISON FRAME (NOT packed at startup) ==============
+_comparison_frame = tk.Frame(heatmap_main_container, bg="white")
+
+_comp_ctrl = tk.Frame(_comparison_frame, bg="#f0f0f0")
+_comp_ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+tk.Label(_comp_ctrl, text="Compare loaded wafers side by side. Load 2+ wafers to see comparison.",
+         font=("Helvetica", 10), fg="#666", bg="#f0f0f0").pack(side=tk.LEFT, padx=10)
+tk.Button(_comp_ctrl, text="Update Comparison", command=lambda: _update_comparison(),
+          font=("Helvetica", 9, "bold"), bg="#2196F3", fg="white", padx=10).pack(side=tk.RIGHT, padx=10)
+
+_comp_plot_frame = tk.Frame(_comparison_frame, bg="white")
+_comp_plot_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+_comp_canvas_ref = [None]
+
+def _update_comparison():
+    for widget in _comp_plot_frame.winfo_children():
+        widget.destroy()
+    _comp_canvas_ref[0] = None
+    if not multiple_stdf_data or len(multiple_stdf_data) < 1:
+        tk.Label(_comp_plot_frame, text="Load at least 1 wafer for comparison", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    n_wafers = min(len(multiple_stdf_data), 6)
+    fig, axes = plt.subplots(1, n_wafers, figsize=(5 * n_wafers, 5))
+    if n_wafers == 1:
+        axes = [axes]
+    for i in range(n_wafers):
+        df = multiple_stdf_data[i]
+        wid = str(multiple_wafer_ids[i])[:30]
+        ax = axes[i]
+        bin_col = 'sbin' if 'sbin' in df.columns else 'bin'
+        if bin_col in df.columns and 'x' in df.columns and 'y' in df.columns:
+            colors = ['#4CAF50' if b == 1 else '#f44336' for b in df[bin_col]]
+            ax.scatter(df['x'], df['y'], c=colors, s=8, marker='s')
+        ax.set_title(wid, fontsize=9)
+        ax.set_aspect('equal')
+        ax.invert_yaxis()
+        ax.grid(True, alpha=0.2)
+    fig.suptitle("Wafer Comparison (Bin Map)", fontsize=12, fontweight='bold')
+    fig.tight_layout()
+    canvas = FigureCanvasTkAgg(fig, master=_comp_plot_frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    NavigationToolbar2Tk(canvas, _comp_plot_frame).update()
+    _comp_canvas_ref[0] = (fig, axes, canvas)
+
+# ============== CORRELATION FRAME (NOT packed at startup) ==============
+_correlation_frame = tk.Frame(heatmap_main_container, bg="white")
+
+_corr_ctrl = tk.Frame(_correlation_frame, bg="#f0f0f0")
+_corr_ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+
+tk.Label(_corr_ctrl, text="X:", font=("Helvetica", 9, "bold"), bg="#f0f0f0").pack(side=tk.LEFT, padx=(5, 2))
+_corr_x_var = tk.StringVar()
+_corr_x_combo = ttk.Combobox(_corr_ctrl, textvariable=_corr_x_var, state="readonly", width=40, font=("Helvetica", 9))
+_corr_x_combo.pack(side=tk.LEFT, padx=2)
+
+tk.Label(_corr_ctrl, text="Y:", font=("Helvetica", 9, "bold"), bg="#f0f0f0").pack(side=tk.LEFT, padx=(10, 2))
+_corr_y_var = tk.StringVar()
+_corr_y_combo = ttk.Combobox(_corr_ctrl, textvariable=_corr_y_var, state="readonly", width=40, font=("Helvetica", 9))
+_corr_y_combo.pack(side=tk.LEFT, padx=2)
+
+tk.Button(_corr_ctrl, text="Plot", command=lambda: _update_correlation(),
+          font=("Helvetica", 9, "bold"), bg="#4CAF50", fg="white", padx=10).pack(side=tk.LEFT, padx=10)
+
+_corr_plot_frame = tk.Frame(_correlation_frame, bg="white")
+_corr_plot_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+_corr_canvas_ref = [None]
+
+def _update_correlation_params():
+    if not multiple_stdf_data:
+        return
+    idx = wafer_tab_selected_var.get() if wafer_tab_selected_var.get() < len(multiple_stdf_data) else 0
+    df = multiple_stdf_data[idx]
+    exclude = {'x', 'y', 'bin', 'sbin'}
+    params = [str(c) for c in df.columns if str(c).lower() not in exclude and pd.api.types.is_numeric_dtype(df[c])]
+    _corr_x_combo["values"] = params
+    _corr_y_combo["values"] = params
+    if len(params) >= 2:
+        _corr_x_combo.current(0)
+        _corr_y_combo.current(1)
+
+def _update_correlation():
+    for widget in _corr_plot_frame.winfo_children():
+        widget.destroy()
+    _corr_canvas_ref[0] = None
+    if not multiple_stdf_data:
+        return
+    idx = wafer_tab_selected_var.get() if wafer_tab_selected_var.get() < len(multiple_stdf_data) else 0
+    df = multiple_stdf_data[idx]
+    x_param = _corr_x_var.get()
+    y_param = _corr_y_var.get()
+    if not x_param or not y_param or x_param not in df.columns or y_param not in df.columns:
+        tk.Label(_corr_plot_frame, text="Select X and Y parameters", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    x_data = pd.to_numeric(df[x_param], errors='coerce').dropna()
+    y_data = pd.to_numeric(df[y_param], errors='coerce').dropna()
+    common = x_data.index.intersection(y_data.index)
+    x_data = x_data[common]
+    y_data = y_data[common]
+    if len(x_data) < 2:
+        tk.Label(_corr_plot_frame, text="Not enough data points", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.scatter(x_data, y_data, s=10, alpha=0.6, c='#1565C0')
+    # Linear regression
+    from numpy.polynomial import polynomial as P
+    coeffs = np.polyfit(x_data, y_data, 1)
+    poly = np.poly1d(coeffs)
+    x_line = np.linspace(x_data.min(), x_data.max(), 100)
+    ax.plot(x_line, poly(x_line), 'r-', linewidth=1.5, label=f'y = {coeffs[0]:.4g}x + {coeffs[1]:.4g}')
+    corr = x_data.corr(y_data)
+    ax.set_title(f"Correlation: R = {corr:.4f}", fontsize=12, fontweight='bold')
+    ax.set_xlabel(str(x_param)[:50], fontsize=10)
+    ax.set_ylabel(str(y_param)[:50], fontsize=10)
+    ax.legend(fontsize=9)
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    canvas = FigureCanvasTkAgg(fig, master=_corr_plot_frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    NavigationToolbar2Tk(canvas, _corr_plot_frame).update()
+    _corr_canvas_ref[0] = (fig, ax, canvas)
+
 # Charac.-Curve panel (sibling of heatmap_display_frame, NOT packed at startup)
 charac_curve_frame = tk.Frame(heatmap_main_container)
 
@@ -5089,35 +5326,10 @@ charac_x_listbox.bind("<<ListboxSelect>>", _update_charac_selection_info)
 charac_y_listbox.bind("<<ListboxSelect>>", _update_charac_selection_info)
 
 # ============== STATISTICS DISPLAY FRAME (3rd tab, NOT packed at startup) ==============
-statistics_display_frame = tk.Frame(heatmap_main_container)
-
-# Sub-tab bar inside Statistics
-_stats_tab_bar = tk.Frame(statistics_display_frame, bg="#e0e0e0")
-_stats_tab_bar.pack(side=tk.TOP, fill=tk.X, padx=5, pady=(2, 0))
-
-_active_stats_subtab = "boxplot"
-
-_STAB_ACTIVE = {"bg": "white", "fg": "#333", "relief": tk.FLAT, "bd": 0}
-_STAB_INACTIVE = {"bg": "#d0d0d0", "fg": "#666", "relief": tk.FLAT, "bd": 0}
-
-_stab_boxplot = tk.Label(
-    _stats_tab_bar, text="  📊 Boxplot  ", font=("Helvetica", 10, "bold"),
-    cursor="hand2", padx=12, pady=3, **_STAB_ACTIVE
-)
-_stab_boxplot.pack(side=tk.LEFT, padx=(2, 0))
-
-_stab_distribution = tk.Label(
-    _stats_tab_bar, text="  📈 Distribution  ", font=("Helvetica", 10, "bold"),
-    cursor="hand2", padx=12, pady=3, **_STAB_INACTIVE
-)
-_stab_distribution.pack(side=tk.LEFT, padx=(1, 0))
-
-_stats_tab_sep = tk.Frame(_stats_tab_bar, height=2, bg="#1565C0")
-_stats_tab_sep.pack(side=tk.BOTTOM, fill=tk.X)
-
-# Boxplot sub-tab content
-_stats_boxplot_container = tk.Frame(statistics_display_frame)
+# ============== BOXPLOT FRAME (own tab, NOT packed at startup) ==============
+_stats_boxplot_container = tk.Frame(heatmap_main_container)
 _stats_boxplot_container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+_stats_boxplot_container.pack_forget()
 
 # Controls for boxplot
 _bp_ctrl = tk.Frame(_stats_boxplot_container)
@@ -5224,8 +5436,8 @@ boxplot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
 boxplot_plot_frame = tk.Frame(boxplot_frame, bg="#f8f8f8")
 boxplot_plot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-# Distribution sub-tab content (NOT packed at startup)
-_stats_dist_container = tk.Frame(statistics_display_frame)
+# ============== DISTRIBUTION FRAME (own tab, NOT packed at startup) ==============
+_stats_dist_container = tk.Frame(heatmap_main_container)
 
 _dist_ctrl = tk.Frame(_stats_dist_container)
 _dist_ctrl.pack(side=tk.TOP, fill=tk.X, padx=10, pady=5)
@@ -5330,25 +5542,77 @@ prob_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
 prob_plot_frame = tk.Frame(prob_frame, bg="#f8f8f8")
 prob_plot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
+# ============== STATISTIC TABLE FRAME (own tab, NOT packed at startup) ==============
+statistics_display_frame = tk.Frame(heatmap_main_container)
 
-def _switch_stats_subtab(subtab, event=None):
-    global _active_stats_subtab
-    if _active_stats_subtab == subtab:
+_stat_table_title = tk.Label(statistics_display_frame, text="📊 Statistic Table", font=("Segoe UI", 12, "bold"), fg="#1565C0")
+_stat_table_title.pack(side=tk.TOP, fill=tk.X, padx=10, pady=(10, 5))
+
+_stat_table_ctrl = tk.Frame(statistics_display_frame)
+_stat_table_ctrl.pack(side=tk.TOP, fill=tk.X, padx=10, pady=5)
+tk.Button(_stat_table_ctrl, text="Update Table", command=lambda: _update_statistic_table(),
+          font=("Helvetica", 9, "bold"), bg="#2196F3", fg="white", padx=10).pack(side=tk.LEFT, padx=2)
+
+_stat_table_canvas = tk.Canvas(statistics_display_frame, highlightthickness=0)
+_stat_table_scrollbar_y = ttk.Scrollbar(statistics_display_frame, orient="vertical", command=_stat_table_canvas.yview)
+_stat_table_scrollbar_x = ttk.Scrollbar(statistics_display_frame, orient="horizontal", command=_stat_table_canvas.xview)
+_stat_table_inner = tk.Frame(_stat_table_canvas)
+_stat_table_inner.bind("<Configure>", lambda e: _stat_table_canvas.configure(scrollregion=_stat_table_canvas.bbox("all")))
+_stat_table_canvas.create_window((0, 0), window=_stat_table_inner, anchor="nw")
+_stat_table_canvas.configure(yscrollcommand=_stat_table_scrollbar_y.set, xscrollcommand=_stat_table_scrollbar_x.set)
+_stat_table_scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
+_stat_table_scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X)
+_stat_table_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+_stat_table_canvas.bind("<MouseWheel>", lambda e: _stat_table_canvas.yview_scroll(int(-1 * (e.delta / 120)), "units"))
+
+def _update_statistic_table():
+    for widget in _stat_table_inner.winfo_children():
+        widget.destroy()
+    if not multiple_stdf_data or not multiple_wafer_ids:
+        tk.Label(_stat_table_inner, text="No wafer data loaded", font=("Helvetica", 11), fg="gray").pack(pady=20)
         return
-    _active_stats_subtab = subtab
-    _stats_boxplot_container.pack_forget()
-    _stats_dist_container.pack_forget()
-    _stab_boxplot.config(**_STAB_INACTIVE)
-    _stab_distribution.config(**_STAB_INACTIVE)
-    if subtab == "boxplot":
-        _stats_boxplot_container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        _stab_boxplot.config(**_STAB_ACTIVE)
-    else:
-        _stats_dist_container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        _stab_distribution.config(**_STAB_ACTIVE)
-
-_stab_boxplot.bind("<Button-1>", lambda e: _switch_stats_subtab("boxplot"))
-_stab_distribution.bind("<Button-1>", lambda e: _switch_stats_subtab("distribution"))
+    idx = wafer_tab_selected_var.get() if wafer_tab_selected_var.get() < len(multiple_stdf_data) else 0
+    df = multiple_stdf_data[idx]
+    wafer_id = multiple_wafer_ids[idx]
+    # Bin Summary
+    bin_section = tk.LabelFrame(_stat_table_inner, text=f"Bin Summary – {wafer_id}", font=("Segoe UI", 10, "bold"), fg="#1565C0")
+    bin_section.pack(fill=tk.X, padx=5, pady=5)
+    bin_col = 'sbin' if 'sbin' in df.columns else ('bin' if 'bin' in df.columns else None)
+    if bin_col:
+        bin_counts = df[bin_col].value_counts().sort_index()
+        total = len(df)
+        for ci, h in enumerate(["Bin", "Count", "Percentage", "Pass/Fail"]):
+            tk.Label(bin_section, text=h, font=("Segoe UI", 9, "bold"), bg="#e0e0e0", relief=tk.RIDGE, padx=8, pady=3).grid(row=0, column=ci, sticky="nsew", padx=1, pady=1)
+        for ri, (bv, cnt) in enumerate(bin_counts.items(), 1):
+            pct = f"{cnt / total * 100:.1f}%"
+            pf = "Pass" if int(bv) == 1 else "Fail"
+            pf_color = "#2E7D32" if pf == "Pass" else "#C62828"
+            for ci, val in enumerate([str(bv), str(cnt), pct]):
+                tk.Label(bin_section, text=val, font=("Consolas", 9), relief=tk.RIDGE, padx=8, pady=2).grid(row=ri, column=ci, sticky="nsew", padx=1, pady=1)
+            tk.Label(bin_section, text=pf, font=("Consolas", 9, "bold"), fg=pf_color, relief=tk.RIDGE, padx=8, pady=2).grid(row=ri, column=3, sticky="nsew", padx=1, pady=1)
+        pass_count = bin_counts.get(1, 0)
+        yield_pct = f"{pass_count / total * 100:.1f}%" if total > 0 else "0%"
+        ri = len(bin_counts) + 1
+        tk.Label(bin_section, text="TOTAL", font=("Segoe UI", 9, "bold"), bg="#E3F2FD", relief=tk.RIDGE, padx=8, pady=3).grid(row=ri, column=0, sticky="nsew", padx=1, pady=1)
+        tk.Label(bin_section, text=str(total), font=("Consolas", 9, "bold"), bg="#E3F2FD", relief=tk.RIDGE, padx=8, pady=3).grid(row=ri, column=1, sticky="nsew", padx=1, pady=1)
+        tk.Label(bin_section, text="100%", font=("Consolas", 9, "bold"), bg="#E3F2FD", relief=tk.RIDGE, padx=8, pady=3).grid(row=ri, column=2, sticky="nsew", padx=1, pady=1)
+        tk.Label(bin_section, text=f"Yield: {yield_pct}", font=("Consolas", 9, "bold"), fg="#1565C0", bg="#E3F2FD", relief=tk.RIDGE, padx=8, pady=3).grid(row=ri, column=3, sticky="nsew", padx=1, pady=1)
+    # Parameter Statistics
+    param_section = tk.LabelFrame(_stat_table_inner, text="Parameter Statistics", font=("Segoe UI", 10, "bold"), fg="#2E7D32")
+    param_section.pack(fill=tk.X, padx=5, pady=5)
+    exclude_cols = {'x', 'y', 'bin', 'sbin', 'hardbin', 'softbin', 'waferid', 'device', 'date', 'testprogram', 'product', 'insertion', 'type', 'lotid', 'color', 'testername', 'temperature'}
+    numeric_cols = [c for c in df.columns if str(c).lower() not in exclude_cols and pd.api.types.is_numeric_dtype(df[c])]
+    if numeric_cols:
+        for ci, h in enumerate(["Parameter", "Min", "Max", "Mean", "Median", "Std", "Count"]):
+            tk.Label(param_section, text=h, font=("Segoe UI", 8, "bold"), bg="#e0e0e0", relief=tk.RIDGE, padx=6, pady=2).grid(row=0, column=ci, sticky="nsew", padx=1, pady=1)
+        for ri, col in enumerate(numeric_cols[:50], 1):
+            col_data = df[col].dropna()
+            if len(col_data) == 0:
+                continue
+            stats = [str(col)[:40], f"{col_data.min():.4g}", f"{col_data.max():.4g}", f"{col_data.mean():.4g}", f"{col_data.median():.4g}", f"{col_data.std():.4g}", str(len(col_data))]
+            for ci, val in enumerate(stats):
+                bg = "#f8f8f8" if ri % 2 == 0 else "white"
+                tk.Label(param_section, text=val, font=("Consolas", 7), relief=tk.RIDGE, padx=4, pady=1, bg=bg, anchor="w").grid(row=ri, column=ci, sticky="nsew", padx=1, pady=0)
 
 
 def _ensure_charac_canvas():
@@ -19435,6 +19699,310 @@ diffmap_hist_label = tk.Label(
     bg="#f0f0f0"
 )
 diffmap_hist_label.pack(side=tk.TOP)
+
+# ============== DIFFMAP SUB-TAB BAR ==============
+_dm_tab_bar = tk.Frame(diffmap_main_container, bg="#e0e0e0")
+_dm_tab_bar.pack(side=tk.TOP, fill=tk.X, padx=5, pady=(2, 0))
+
+_dm_active_tab = "wafermap"
+_DM_TAB_ACTIVE = {"bg": "white", "fg": "#333", "relief": tk.FLAT, "bd": 0}
+_DM_TAB_INACTIVE = {"bg": "#d0d0d0", "fg": "#666", "relief": tk.FLAT, "bd": 0}
+
+_dm_tab_labels = {}
+for _tn in ["Testheader", "Comparison", "Wafermap", "Charac.-Curve", "Boxplot", "Distribution", "Correlation", "📊 Statistik-Tabelle"]:
+    _style = _DM_TAB_ACTIVE if _tn == "Wafermap" else _DM_TAB_INACTIVE
+    _lbl = tk.Label(_dm_tab_bar, text=f"  {_tn}  ", font=("Helvetica", 10, "bold"), cursor="hand2", padx=8, pady=4, **_style)
+    _lbl.pack(side=tk.LEFT, padx=(1, 0))
+    _dm_tab_labels[_tn] = _lbl
+
+_dm_tab_sep = tk.Frame(_dm_tab_bar, height=2, bg="#FF9800")
+_dm_tab_sep.pack(side=tk.BOTTOM, fill=tk.X)
+
+# Diffmap sub-tab content frames
+_dm_testheader_frame = tk.Frame(diffmap_main_container, bg="white")
+_dm_comparison_frame = tk.Frame(diffmap_main_container, bg="white")
+_dm_charac_frame = tk.Frame(diffmap_main_container, bg="white")
+_dm_boxplot_frame = tk.Frame(diffmap_main_container, bg="white")
+_dm_distribution_frame = tk.Frame(diffmap_main_container, bg="white")
+_dm_correlation_frame = tk.Frame(diffmap_main_container, bg="white")
+_dm_stattable_frame = tk.Frame(diffmap_main_container, bg="white")
+
+# --- Testheader content ---
+def _dm_update_testheader():
+    for w in _dm_testheader_frame.winfo_children():
+        w.destroy()
+    if not diffmap_reference_id and not diffmap_compare_id:
+        tk.Label(_dm_testheader_frame, text="Load Reference and Comparison wafers", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    canvas = tk.Canvas(_dm_testheader_frame, highlightthickness=0, bg="white")
+    sb = ttk.Scrollbar(_dm_testheader_frame, orient="vertical", command=canvas.yview)
+    content = tk.Frame(canvas, bg="white")
+    content.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+    canvas.create_window((0, 0), window=content, anchor="nw")
+    canvas.configure(yscrollcommand=sb.set)
+    sb.pack(side=tk.RIGHT, fill=tk.Y)
+    canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+    def add_sec(title, color):
+        s = tk.LabelFrame(content, text=title, font=("Segoe UI", 10, "bold"), fg=color, bg="white")
+        s.pack(fill=tk.X, padx=10, pady=(8, 2))
+        return s
+    def add_r(p, l, v, r):
+        tk.Label(p, text=l, font=("Segoe UI", 9, "bold"), anchor="w", bg="white").grid(row=r, column=0, sticky="w", padx=(10, 8), pady=2)
+        d = str(v).strip() if v and str(v).strip() != 'nan' else "-"
+        tk.Label(p, text=d, font=("Segoe UI", 9), anchor="w", fg="#333", bg="white").grid(row=r, column=1, sticky="w", padx=(0, 10), pady=2)
+    for label, wid in [("🔵 Reference", diffmap_reference_id), ("🟠 Comparison", diffmap_compare_id)]:
+        if wid:
+            sec = add_sec(f"{label}: {wid}", "#1565C0" if "Reference" in label else "#E65100")
+            add_r(sec, "Wafer ID:", wid, 0)
+
+# --- Comparison content ---
+_dm_comp_ctrl = tk.Frame(_dm_comparison_frame, bg="#f0f0f0")
+_dm_comp_ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+tk.Label(_dm_comp_ctrl, text="Side-by-side view of Reference and Comparison wafers", font=("Helvetica", 10), fg="#666", bg="#f0f0f0").pack(side=tk.LEFT, padx=10)
+tk.Button(_dm_comp_ctrl, text="Update", command=lambda: _dm_update_comparison(), font=("Helvetica", 9, "bold"), bg="#2196F3", fg="white", padx=10).pack(side=tk.RIGHT, padx=10)
+_dm_comp_plot = tk.Frame(_dm_comparison_frame, bg="white")
+_dm_comp_plot.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+def _dm_update_comparison():
+    for w in _dm_comp_plot.winfo_children():
+        w.destroy()
+    if diffmap_reference_data is None or diffmap_compare_data is None:
+        tk.Label(_dm_comp_plot, text="Load both Reference and Comparison wafers", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    for i, (df, wid, title) in enumerate([(diffmap_reference_data, diffmap_reference_id, "Reference"), (diffmap_compare_data, diffmap_compare_id, "Comparison")]):
+        ax = axes[i]
+        bin_col = 'sbin' if 'sbin' in df.columns else 'bin'
+        if bin_col in df.columns and 'x' in df.columns and 'y' in df.columns:
+            colors = ['#4CAF50' if b == 1 else '#f44336' for b in df[bin_col]]
+            ax.scatter(df['x'], df['y'], c=colors, s=8, marker='s')
+        ax.set_title(f"{title}: {str(wid)[:30]}", fontsize=10)
+        ax.set_aspect('equal')
+        ax.invert_yaxis()
+        ax.grid(True, alpha=0.2)
+    fig.suptitle("Wafer Comparison (Bin Map)", fontsize=12, fontweight='bold')
+    fig.tight_layout()
+    canvas = FigureCanvasTkAgg(fig, master=_dm_comp_plot)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    NavigationToolbar2Tk(canvas, _dm_comp_plot).update()
+
+# --- Charac.-Curve placeholder ---
+tk.Label(_dm_charac_frame, text="Charac.-Curve for Diffmap data\n\nSelect parameter and plot characteristic curves of the difference values",
+         font=("Helvetica", 11), fg="gray", bg="white", justify="center").pack(expand=True)
+
+# --- Boxplot content ---
+_dm_bp_ctrl = tk.Frame(_dm_boxplot_frame, bg="#f0f0f0")
+_dm_bp_ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+tk.Label(_dm_bp_ctrl, text="Shows boxplot of difference values for selected parameter", font=("Helvetica", 10), fg="#666", bg="#f0f0f0").pack(side=tk.LEFT, padx=10)
+tk.Button(_dm_bp_ctrl, text="Update Boxplot", command=lambda: _dm_update_boxplot(), font=("Helvetica", 9, "bold"), bg="#2196F3", fg="white", padx=10).pack(side=tk.RIGHT, padx=10)
+_dm_bp_plot = tk.Frame(_dm_boxplot_frame, bg="white")
+_dm_bp_plot.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+def _dm_update_boxplot():
+    for w in _dm_bp_plot.winfo_children():
+        w.destroy()
+    if diffmap_result_data is None or len(diffmap_result_data) == 0:
+        tk.Label(_dm_bp_plot, text="Calculate Diffmap first", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    param = get_diffmap_selected_param()
+    if not param or param not in diffmap_result_data.columns:
+        tk.Label(_dm_bp_plot, text="Select a parameter", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    values = diffmap_result_data[param].dropna()
+    fig, ax = plt.subplots(figsize=(8, 6))
+    bp = ax.boxplot(values, patch_artist=True, notch=True)
+    bp['boxes'][0].set_facecolor('#80CBC4')
+    ax.set_title(f"Boxplot: {param}", fontsize=12, fontweight='bold')
+    ax.set_ylabel(param, fontsize=10)
+    ax.grid(True, alpha=0.3)
+    mean_val = values.mean()
+    median_val = values.median()
+    ax.annotate(f"Mean: {mean_val:.3g}\nMedian: {median_val:.3g}", xy=(1.15, mean_val), fontsize=9, bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5))
+    fig.tight_layout()
+    canvas = FigureCanvasTkAgg(fig, master=_dm_bp_plot)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    NavigationToolbar2Tk(canvas, _dm_bp_plot).update()
+
+# --- Distribution content ---
+_dm_dist_ctrl = tk.Frame(_dm_distribution_frame, bg="#f0f0f0")
+_dm_dist_ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+tk.Label(_dm_dist_ctrl, text="Histogram / distribution of difference values", font=("Helvetica", 10), fg="#666", bg="#f0f0f0").pack(side=tk.LEFT, padx=10)
+tk.Button(_dm_dist_ctrl, text="Update Distribution", command=lambda: _dm_update_distribution(), font=("Helvetica", 9, "bold"), bg="#2196F3", fg="white", padx=10).pack(side=tk.RIGHT, padx=10)
+_dm_dist_plot = tk.Frame(_dm_distribution_frame, bg="white")
+_dm_dist_plot.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+def _dm_update_distribution():
+    for w in _dm_dist_plot.winfo_children():
+        w.destroy()
+    if diffmap_result_data is None or len(diffmap_result_data) == 0:
+        tk.Label(_dm_dist_plot, text="Calculate Diffmap first", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    param = get_diffmap_selected_param()
+    if not param or param not in diffmap_result_data.columns:
+        tk.Label(_dm_dist_plot, text="Select a parameter", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    values = diffmap_result_data[param].dropna()
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.hist(values, bins=50, color='#1565C0', alpha=0.7, edgecolor='white')
+    ax.axvline(values.mean(), color='red', linestyle='--', linewidth=1.5, label=f'Mean: {values.mean():.3g}')
+    ax.axvline(values.median(), color='orange', linestyle='--', linewidth=1.5, label=f'Median: {values.median():.3g}')
+    ax.set_title(f"Distribution: {param}", fontsize=12, fontweight='bold')
+    ax.set_xlabel(param, fontsize=10)
+    ax.set_ylabel("Count", fontsize=10)
+    ax.legend(fontsize=9)
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    canvas = FigureCanvasTkAgg(fig, master=_dm_dist_plot)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    NavigationToolbar2Tk(canvas, _dm_dist_plot).update()
+
+# --- Correlation content ---
+_dm_corr_ctrl = tk.Frame(_dm_correlation_frame, bg="#f0f0f0")
+_dm_corr_ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+tk.Label(_dm_corr_ctrl, text="X:", font=("Helvetica", 9, "bold"), bg="#f0f0f0").pack(side=tk.LEFT, padx=(5, 2))
+_dm_corr_x_var = tk.StringVar()
+_dm_corr_x_combo = ttk.Combobox(_dm_corr_ctrl, textvariable=_dm_corr_x_var, state="readonly", width=35, font=("Helvetica", 9))
+_dm_corr_x_combo.pack(side=tk.LEFT, padx=2)
+tk.Label(_dm_corr_ctrl, text="Y:", font=("Helvetica", 9, "bold"), bg="#f0f0f0").pack(side=tk.LEFT, padx=(10, 2))
+_dm_corr_y_var = tk.StringVar()
+_dm_corr_y_combo = ttk.Combobox(_dm_corr_ctrl, textvariable=_dm_corr_y_var, state="readonly", width=35, font=("Helvetica", 9))
+_dm_corr_y_combo.pack(side=tk.LEFT, padx=2)
+tk.Button(_dm_corr_ctrl, text="Plot", command=lambda: _dm_update_correlation(), font=("Helvetica", 9, "bold"), bg="#4CAF50", fg="white", padx=10).pack(side=tk.LEFT, padx=10)
+_dm_corr_plot = tk.Frame(_dm_correlation_frame, bg="white")
+_dm_corr_plot.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+def _dm_update_correlation():
+    for w in _dm_corr_plot.winfo_children():
+        w.destroy()
+    if diffmap_result_data is None or len(diffmap_result_data) == 0:
+        tk.Label(_dm_corr_plot, text="Calculate Diffmap first", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    xp = _dm_corr_x_var.get()
+    yp = _dm_corr_y_var.get()
+    if not xp or not yp or xp not in diffmap_result_data.columns or yp not in diffmap_result_data.columns:
+        tk.Label(_dm_corr_plot, text="Select X and Y parameters", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    xd = pd.to_numeric(diffmap_result_data[xp], errors='coerce').dropna()
+    yd = pd.to_numeric(diffmap_result_data[yp], errors='coerce').dropna()
+    common = xd.index.intersection(yd.index)
+    xd, yd = xd[common], yd[common]
+    if len(xd) < 2:
+        return
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.scatter(xd, yd, s=10, alpha=0.6, c='#E65100')
+    coeffs = np.polyfit(xd, yd, 1)
+    poly = np.poly1d(coeffs)
+    xl = np.linspace(xd.min(), xd.max(), 100)
+    ax.plot(xl, poly(xl), 'r-', linewidth=1.5, label=f'y = {coeffs[0]:.4g}x + {coeffs[1]:.4g}')
+    corr = xd.corr(yd)
+    ax.set_title(f"Correlation: R = {corr:.4f}", fontsize=12, fontweight='bold')
+    ax.set_xlabel(str(xp)[:50], fontsize=10)
+    ax.set_ylabel(str(yp)[:50], fontsize=10)
+    ax.legend(fontsize=9)
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    canvas = FigureCanvasTkAgg(fig, master=_dm_corr_plot)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    NavigationToolbar2Tk(canvas, _dm_corr_plot).update()
+
+# --- Statistik-Tabelle content ---
+_dm_st_ctrl = tk.Frame(_dm_stattable_frame, bg="#f0f0f0")
+_dm_st_ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+tk.Button(_dm_st_ctrl, text="Update Table", command=lambda: _dm_update_stattable(), font=("Helvetica", 9, "bold"), bg="#2196F3", fg="white", padx=10).pack(side=tk.LEFT, padx=10)
+_dm_st_canvas = tk.Canvas(_dm_stattable_frame, highlightthickness=0, bg="white")
+_dm_st_sb = ttk.Scrollbar(_dm_stattable_frame, orient="vertical", command=_dm_st_canvas.yview)
+_dm_st_inner = tk.Frame(_dm_st_canvas, bg="white")
+_dm_st_inner.bind("<Configure>", lambda e: _dm_st_canvas.configure(scrollregion=_dm_st_canvas.bbox("all")))
+_dm_st_canvas.create_window((0, 0), window=_dm_st_inner, anchor="nw")
+_dm_st_canvas.configure(yscrollcommand=_dm_st_sb.set)
+_dm_st_sb.pack(side=tk.RIGHT, fill=tk.Y)
+_dm_st_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+_dm_st_canvas.bind("<MouseWheel>", lambda e: _dm_st_canvas.yview_scroll(int(-1 * (e.delta / 120)), "units"))
+
+def _dm_update_stattable():
+    for w in _dm_st_inner.winfo_children():
+        w.destroy()
+    if diffmap_result_data is None or len(diffmap_result_data) == 0:
+        tk.Label(_dm_st_inner, text="Calculate Diffmap first", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+    sec = tk.LabelFrame(_dm_st_inner, text="Diffmap Parameter Statistics", font=("Segoe UI", 10, "bold"), fg="#1565C0", bg="white")
+    sec.pack(fill=tk.X, padx=5, pady=5)
+    exclude = {'x', 'y', 'bin', 'sbin'}
+    num_cols = [c for c in diffmap_result_data.columns if str(c).lower() not in exclude and pd.api.types.is_numeric_dtype(diffmap_result_data[c])]
+    if num_cols:
+        for ci, h in enumerate(["Parameter", "Min", "Max", "Mean", "Median", "Std", "Count"]):
+            tk.Label(sec, text=h, font=("Segoe UI", 8, "bold"), bg="#e0e0e0", relief=tk.RIDGE, padx=6, pady=2).grid(row=0, column=ci, sticky="nsew", padx=1, pady=1)
+        for ri, col in enumerate(num_cols[:50], 1):
+            cd = diffmap_result_data[col].dropna()
+            if len(cd) == 0:
+                continue
+            stats = [str(col)[:40], f"{cd.min():.4g}", f"{cd.max():.4g}", f"{cd.mean():.4g}", f"{cd.median():.4g}", f"{cd.std():.4g}", str(len(cd))]
+            for ci, val in enumerate(stats):
+                bg = "#f8f8f8" if ri % 2 == 0 else "white"
+                tk.Label(sec, text=val, font=("Consolas", 7), relief=tk.RIDGE, padx=4, pady=1, bg=bg, anchor="w").grid(row=ri, column=ci, sticky="nsew", padx=1, pady=0)
+
+# --- Tab switching function ---
+_dm_tab_key_map = {
+    "Testheader": "testheader", "Comparison": "comparison", "Wafermap": "wafermap",
+    "Charac.-Curve": "charac", "Boxplot": "boxplot", "Distribution": "distribution",
+    "Correlation": "correlation", "📊 Statistik-Tabelle": "stattable"
+}
+_dm_frame_map = {
+    "wafermap": None,  # uses diffmap_display_frame (existing)
+    "testheader": _dm_testheader_frame, "comparison": _dm_comparison_frame,
+    "charac": _dm_charac_frame, "boxplot": _dm_boxplot_frame,
+    "distribution": _dm_distribution_frame, "correlation": _dm_correlation_frame,
+    "stattable": _dm_stattable_frame
+}
+
+def _switch_dm_tab(tab_key, event=None):
+    global _dm_active_tab
+    if _dm_active_tab == tab_key:
+        return
+    _dm_active_tab = tab_key
+    # Hide all
+    diffmap_display_frame.pack_forget()
+    for f in _dm_frame_map.values():
+        if f:
+            f.pack_forget()
+    # Reset styles
+    for lbl in _dm_tab_labels.values():
+        lbl.config(**_DM_TAB_INACTIVE)
+    # Show selected
+    if tab_key == "wafermap":
+        diffmap_display_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+    else:
+        frame = _dm_frame_map.get(tab_key)
+        if frame:
+            frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+    # Highlight tab
+    for name, key in _dm_tab_key_map.items():
+        if key == tab_key:
+            _dm_tab_labels[name].config(**_DM_TAB_ACTIVE)
+            break
+    # Auto-update on switch
+    if tab_key == "testheader":
+        _dm_update_testheader()
+    elif tab_key == "comparison":
+        _dm_update_comparison()
+    elif tab_key == "correlation":
+        if diffmap_result_data is not None:
+            exclude = {'x', 'y', 'bin', 'sbin'}
+            params = [str(c) for c in diffmap_result_data.columns if str(c).lower() not in exclude and pd.api.types.is_numeric_dtype(diffmap_result_data[c])]
+            _dm_corr_x_combo["values"] = params
+            _dm_corr_y_combo["values"] = params
+            if len(params) >= 2:
+                _dm_corr_x_combo.current(0)
+                _dm_corr_y_combo.current(1)
+
+# Bind tab clicks
+for _name, _lbl in _dm_tab_labels.items():
+    _key = _dm_tab_key_map[_name]
+    _lbl.bind("<Button-1>", lambda e, k=_key: _switch_dm_tab(k))
 
 # Right panel for diffmap display
 diffmap_display_frame = tk.Frame(diffmap_main_container)
