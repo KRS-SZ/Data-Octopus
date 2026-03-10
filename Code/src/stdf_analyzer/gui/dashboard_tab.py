@@ -225,18 +225,32 @@ class DashboardTab:
         self._create_tool_card(rgs_tools_frame, "RGS-ATE", "Regensburg", 0)
 
     def _toggle_probers(self):
-        """Toggle visibility of Prober cards."""
+        """Toggle visibility of Prober cards and lot detail section."""
         if self.show_prober_var.get():
             self.prober_cards_frame.pack(fill=tk.X, pady=(10, 0))
+            if hasattr(self, 'lot_prober_frame'):
+                self.lot_prober_frame.pack(anchor=tk.W, fill=tk.X)
         else:
             self.prober_cards_frame.pack_forget()
+            if hasattr(self, 'lot_prober_frame'):
+                self.lot_prober_frame.pack_forget()
+                if self.lot_tool_var.get() in self.TOOLS.get("Prober", []):
+                    self.lot_tool_var.set("9ATE1")
+                    self._update_lot_details()
 
     def _toggle_taiwan(self):
-        """Toggle visibility of Taiwan cards."""
+        """Toggle visibility of Taiwan cards and lot detail section."""
         if self.show_taiwan_var.get():
             self.taiwan_cards_frame.pack(fill=tk.X, pady=(10, 0))
+            if hasattr(self, 'lot_taiwan_frame'):
+                self.lot_taiwan_frame.pack(anchor=tk.W, fill=tk.X)
         else:
             self.taiwan_cards_frame.pack_forget()
+            if hasattr(self, 'lot_taiwan_frame'):
+                self.lot_taiwan_frame.pack_forget()
+                if self.lot_tool_var.get() in self.TOOLS.get("Taiwan", []):
+                    self.lot_tool_var.set("9ATE1")
+                    self._update_lot_details()
 
     def _create_tool_card(self, parent, name: str, cat: str, col: int):
         """Create a single tool card with browse button."""
@@ -569,44 +583,84 @@ class DashboardTab:
         main = tk.Frame(section, bg="white", relief=tk.RIDGE, bd=1)
         main.pack(fill=tk.BOTH, expand=True)
 
-        # Left: Tool selection
-        left = tk.Frame(main, bg="white", width=120)
+        # Left: Tool selection with scrollbar
+        left = tk.Frame(main, bg="white", width=140)
         left.pack(side=tk.LEFT, fill=tk.Y, padx=5, pady=5)
         left.pack_propagate(False)
 
         tk.Label(left, text="Select Tool:", font=("Segoe UI", 9, "bold"), bg="white").pack(anchor=tk.W)
 
+        # Scrollable frame for tool radio buttons
+        tool_canvas = tk.Canvas(left, bg="white", highlightthickness=0, width=120)
+        tool_scrollbar = ttk.Scrollbar(left, orient=tk.VERTICAL, command=tool_canvas.yview)
+        self.lot_tool_inner = tk.Frame(tool_canvas, bg="white")
+
+        self.lot_tool_inner.bind("<Configure>",
+            lambda e: tool_canvas.configure(scrollregion=tool_canvas.bbox("all")))
+        tool_canvas.create_window((0, 0), window=self.lot_tool_inner, anchor="nw")
+        tool_canvas.configure(yscrollcommand=tool_scrollbar.set)
+
+        tool_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        tool_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Mousewheel scrolling
+        def _on_mousewheel(event):
+            tool_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        tool_canvas.bind("<MouseWheel>", _on_mousewheel)
+        self.lot_tool_inner.bind("<MouseWheel>", _on_mousewheel)
+
         self.lot_tool_var = tk.StringVar(value="9ATE1")
+        self.lot_tool_widgets = {}
 
-        # ATE Tools
-        tk.Label(left, text="── ATE ──", font=("Segoe UI", 8), bg="white", fg="#757575").pack(anchor=tk.W, pady=(5,0))
+        # ATE Tools (always visible)
+        ate_label = tk.Label(self.lot_tool_inner, text="── ATE ──", font=("Segoe UI", 8), bg="white", fg="#757575")
+        ate_label.pack(anchor=tk.W, pady=(5,0))
+        ate_label.bind("<MouseWheel>", _on_mousewheel)
         for tool in self.TOOLS["ATE"]:
-            rb = tk.Radiobutton(left, text=tool, variable=self.lot_tool_var, value=tool,
+            rb = tk.Radiobutton(self.lot_tool_inner, text=tool, variable=self.lot_tool_var, value=tool,
                                command=self._update_lot_details, bg="white", font=("Segoe UI", 9))
             rb.pack(anchor=tk.W)
+            rb.bind("<MouseWheel>", _on_mousewheel)
 
-        # Prober Tools
-        tk.Label(left, text="── Prober ──", font=("Segoe UI", 8), bg="white", fg="#757575").pack(anchor=tk.W, pady=(5,0))
+        # Prober Tools (respects show_prober_var)
+        self.lot_prober_frame = tk.Frame(self.lot_tool_inner, bg="white")
+        prober_lbl = tk.Label(self.lot_prober_frame, text="── Prober ──", font=("Segoe UI", 8), bg="white", fg="#757575")
+        prober_lbl.pack(anchor=tk.W, pady=(5,0))
+        prober_lbl.bind("<MouseWheel>", _on_mousewheel)
         for tool in self.TOOLS["Prober"]:
-            rb = tk.Radiobutton(left, text=tool, variable=self.lot_tool_var, value=tool,
+            rb = tk.Radiobutton(self.lot_prober_frame, text=tool, variable=self.lot_tool_var, value=tool,
                                command=self._update_lot_details, bg="white", font=("Segoe UI", 9))
             rb.pack(anchor=tk.W)
+            rb.bind("<MouseWheel>", _on_mousewheel)
+        if self.show_prober_var.get():
+            self.lot_prober_frame.pack(anchor=tk.W, fill=tk.X)
 
-        # Taiwan
-        tk.Label(left, text="── Taiwan ──", font=("Segoe UI", 8), bg="white", fg=self.COLORS["taiwan"]).pack(anchor=tk.W, pady=(5,0))
+        # Taiwan (respects show_taiwan_var)
+        self.lot_taiwan_frame = tk.Frame(self.lot_tool_inner, bg="white")
+        taiwan_lbl = tk.Label(self.lot_taiwan_frame, text="── Taiwan ──", font=("Segoe UI", 8), bg="white", fg=self.COLORS["taiwan"])
+        taiwan_lbl.pack(anchor=tk.W, pady=(5,0))
+        taiwan_lbl.bind("<MouseWheel>", _on_mousewheel)
         for tool in self.TOOLS["Taiwan"]:
-            rb = tk.Radiobutton(left, text=tool, variable=self.lot_tool_var, value=tool,
+            rb = tk.Radiobutton(self.lot_taiwan_frame, text=tool, variable=self.lot_tool_var, value=tool,
                                command=self._update_lot_details, bg="white", font=("Segoe UI", 9),
                                fg=self.COLORS["taiwan"])
             rb.pack(anchor=tk.W)
+            rb.bind("<MouseWheel>", _on_mousewheel)
+        if self.show_taiwan_var.get():
+            self.lot_taiwan_frame.pack(anchor=tk.W, fill=tk.X)
 
         # Regensburg (Coming soon)
-        tk.Label(left, text="── Regensburg ──", font=("Segoe UI", 8), bg="white", fg=self.COLORS["regensburg"]).pack(anchor=tk.W, pady=(5,0))
+        self.lot_regensburg_frame = tk.Frame(self.lot_tool_inner, bg="white")
+        rgs_lbl = tk.Label(self.lot_regensburg_frame, text="── Regensburg ──", font=("Segoe UI", 8), bg="white", fg=self.COLORS["regensburg"])
+        rgs_lbl.pack(anchor=tk.W, pady=(5,0))
+        rgs_lbl.bind("<MouseWheel>", _on_mousewheel)
         for tool in self.TOOLS["Regensburg"]:
-            rb = tk.Radiobutton(left, text=f"{tool} ⏳", variable=self.lot_tool_var, value=tool,
+            rb = tk.Radiobutton(self.lot_regensburg_frame, text=f"{tool} ⏳", variable=self.lot_tool_var, value=tool,
                                command=self._update_lot_details, bg="white", font=("Segoe UI", 9),
                                fg=self.COLORS["regensburg"])
             rb.pack(anchor=tk.W)
+            rb.bind("<MouseWheel>", _on_mousewheel)
+        self.lot_regensburg_frame.pack(anchor=tk.W, fill=tk.X)
 
         # Middle: Lot list
         mid = tk.Frame(main, bg="white", width=200)

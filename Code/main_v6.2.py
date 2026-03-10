@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "6.2.0"  # Diffmap: Prev/Next/Unload/Unload All Buttons in Waferselection
+APP_VERSION = "6.2.1"  # Fix Tab Visibility: Wiedereinblenden funktioniert jetzt (notebook.tab state statt index)
 
 import sys
 
@@ -1117,7 +1117,7 @@ current_wafer_config = {
 def select_stdf_file():
     stdf_path = filedialog.askopenfilename(
         title="Select an STDF file",
-        filetypes=[("STDF files", "*.stdf"), ("All files", "*.*")],
+        filetypes=[("STDF files", "*.stdf *.std"), ("All files", "*.*")],
     )
 
     if stdf_path:
@@ -1158,12 +1158,14 @@ current_wafer_config = {
 def select_stdf_file():
     stdf_path = filedialog.askopenfilename(
         title="Select an STDF file",
-        filetypes=[("STDF files", "*.stdf"), ("All files", "*.*")],
+        filetypes=[("STDF files", "*.stdf *.std"), ("All files", "*.*")],
     )
 
     if stdf_path:
         load_stdf_data(stdf_path)
 
+
+# NOTE: sort_test_params_numerically
 
 # NOTE: sort_test_params_numerically, simplify_param_name, extract_group_from_column,
 # and convert_am_data_column_name are now imported from src.stdf_analyzer.core.parameter_utils
@@ -3081,7 +3083,7 @@ class SaveDataDialog:
                     parent=self.dialog,
                     title="Save STDF File",
                     defaultextension=".stdf",
-                    filetypes=[("STDF files", "*.stdf"), ("All files", "*.*")],
+                    filetypes=[("STDF files", "*.stdf *.std"), ("All files", "*.*")],
                     initialfile="combined_wafer_data.stdf"
                 )
 
@@ -6776,14 +6778,15 @@ def _draw_multi_param_distribution(params_to_plot, data_sources, wafer_labels, p
     stats_prob_canvas.draw()
 
 
-def load_multiple_stdf_files():
+def load_multiple_stdf_files(stdf_paths=None):
     """Load multiple STDF files for multi-plot heatmap display - THREADED VERSION"""
     global multiple_stdf_data, multiple_wafer_ids, test_parameters
 
-    stdf_paths = filedialog.askopenfilenames(
-        title="Select multiple STDF files",
-        filetypes=[("STDF files", "*.stdf"), ("All files", "*.*")],
-    )
+    if stdf_paths is None:
+        stdf_paths = filedialog.askopenfilenames(
+            title="Select multiple STDF files",
+            filetypes=[("STDF files", "*.stdf *.std"), ("All files", "*.*")],
+        )
 
     if not stdf_paths:
         print("No files selected.")
@@ -6879,7 +6882,8 @@ def load_stdf_files_threaded(stdf_paths, title="Loading"):
                     'grouped_params': grouped_params,
                     'test_limits': limits_dict,
                     'wafer_config': wafer_cfg,
-                    'filename': filename
+                    'filename': filename,
+                    'file_path': stdf_path
                 }
         except Exception as e:
             print(f"[Thread] Error loading {filename}: {e}")
@@ -6929,6 +6933,7 @@ def load_stdf_files_threaded(stdf_paths, title="Loading"):
         global multiple_stdf_data, multiple_wafer_ids, test_parameters, grouped_parameters, test_limits
         global current_wafer_config
         global wafer_metadata
+        global plm_file_directory, die_image_directory
 
         elapsed = time.time() - start_time[0]
 
@@ -6945,7 +6950,7 @@ def load_stdf_files_threaded(stdf_paths, title="Loading"):
             stdf_meta = {
                 'format': 'STDF',
                 'source': 'local',
-                'file_path': result.get('filename', ''),
+                'file_path': result.get('file_path', result.get('filename', '')),
                 'wafer_id': result['wafer_id'],
                 'product': '', 'lot_id': '', 'test_program': '', 'insertion': '',
                 'test_type': '', 'tester_name': '', 'tester_type': '', 'facility': '',
@@ -6988,6 +6993,46 @@ def load_stdf_files_threaded(stdf_paths, title="Loading"):
         if results and results[0].get('wafer_config'):
             current_wafer_config = results[0]['wafer_config']
             print(f"Wafer Config set: Notch={current_wafer_config.get('notch_orientation')}")
+
+        # Auto-detect PLM and Image directories relative to STDF file path
+        if results and results[0].get('file_path'):
+            stdf_full_path = results[0]['file_path']
+            stdf_dir = os.path.dirname(stdf_full_path)
+            parent_dir = os.path.dirname(stdf_dir)
+            grandparent_dir = os.path.dirname(parent_dir)
+
+            # Search order: sibling of STDF dir, then parent, then grandparent
+            search_dirs = [parent_dir, stdf_dir, grandparent_dir]
+
+            # PLM folder names to look for (case-insensitive)
+            plm_names = ['PLMFiles', 'plmfiles', 'PLM', 'plm']
+            if not plm_file_directory or not os.path.isdir(plm_file_directory):
+                for search_dir in search_dirs:
+                    if not os.path.isdir(search_dir):
+                        continue
+                    for name in plm_names:
+                        candidate = os.path.join(search_dir, name)
+                        if os.path.isdir(candidate):
+                            plm_file_directory = candidate
+                            print(f"[STDF Auto-detect] PLM folder: {plm_file_directory}")
+                            break
+                    if plm_file_directory and os.path.isdir(plm_file_directory):
+                        break
+
+            # Image folder names to look for (case-insensitive)
+            img_names = ['ImageCaptures', 'imagecaptures', 'images', 'img', 'Img', 'IMG']
+            if not die_image_directory or not os.path.isdir(die_image_directory):
+                for search_dir in search_dirs:
+                    if not os.path.isdir(search_dir):
+                        continue
+                    for name in img_names:
+                        candidate = os.path.join(search_dir, name)
+                        if os.path.isdir(candidate):
+                            die_image_directory = candidate
+                            print(f"[STDF Auto-detect] Image folder: {die_image_directory}")
+                            break
+                    if die_image_directory and os.path.isdir(die_image_directory):
+                        break
 
         # Update group combobox
         update_group_combobox()
@@ -12659,65 +12704,64 @@ tab_visibility_frame.pack(fill=tk.X, padx=40, pady=5)
 
 # Tab visibility variables
 tab_visibility_vars = {
+    'dashboard': tk.BooleanVar(value=True),
     'datalog': tk.BooleanVar(value=True),
     'wafer': tk.BooleanVar(value=True),
     'multi_wafer': tk.BooleanVar(value=True),
     'diffmap': tk.BooleanVar(value=True),
     'gage_rr': tk.BooleanVar(value=True),
-    'report': tk.BooleanVar(value=True),
+    'plm_analysis': tk.BooleanVar(value=True),
     'stdf_csv': tk.BooleanVar(value=True),
+    'report': tk.BooleanVar(value=True),
+    'auto_jobs': tk.BooleanVar(value=True),
 }
 
 def update_tab_visibility():
     """Show/hide tabs based on checkbox states"""
     tab_map = {
+        'dashboard': (tab_dashboard, "📊 Dashboard"),
         'datalog': (tab_datalog, "📋 Datalog"),
         'wafer': (tab6, "🗺 Wafer"),
         'multi_wafer': (tab_multi_wafer, "📊 Multi-Wafer"),
         'diffmap': (tab_diffmap, "🔄 Diffmap"),
         'gage_rr': (tab_grr, "📏 Gage R&R"),
+        'plm_analysis': (tab_plm_analysis, "🔬 PLM Analysis"),
         'stdf_csv': (tab_stdf_csv, "🔄 STDF to CSV"),
         'report': (tab_presentation, "📑 Report"),
+        'auto_jobs': (tab_settings, "🔄 Auto. Jobs"),
     }
 
-    original_order = ['datalog', 'wafer', 'multi_wafer', 'diffmap', 'gage_rr', 'stdf_csv', 'report']
+    original_order = ['dashboard', 'datalog', 'wafer', 'multi_wafer', 'diffmap', 'gage_rr', 'plm_analysis', 'stdf_csv', 'report', 'auto_jobs']
 
     for key in original_order:
         tab_widget, tab_name = tab_map[key]
         is_visible = tab_visibility_vars[key].get()
 
         try:
-            # Check if tab is currently visible in notebook
-            tab_is_shown = False
+            # Check actual tab state ('normal', 'hidden', 'disabled')
             try:
-                # This will raise an error if tab is hidden
-                notebook.index(tab_widget)
-                tab_is_shown = True
+                state = str(notebook.tab(tab_widget, 'state'))
+                tab_is_shown = (state != 'hidden')
             except:
                 tab_is_shown = False
 
             if is_visible and not tab_is_shown:
-                # Tab should be visible but isn't - add it at correct position
-                # Count how many tabs before this one are visible
-                insert_idx = 1  # After Config tab
+                # Re-show hidden tab and move to correct position
+                notebook.tab(tab_widget, state='normal')
+                insert_idx = 1  # After Config tab (index 0)
                 for prev_key in original_order:
                     if prev_key == key:
                         break
                     if tab_visibility_vars[prev_key].get():
-                        # Check if that tab is actually shown
                         try:
-                            notebook.index(tab_map[prev_key][0])
-                            insert_idx += 1
+                            prev_state = str(notebook.tab(tab_map[prev_key][0], 'state'))
+                            if prev_state != 'hidden':
+                                insert_idx += 1
                         except:
                             pass
-
-                # Use add with correct position - notebook.add re-shows hidden tabs
-                notebook.add(tab_widget, text=tab_name)
-                # Move to correct position
                 notebook.insert(insert_idx, tab_widget)
 
             elif not is_visible and tab_is_shown:
-                # Tab is visible but shouldn't be - hide it
                 notebook.hide(tab_widget)
 
         except Exception as e:
@@ -12728,18 +12772,28 @@ tab_checkbox_frame = tk.Frame(tab_visibility_frame)
 tab_checkbox_frame.pack(pady=5)
 
 tab_labels = [
+    ('dashboard', 'Dashboard'),
     ('datalog', 'Datalog'),
     ('wafer', 'Wafermap'),
     ('multi_wafer', 'Multi-Wafer'),
     ('diffmap', 'Diffmap'),
     ('gage_rr', 'Gage R&R'),
+    ('plm_analysis', 'PLM Analysis'),
     ('stdf_csv', 'STDF→CSV'),
     ('report', 'Report'),
+    ('auto_jobs', 'Auto. Jobs'),
 ]
 
+# 2 rows: first 5 in row 1, rest in row 2
+tab_checkbox_row1 = tk.Frame(tab_checkbox_frame)
+tab_checkbox_row1.pack()
+tab_checkbox_row2 = tk.Frame(tab_checkbox_frame)
+tab_checkbox_row2.pack()
+
 for idx, (key, label) in enumerate(tab_labels):
+    parent_row = tab_checkbox_row1 if idx < 5 else tab_checkbox_row2
     cb = tk.Checkbutton(
-        tab_checkbox_frame,
+        parent_row,
         text=label,
         variable=tab_visibility_vars[key],
         command=update_tab_visibility,
@@ -15546,14 +15600,19 @@ def clear_multi_wafer_files():
 
 
 def add_multi_wafer_csv_files():
-    """Add multiple CSV files to the Multiple Wafermaps tab (appends to existing)"""
+    """Add multiple CSV/STDF files to the Multiple Wafermaps tab (appends to existing)"""
     global multi_wafer_stdf_data, multi_wafer_wafer_ids, multi_wafer_test_params
     global multi_wafer_wafer_configs
     global multi_wafer_test_params_per_wafer, multi_wafer_test_limits_per_wafer
 
     csv_paths = filedialog.askopenfilenames(
-        title="Select CSV files to add",
-        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+        title="Select CSV or STDF files to add",
+        filetypes=[
+            ("All supported", "*.csv;*.stdf;*.std"),
+            ("CSV files", "*.csv"),
+            ("STDF files", "*.stdf *.std"),
+            ("All files", "*.*"),
+        ],
     )
 
     if not csv_paths:
@@ -15563,6 +15622,86 @@ def add_multi_wafer_csv_files():
     num_added = 0
 
     for csv_path in csv_paths:
+        ext = csv_path.lower()
+        if ext.endswith('.stdf') or ext.endswith('.std'):
+            # Handle STDF file
+            try:
+                print(f"Loading STDF file: {csv_path}")
+                df, wafer_id, test_params_stdf, grouped_params_stdf, limits_dict, wafer_cfg = read_wafermap_from_stdf(csv_path)
+
+                if df is None or df.empty:
+                    print(f"ERROR: No data in STDF file {csv_path}")
+                    continue
+
+                if wafer_id is None:
+                    wafer_id = os.path.basename(csv_path).replace('.stdf', '').replace('.std', '')
+
+                # Build grouped params and merge
+                import re
+                local_grouped_params = {}
+                for test_num_key, test_name in test_params_stdf.items():
+                    match = re.search(r'(\d+)$', str(test_num_key))
+                    test_num = int(match.group(1)) if match else 0
+                    group_name = extract_group_from_column(test_name) if test_name else "Ungrouped"
+                    if group_name not in local_grouped_params:
+                        local_grouped_params[group_name] = []
+                    local_grouped_params[group_name].append((test_num, test_name, test_name))
+
+                # Merge into global grouped_parameters
+                for grp, params in local_grouped_params.items():
+                    if grp not in grouped_parameters:
+                        grouped_parameters[grp] = []
+                    for param in params:
+                        if param not in grouped_parameters[grp]:
+                            grouped_parameters[grp].append(param)
+
+                # Merge test params
+                for k, v in test_params_stdf.items():
+                    if k not in multi_wafer_test_params:
+                        multi_wafer_test_params[k] = v
+
+                # Store per-wafer params and limits
+                multi_wafer_test_params_per_wafer.append(test_params_stdf)
+                multi_wafer_test_limits_per_wafer.append(limits_dict)
+
+                # Auto-detect PLM/Image folders
+                stdf_dir = os.path.dirname(csv_path)
+                parent_dir = os.path.dirname(stdf_dir)
+                wafer_config_entry = dict(wafer_cfg) if wafer_cfg else {}
+                for search_dir in [parent_dir, stdf_dir]:
+                    if not os.path.isdir(search_dir):
+                        continue
+                    for name in ['PLMFiles', 'plmfiles', 'PLM', 'plm']:
+                        candidate = os.path.join(search_dir, name)
+                        if os.path.isdir(candidate):
+                            wafer_config_entry['plm_dir'] = candidate
+                            print(f"  [MW Auto-detect] PLM folder: {candidate}")
+                            break
+                    if 'plm_dir' in wafer_config_entry:
+                        break
+                for search_dir in [parent_dir, stdf_dir]:
+                    if not os.path.isdir(search_dir):
+                        continue
+                    for name in ['ImageCaptures', 'imagecaptures', 'images', 'img']:
+                        candidate = os.path.join(search_dir, name)
+                        if os.path.isdir(candidate):
+                            wafer_config_entry['image_dir'] = candidate
+                            print(f"  [MW Auto-detect] Image folder: {candidate}")
+                            break
+                    if 'image_dir' in wafer_config_entry:
+                        break
+
+                multi_wafer_stdf_data.append(df)
+                multi_wafer_wafer_ids.append(wafer_id)
+                multi_wafer_wafer_configs.append(wafer_config_entry)
+                num_added += 1
+                print(f"Added STDF wafer: {wafer_id} ({len(df)} dies, {len(test_params_stdf)} params)")
+
+            except Exception as e:
+                print(f"Error loading STDF file {csv_path}: {e}")
+                import traceback
+                traceback.print_exc()
+            continue
         try:
             print(f"Loading CSV file: {csv_path}")
             df = pd.read_csv(csv_path)
@@ -19225,18 +19364,25 @@ def diffmap_load_csv_files():
     global diffmap_compare_data, diffmap_compare_id, diffmap_compare_path
     global diffmap_compare_data_original, diffmap_aligned
 
+    supported_types = [
+        ("All supported", "*.csv;*.stdf;*.std"),
+        ("CSV files", "*.csv"),
+        ("STDF files", "*.stdf *.std"),
+        ("All files", "*.*"),
+    ]
+
     # Dialog 1: Reference
     ref_path = filedialog.askopenfilename(
-        title="Select REFERENCE CSV file (Wafer 1)",
-        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+        title="Select REFERENCE file (Wafer 1)",
+        filetypes=supported_types,
     )
     if not ref_path:
         return
 
     # Dialog 2: Comparison
     comp_path = filedialog.askopenfilename(
-        title="Select COMPARISON CSV file (Wafer 2)",
-        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+        title="Select COMPARISON file (Wafer 2)",
+        filetypes=supported_types,
     )
     if not comp_path:
         return
@@ -19245,8 +19391,13 @@ def diffmap_load_csv_files():
     diffmap_compare_path = comp_path
     diffmap_compare_data_original = None
     diffmap_aligned = False
-    diffmap_reference_id = os.path.basename(ref_path).replace('.csv', '').replace('.CSV', '')
-    diffmap_compare_id = os.path.basename(comp_path).replace('.csv', '').replace('.CSV', '')
+    basename_ref = os.path.basename(ref_path)
+    basename_comp = os.path.basename(comp_path)
+    for ext in ['.csv', '.CSV', '.stdf', '.STDF', '.std', '.STD']:
+        basename_ref = basename_ref.replace(ext, '')
+        basename_comp = basename_comp.replace(ext, '')
+    diffmap_reference_id = basename_ref
+    diffmap_compare_id = basename_comp
     diffmap_calc_btn.config(state=tk.NORMAL)
     print(f"DEBUG diffmap_load: ref_id={diffmap_reference_id}")
     print(f"DEBUG diffmap_load: comp_id={diffmap_compare_id}")
@@ -19734,26 +19885,116 @@ def _dm_update_testheader():
     if not diffmap_reference_id and not diffmap_compare_id:
         tk.Label(_dm_testheader_frame, text="Load Reference and Comparison wafers", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
         return
-    canvas = tk.Canvas(_dm_testheader_frame, highlightthickness=0, bg="white")
-    sb = ttk.Scrollbar(_dm_testheader_frame, orient="vertical", command=canvas.yview)
-    content = tk.Frame(canvas, bg="white")
-    content.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-    canvas.create_window((0, 0), window=content, anchor="nw")
-    canvas.configure(yscrollcommand=sb.set)
-    sb.pack(side=tk.RIGHT, fill=tk.Y)
-    canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
-    def add_sec(title, color):
-        s = tk.LabelFrame(content, text=title, font=("Segoe UI", 10, "bold"), fg=color, bg="white")
-        s.pack(fill=tk.X, padx=10, pady=(8, 2))
-        return s
-    def add_r(p, l, v, r):
-        tk.Label(p, text=l, font=("Segoe UI", 9, "bold"), anchor="w", bg="white").grid(row=r, column=0, sticky="w", padx=(10, 8), pady=2)
-        d = str(v).strip() if v and str(v).strip() != 'nan' else "-"
-        tk.Label(p, text=d, font=("Segoe UI", 9), anchor="w", fg="#333", bg="white").grid(row=r, column=1, sticky="w", padx=(0, 10), pady=2)
-    for label, wid in [("🔵 Reference", diffmap_reference_id), ("🟠 Comparison", diffmap_compare_id)]:
-        if wid:
-            sec = add_sec(f"{label}: {wid}", "#1565C0" if "Reference" in label else "#E65100")
-            add_r(sec, "Wafer ID:", wid, 0)
+    if diffmap_reference_data is None or diffmap_compare_data is None:
+        tk.Label(_dm_testheader_frame, text="Calculate Diffmap first to see Testheader comparison", font=("Helvetica", 12), fg="gray", bg="white").pack(pady=40)
+        return
+
+    # Summary label
+    _dm_th_summary = tk.Label(_dm_testheader_frame, text="", font=("Segoe UI", 10, "bold"), bg="white")
+    _dm_th_summary.pack(side=tk.TOP, fill=tk.X, padx=10, pady=(5, 2))
+
+    # TreeView for comparison table
+    tree_frame = tk.Frame(_dm_testheader_frame, bg="white")
+    tree_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+    columns = ("test_num", "ref_name", "comp_name", "ref_limits", "comp_limits", "status")
+    tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=20)
+    tree.heading("test_num", text="Test #")
+    tree.heading("ref_name", text=f"Reference: {str(diffmap_reference_id)[:25]}")
+    tree.heading("comp_name", text=f"Compare: {str(diffmap_compare_id)[:25]}")
+    tree.heading("ref_limits", text="Ref Limits")
+    tree.heading("comp_limits", text="Comp Limits")
+    tree.heading("status", text="Status")
+    tree.column("test_num", width=70, anchor="center")
+    tree.column("ref_name", width=200)
+    tree.column("comp_name", width=200)
+    tree.column("ref_limits", width=120)
+    tree.column("comp_limits", width=120)
+    tree.column("status", width=100, anchor="center")
+
+    tree.tag_configure("match", background="#E8F5E9")
+    tree.tag_configure("missing", background="#FFF3E0")
+    tree.tag_configure("additional", background="#FFF3E0")
+    tree.tag_configure("name_diff", background="#FFEBEE")
+
+    tree_sb = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
+    tree.configure(yscrollcommand=tree_sb.set)
+    tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    tree_sb.pack(side=tk.RIGHT, fill=tk.Y)
+
+    # Get columns from both DataFrames (excluding x, y, bin, sbin)
+    exclude = {'x', 'y', 'bin', 'sbin'}
+    ref_cols = {str(c) for c in diffmap_reference_data.columns if str(c).lower() not in exclude}
+    comp_cols = {str(c) for c in diffmap_compare_data.columns if str(c).lower() not in exclude}
+
+    # Extract test numbers and names from diffmap_test_params
+    ref_params = {}
+    comp_params = {}
+    for key, name in diffmap_test_params.items():
+        if key.startswith("test_"):
+            test_num = int(key.replace("test_", ""))
+            ref_params[test_num] = name
+
+    # Also check columns directly
+    all_test_nums = set()
+    for c in ref_cols | comp_cols:
+        cs = str(c)
+        if cs.startswith("test_"):
+            try:
+                all_test_nums.add(int(cs.replace("test_", "")))
+            except ValueError:
+                pass
+        else:
+            try:
+                all_test_nums.add(int(cs))
+            except ValueError:
+                pass
+
+    # Also add test_params keys
+    for key in diffmap_test_params:
+        if key.startswith("test_"):
+            try:
+                all_test_nums.add(int(key.replace("test_", "")))
+            except ValueError:
+                pass
+
+    match_count = 0
+    missing_count = 0
+    additional_count = 0
+    name_diff_count = 0
+
+    for test_num in sorted(all_test_nums):
+        test_key = f"test_{test_num}"
+        ref_name = diffmap_test_params.get(test_key, "")
+        # Check if column exists in both
+        ref_has = any(str(c) == str(test_num) or str(c) == test_key for c in diffmap_reference_data.columns)
+        comp_has = any(str(c) == str(test_num) or str(c) == test_key for c in diffmap_compare_data.columns)
+
+        if ref_has and not comp_has:
+            status = "MISSING"
+            tag = "missing"
+            missing_count += 1
+        elif not ref_has and comp_has:
+            status = "ADDITIONAL"
+            tag = "additional"
+            additional_count += 1
+        else:
+            status = "Match"
+            tag = "match"
+            match_count += 1
+
+        param_name = ref_name if ref_name else str(test_num)
+        tree.insert("", "end", values=(test_num, param_name, param_name if status == "Match" else ("-" if not comp_has else param_name), "-", "-", status), tags=(tag,))
+
+    total = len(all_test_nums)
+    summary_text = (
+        f"Total: {total} parameters | "
+        f"✓ Match: {match_count} | "
+        f"✗ Missing: {missing_count} | "
+        f"+ Additional: {additional_count}"
+    )
+    summary_color = "green" if (missing_count == 0 and additional_count == 0) else "orange"
+    _dm_th_summary.config(text=summary_text, fg=summary_color)
 
 # --- Comparison content ---
 _dm_comp_ctrl = tk.Frame(_dm_comparison_frame, bg="#f0f0f0")
@@ -20099,6 +20340,20 @@ def _dm_update_correlation():
     canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
     NavigationToolbar2Tk(canvas, _dm_corr_plot).update()
 
+def _dm_update_correlation_params():
+    """Populate X and Y parameter combo boxes for Correlation tab"""
+    if diffmap_result_data is None:
+        return
+    exclude = {'x', 'y', 'bin', 'sbin'}
+    params = [str(c) for c in diffmap_result_data.columns if str(c).lower() not in exclude and pd.api.types.is_numeric_dtype(diffmap_result_data[c])]
+    _dm_corr_x_combo["values"] = params
+    _dm_corr_y_combo["values"] = params
+    if len(params) >= 2:
+        if not _dm_corr_x_var.get() or _dm_corr_x_var.get() not in params:
+            _dm_corr_x_combo.current(0)
+        if not _dm_corr_y_var.get() or _dm_corr_y_var.get() not in params:
+            _dm_corr_y_combo.current(min(1, len(params) - 1))
+
 # --- Statistik-Tabelle content ---
 _dm_st_ctrl = tk.Frame(_dm_stattable_frame, bg="#f0f0f0")
 _dm_st_ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
@@ -20188,14 +20443,7 @@ def _switch_dm_tab(tab_key, event=None):
     elif tab_key == "stattable":
         _dm_update_stattable()
     elif tab_key == "correlation":
-        if diffmap_result_data is not None:
-            exclude = {'x', 'y', 'bin', 'sbin'}
-            params = [str(c) for c in diffmap_result_data.columns if str(c).lower() not in exclude and pd.api.types.is_numeric_dtype(diffmap_result_data[c])]
-            _dm_corr_x_combo["values"] = params
-            _dm_corr_y_combo["values"] = params
-            if len(params) >= 2:
-                _dm_corr_x_combo.current(0)
-                _dm_corr_y_combo.current(1)
+        _dm_update_correlation_params()
 
 # Bind tab clicks
 for _name, _lbl in _dm_tab_labels.items():
@@ -20857,6 +21105,16 @@ def calculate_diffmap():
 
     # Update wafer overview panel
     update_diffmap_wafer_overview()
+
+    # Update all sub-tab data after calculation
+    try:
+        _dm_update_charac_params()
+    except Exception as e:
+        print(f"Warning: Could not update charac params: {e}")
+    try:
+        _dm_update_correlation_params()
+    except Exception as e:
+        print(f"Warning: Could not update correlation params: {e}")
 
 
 
@@ -27803,7 +28061,7 @@ def load_grr_wafer_folder():
 
             # Fallback: Load STDF if no CSV
             elif stdf_folder and os.path.isdir(stdf_folder):
-                stdf_files = [f for f in os.listdir(stdf_folder) if f.lower().endswith('.stdf')]
+                stdf_files = [f for f in os.listdir(stdf_folder) if f.lower().endswith(('.stdf', '.std'))]
                 if stdf_files:
                     stdf_path = os.path.join(stdf_folder, stdf_files[0])
                     print(f"[Load Wafer] Loading STDF: {stdf_path}")
@@ -27859,7 +28117,7 @@ def load_grr_files():
     # Set file filter based on selected type
     if file_type == "STDF":
         filetypes = [
-            ("STDF files", "*.stdf"),
+            ("STDF files", "*.stdf *.std"),
             ("All files", "*.*")
         ]
         title = f"Select STDF files for Gage R&R comparison (currently {len(grr_file_data)} loaded)"
@@ -27895,7 +28153,7 @@ def load_grr_files():
         file_info = {'path': path, 'type': None, 'data': None, 'wafer_id': None}
 
         try:
-            if file_ext == '.stdf':
+            if file_ext in ('.stdf', '.std'):
                 # Load STDF file using existing parser
                 df, wafer_id, test_info, test_limits_dict, wafer_config = load_single_stdf_file_for_csv(path)
                 if df is not None and len(df) > 0:
