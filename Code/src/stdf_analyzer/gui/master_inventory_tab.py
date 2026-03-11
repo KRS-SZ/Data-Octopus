@@ -622,6 +622,94 @@ class MasterInventoryTab:
             )
 
     # ================================================================
+    # SELECTION MODE (invoked from other tabs)
+    # ================================================================
+
+    def enter_selection_mode(self, label: str, callback, multi: bool = False):
+        """Activate selection mode – shows a banner and confirm/cancel buttons.
+
+        Args:
+            label:    text shown in the banner, e.g. "Select wafer for: 🗺 Wafer Tab"
+            callback: called with a *list* of resolved file paths on confirm
+            multi:    if True allow Ctrl+Click multi-select
+        """
+        self._sel_callback = callback
+        self._sel_multi = multi
+
+        # Switch treeview selectmode
+        if self.tree is not None:
+            self.tree.configure(selectmode="extended" if multi else "browse")
+
+        # Build banner (above the treeview)
+        if hasattr(self, "_sel_banner") and self._sel_banner is not None:
+            self._sel_banner.destroy()
+
+        self._sel_banner = tk.Frame(self.frame, bg="#FF8F00", height=44)
+        self._sel_banner.pack(fill=tk.X, padx=10, pady=(4, 0), before=self.tree_frame)
+        self._sel_banner.pack_propagate(False)
+
+        tk.Label(
+            self._sel_banner, text=label,
+            font=("Segoe UI", 11, "bold"), fg="white", bg="#FF8F00",
+        ).pack(side=tk.LEFT, padx=14)
+
+        tk.Button(
+            self._sel_banner, text="❌ Cancel", command=self._cancel_selection,
+            font=("Segoe UI", 9, "bold"), bg="#C62828", fg="white", width=10,
+        ).pack(side=tk.RIGHT, padx=6, pady=6)
+
+        tk.Button(
+            self._sel_banner, text="✅ Confirm Selection", command=self._confirm_selection,
+            font=("Segoe UI", 9, "bold"), bg="#2E7D32", fg="white", width=18,
+        ).pack(side=tk.RIGHT, padx=6, pady=6)
+
+    def _confirm_selection(self):
+        """Resolve selected rows and call back."""
+        if self.tree is None or self.df is None:
+            return
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showinfo("No Selection", "Please select at least one wafer row.")
+            return
+
+        paths: List[str] = []
+        cols_present = [c for c in self.active_columns if c in self.df.columns]
+        for item in sel:
+            values = self.tree.item(item, "values")
+            if not values:
+                continue
+            match = self.df.copy()
+            for i, col in enumerate(cols_present[:2]):
+                if i < len(values):
+                    match = match[match[col].astype(str) == values[i]]
+            if match.empty:
+                continue
+            row = match.iloc[0]
+            path = self._resolve_wafer_path(row)
+            if path:
+                paths.append(path)
+
+        if not paths:
+            messagebox.showwarning("No Path", "No loadable paths found for the selected wafer(s).")
+            return
+
+        cb = self._sel_callback
+        self._exit_selection_mode()
+        if cb:
+            cb(paths)
+
+    def _cancel_selection(self):
+        self._exit_selection_mode()
+
+    def _exit_selection_mode(self):
+        self._sel_callback = None
+        if hasattr(self, "_sel_banner") and self._sel_banner is not None:
+            self._sel_banner.destroy()
+            self._sel_banner = None
+        if self.tree is not None:
+            self.tree.configure(selectmode="browse")
+
+    # ================================================================
     # PUBLIC API
     # ================================================================
 
