@@ -29606,175 +29606,331 @@ pptx_wafermap_stats_var = tk.BooleanVar(value=True)
 pptx_wafermap_boxplot_var = tk.BooleanVar(value=True)
 pptx_wafermap_histogram_var = tk.BooleanVar(value=True)
 
-# ===== Parameter Group Selection for Wafermap =====
-wafermap_param_group_frame = tk.LabelFrame(wafermap_content_frame, text="Parameter-Auswahl", font=("Helvetica", 9, "bold"))
-wafermap_param_group_frame.pack(fill=tk.X, pady=5)
+# ===== Group Selection for Wafermap Report =====
+wafermap_report_group_frame = tk.LabelFrame(wafermap_content_frame, text="📁 Group Selection for Report", font=("Helvetica", 9, "bold"))
+wafermap_report_group_frame.pack(fill=tk.BOTH, expand=True, pady=5)
 
-# Group selection
-wafermap_group_row = tk.Frame(wafermap_param_group_frame)
-wafermap_group_row.pack(fill=tk.X, padx=5, pady=3)
+# Storage: {group_name: {"selected": BooleanVar, "params": [list of param strings]}}
+pptx_wafermap_group_data = {}
+pptx_wafermap_selected_params = []  # backward compatibility - flat list of all selected params
 
-tk.Label(wafermap_group_row, text="Gruppe:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=5)
+# --- Top row: Select All / Deselect All groups ---
+wafermap_group_btn_row = tk.Frame(wafermap_report_group_frame)
+wafermap_group_btn_row.pack(fill=tk.X, padx=5, pady=(5, 2))
 
-pptx_wafermap_group_var = tk.StringVar(value="-- Gruppe auswählen --")
-pptx_wafermap_group_combobox = ttk.Combobox(
-    wafermap_group_row,
-    textvariable=pptx_wafermap_group_var,
-    state="readonly",
-    width=25,
-    font=("Helvetica", 9)
+def wafermap_report_select_all_groups():
+    """Select all groups for Wafermap report"""
+    for gname, gdata in pptx_wafermap_group_data.items():
+        gdata["selected"].set(True)
+    refresh_wafermap_group_listbox()
+    update_wafermap_report_summary()
+
+    # Update parameter editor combobox
+    try:
+        groups = ["-- Select Group --"] + sorted(pptx_wafermap_group_data.keys())
+        pptx_wafermap_edit_group_combobox["values"] = groups
+        pptx_wafermap_edit_group_combobox.set("-- Select Group --")
+    except NameError:
+        pass
+
+def wafermap_report_deselect_all_groups():
+    """Deselect all groups for Wafermap report"""
+    for gname, gdata in pptx_wafermap_group_data.items():
+        gdata["selected"].set(False)
+    refresh_wafermap_group_listbox()
+    update_wafermap_report_summary()
+
+tk.Button(wafermap_group_btn_row, text="✅ Select All", font=("Helvetica", 8), command=wafermap_report_select_all_groups).pack(side=tk.LEFT, padx=3)
+tk.Button(wafermap_group_btn_row, text="❌ Deselect All", font=("Helvetica", 8), command=wafermap_report_deselect_all_groups).pack(side=tk.LEFT, padx=3)
+
+# --- Group listbox with checkboxes and parameter/slide count ---
+wafermap_group_list_frame = tk.Frame(wafermap_report_group_frame)
+wafermap_group_list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+# Header row
+wafermap_group_header = tk.Frame(wafermap_group_list_frame)
+wafermap_group_header.pack(fill=tk.X)
+tk.Label(wafermap_group_header, text="Group", font=("Helvetica", 8, "bold"), width=25, anchor="w").pack(side=tk.LEFT, padx=5)
+tk.Label(wafermap_group_header, text="Parameters", font=("Helvetica", 8, "bold"), width=10, anchor="center").pack(side=tk.LEFT, padx=5)
+tk.Label(wafermap_group_header, text="Slides", font=("Helvetica", 8, "bold"), width=8, anchor="center").pack(side=tk.LEFT, padx=5)
+
+# Scrollable group checkbox area
+wafermap_group_canvas = tk.Canvas(wafermap_group_list_frame, height=250)
+wafermap_group_scrollbar = ttk.Scrollbar(wafermap_group_list_frame, orient="vertical", command=wafermap_group_canvas.yview)
+wafermap_group_inner_frame = tk.Frame(wafermap_group_canvas)
+
+wafermap_group_inner_frame.bind(
+    "<Configure>",
+    lambda e: wafermap_group_canvas.configure(scrollregion=wafermap_group_canvas.bbox("all"))
 )
-pptx_wafermap_group_combobox["values"] = ["-- Gruppe auswählen --"]
-pptx_wafermap_group_combobox.pack(side=tk.LEFT, padx=5)
+wafermap_group_canvas.create_window((0, 0), window=wafermap_group_inner_frame, anchor="nw")
+wafermap_group_canvas.configure(yscrollcommand=wafermap_group_scrollbar.set)
 
-# Parameter selection
-wafermap_param_row = tk.Frame(wafermap_param_group_frame)
-wafermap_param_row.pack(fill=tk.X, padx=5, pady=3)
+wafermap_group_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+wafermap_group_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-tk.Label(wafermap_param_row, text="Parameter:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=5)
+# Mousewheel scrolling
+def _on_wafermap_group_mousewheel(event):
+    wafermap_group_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
-pptx_wafermap_param_var = tk.StringVar(value="-- Parameter auswählen --")
-pptx_wafermap_param_combobox = ttk.Combobox(
-    wafermap_param_row,
-    textvariable=pptx_wafermap_param_var,
-    state="readonly",
-    width=35,
-    font=("Helvetica", 9)
-)
-pptx_wafermap_param_combobox["values"] = ["-- Parameter auswählen --"]
-pptx_wafermap_param_combobox.pack(side=tk.LEFT, padx=5)
+def _bind_wafermap_mousewheel_recursive(widget):
+    widget.bind("<MouseWheel>", _on_wafermap_group_mousewheel)
+    for child in widget.winfo_children():
+        _bind_wafermap_mousewheel_recursive(child)
 
-# Add/Remove buttons
-wafermap_btn_row = tk.Frame(wafermap_param_group_frame)
-wafermap_btn_row.pack(fill=tk.X, padx=5, pady=5)
+wafermap_group_canvas.bind("<MouseWheel>", _on_wafermap_group_mousewheel)
+wafermap_group_inner_frame.bind("<MouseWheel>", _on_wafermap_group_mousewheel)
 
-pptx_wafermap_add_btn = tk.Button(
-    wafermap_btn_row,
-    text="➕ Hinzufügen",
-    font=("Helvetica", 9),
-    command=lambda: add_wafermap_param_to_report()
-)
-pptx_wafermap_add_btn.pack(side=tk.LEFT, padx=5)
+def refresh_wafermap_group_listbox():
+    """Rebuild the group checkbox list from pptx_wafermap_group_data"""
+    for widget in wafermap_group_inner_frame.winfo_children():
+        widget.destroy()
 
-def add_wafermap_group_to_report():
-    """Add ALL parameters from selected group to Wafermap report list"""
-    global pptx_wafermap_selected_params, grouped_parameters
+    for gname in sorted(pptx_wafermap_group_data.keys()):
+        gdata = pptx_wafermap_group_data[gname]
+        row = tk.Frame(wafermap_group_inner_frame)
+        row.pack(fill=tk.X, pady=1)
 
-    group = pptx_wafermap_group_var.get()
-    if not grouped_parameters or group == "-- Gruppe auswählen --":
-        return
+        cb = tk.Checkbutton(
+            row, text=gname, variable=gdata["selected"],
+            font=("Helvetica", 8), anchor="w", width=24,
+            command=lambda g=gname: on_wafermap_group_toggled(g)
+        )
+        cb.pack(side=tk.LEFT, padx=5)
 
-    if group not in grouped_parameters:
-        return
+        param_count = len(gdata["params"])
+        tk.Label(row, text=str(param_count), font=("Helvetica", 8), width=10, anchor="center").pack(side=tk.LEFT, padx=5)
 
-    added_count = 0
-    for param_tuple in grouped_parameters[group]:
-        test_num = param_tuple[0]
-        full_name = param_tuple[2] if len(param_tuple) > 2 else param_tuple[1]
-        simple_name = simplify_param_name(full_name)
-        param_str = f"test_{test_num}: {simple_name}"
+        num_slides = param_count * wafermap_slide_count_var.get()
+        slide_label = tk.Label(row, text=str(num_slides), font=("Helvetica", 8, "bold"), width=8, anchor="center",
+                               fg="#1976D2" if gdata["selected"].get() else "#999999")
+        slide_label.pack(side=tk.LEFT, padx=5)
+        gdata["_slide_label"] = slide_label
 
-        if param_str not in pptx_wafermap_selected_params:
-            pptx_wafermap_selected_params.append(param_str)
-            pptx_wafermap_params_listbox.insert(tk.END, param_str)
-            added_count += 1
+    _bind_wafermap_mousewheel_recursive(wafermap_group_inner_frame)
 
-    print(f"Added {added_count} parameters from group '{group}' to Wafermap report")
+def on_wafermap_group_toggled(group_name):
+    """Called when a group checkbox is toggled"""
+    update_wafermap_report_summary()
+    if group_name in pptx_wafermap_group_data:
+        gdata = pptx_wafermap_group_data[group_name]
+        if "_slide_label" in gdata:
+            gdata["_slide_label"].config(fg="#1976D2" if gdata["selected"].get() else "#999999")
 
-pptx_wafermap_add_group_btn = tk.Button(
-    wafermap_btn_row,
-    text="📁 Ganze Gruppe",
+# Summary label
+wafermap_report_summary_frame = tk.Frame(wafermap_report_group_frame)
+wafermap_report_summary_frame.pack(fill=tk.X, padx=5, pady=5)
+
+wafermap_report_summary_label = tk.Label(
+    wafermap_report_summary_frame,
+    text="No groups selected",
     font=("Helvetica", 9, "bold"),
-    bg="#4CAF50",
-    fg="white",
-    command=add_wafermap_group_to_report
+    fg="#666666"
 )
-pptx_wafermap_add_group_btn.pack(side=tk.LEFT, padx=5)
+wafermap_report_summary_label.pack(side=tk.LEFT, padx=5)
 
-pptx_wafermap_remove_btn = tk.Button(
-    wafermap_btn_row,
-    text="➖ Entfernen",
-    font=("Helvetica", 9),
-    command=lambda: remove_wafermap_param_from_report()
-)
-pptx_wafermap_remove_btn.pack(side=tk.LEFT, padx=5)
+def update_wafermap_report_summary():
+    """Update the summary label and rebuild pptx_wafermap_selected_params"""
+    global pptx_wafermap_selected_params
+    selected_groups = [g for g, d in pptx_wafermap_group_data.items() if d["selected"].get()]
+    total_params = sum(len(pptx_wafermap_group_data[g]["params"]) for g in selected_groups)
+    total_slides = total_params * wafermap_slide_count_var.get()
 
-pptx_wafermap_clear_btn = tk.Button(
-    wafermap_btn_row,
-    text="🗑️ Alle löschen",
-    font=("Helvetica", 9),
-    command=lambda: clear_wafermap_params_from_report()
-)
-pptx_wafermap_clear_btn.pack(side=tk.LEFT, padx=5)
+    if selected_groups:
+        wafermap_report_summary_label.config(
+            text=f"✅ {len(selected_groups)} Groups | {total_params} Parameters | {total_slides} Slides total",
+            fg="#1976D2"
+        )
+    else:
+        wafermap_report_summary_label.config(
+            text="No groups selected",
+            fg="#666666"
+        )
 
-# Selected parameters listbox
-wafermap_selected_frame = tk.LabelFrame(wafermap_content_frame, text="Ausgewählte Parameter für Report", font=("Helvetica", 9))
-wafermap_selected_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)
+    # Rebuild flat pptx_wafermap_selected_params for PPT generation
+    pptx_wafermap_selected_params = []
+    for gname in sorted(pptx_wafermap_group_data.keys()):
+        gdata = pptx_wafermap_group_data[gname]
+        if gdata["selected"].get():
+            pptx_wafermap_selected_params.extend(gdata["params"])
 
-pptx_wafermap_params_listbox = tk.Listbox(
-    wafermap_selected_frame,
-    font=("Helvetica", 9),
-    height=8,
-    selectmode=tk.SINGLE
-)
-pptx_wafermap_params_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-pptx_wafermap_selected_params = []
-
-def update_wafermap_param_combobox(event=None):
-    """Update parameter combobox based on selected group"""
-    global grouped_parameters
-
-    group = pptx_wafermap_group_var.get()
-    if not grouped_parameters or group == "-- Gruppe auswählen --":
-        pptx_wafermap_param_combobox["values"] = ["-- Parameter auswählen --"]
-        pptx_wafermap_param_var.set("-- Parameter auswählen --")
+def populate_wafermap_group_data():
+    """Build wafermap group data from grouped_parameters"""
+    global pptx_wafermap_group_data
+    if not grouped_parameters:
         return
 
-    params = []
-    if group in grouped_parameters:
-        for param_tuple in grouped_parameters[group]:
+    # Keep existing selections
+    old_selections = {g: d["selected"].get() for g, d in pptx_wafermap_group_data.items()}
+
+    pptx_wafermap_group_data = {}
+    for group_name, params in grouped_parameters.items():
+        param_strings = []
+        for param_tuple in params:
             test_num = param_tuple[0]
             full_name = param_tuple[2] if len(param_tuple) > 2 else param_tuple[1]
             simple_name = simplify_param_name(full_name)
-            params.append(f"test_{test_num}: {simple_name}")
+            param_strings.append(f"test_{test_num}: {simple_name}")
 
-    pptx_wafermap_param_combobox["values"] = ["-- Parameter auswählen --"] + sorted(params)
-    pptx_wafermap_param_var.set("-- Parameter auswählen --")
+        was_selected = old_selections.get(group_name, False)
+        pptx_wafermap_group_data[group_name] = {
+            "selected": tk.BooleanVar(value=was_selected),
+            "params": list(param_strings),
+            "all_params": list(param_strings),
+        }
 
-pptx_wafermap_group_combobox.bind("<<ComboboxSelected>>", update_wafermap_param_combobox)
+    refresh_wafermap_group_listbox()
+    update_wafermap_report_summary()
 
-def add_wafermap_param_to_report():
-    """Add selected parameter to wafermap report list"""
-    global pptx_wafermap_selected_params
+# ===== Parameter Editor =====
+wafermap_param_editor_frame = tk.LabelFrame(wafermap_content_frame, text="📝 Edit Parameters (select group above)", font=("Helvetica", 9, "bold"))
+wafermap_param_editor_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-    param = pptx_wafermap_param_var.get()
-    if param == "-- Parameter auswählen --":
+# Group selector for param editing
+wafermap_param_edit_group_row = tk.Frame(wafermap_param_editor_frame)
+wafermap_param_edit_group_row.pack(fill=tk.X, padx=5, pady=5)
+
+tk.Label(wafermap_param_edit_group_row, text="Edit Group:", font=("Helvetica", 9)).pack(side=tk.LEFT, padx=5)
+
+pptx_wafermap_edit_group_var = tk.StringVar(value="-- Select Group --")
+pptx_wafermap_edit_group_combobox = ttk.Combobox(
+    wafermap_param_edit_group_row,
+    textvariable=pptx_wafermap_edit_group_var,
+    state="readonly",
+    width=30,
+    font=("Helvetica", 9)
+)
+pptx_wafermap_edit_group_combobox["values"] = ["-- Select Group --"]
+pptx_wafermap_edit_group_combobox.pack(side=tk.LEFT, padx=5)
+
+# Two-panel layout: Available params | Selected params
+wafermap_param_panels = tk.Frame(wafermap_param_editor_frame)
+wafermap_param_panels.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+# LEFT: Available parameters
+wafermap_avail_frame = tk.LabelFrame(wafermap_param_panels, text="Available Parameters", font=("Helvetica", 8))
+wafermap_avail_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 2))
+
+wafermap_avail_listbox = tk.Listbox(wafermap_avail_frame, font=("Helvetica", 8), height=8, selectmode=tk.EXTENDED)
+wafermap_avail_yscroll = ttk.Scrollbar(wafermap_avail_frame, orient="vertical", command=wafermap_avail_listbox.yview)
+wafermap_avail_xscroll = ttk.Scrollbar(wafermap_avail_frame, orient="horizontal", command=wafermap_avail_listbox.xview)
+wafermap_avail_listbox.configure(yscrollcommand=wafermap_avail_yscroll.set, xscrollcommand=wafermap_avail_xscroll.set)
+wafermap_avail_yscroll.pack(side=tk.RIGHT, fill=tk.Y)
+wafermap_avail_xscroll.pack(side=tk.BOTTOM, fill=tk.X)
+wafermap_avail_listbox.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+
+# CENTER: Add/Remove buttons
+wafermap_param_btn_frame = tk.Frame(wafermap_param_panels)
+wafermap_param_btn_frame.pack(side=tk.LEFT, padx=2, pady=5)
+
+tk.Button(wafermap_param_btn_frame, text="▶▶\nAdd All", font=("Helvetica", 6), width=7,
+          command=lambda: wafermap_param_add_all()).pack(pady=1)
+tk.Button(wafermap_param_btn_frame, text="▶\nAdd", font=("Helvetica", 6), width=7,
+          command=lambda: wafermap_param_add_selected()).pack(pady=1)
+tk.Button(wafermap_param_btn_frame, text="◀\nRemove", font=("Helvetica", 6), width=7,
+          command=lambda: wafermap_param_remove_selected()).pack(pady=1)
+tk.Button(wafermap_param_btn_frame, text="◀◀\nRemove All", font=("Helvetica", 6), width=7,
+          command=lambda: wafermap_param_remove_all()).pack(pady=1)
+
+# RIGHT: Selected parameters
+wafermap_selected_frame = tk.LabelFrame(wafermap_param_panels, text="Selected Parameters (for Report)", font=("Helvetica", 8))
+wafermap_selected_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(2, 0))
+
+wafermap_selected_listbox = tk.Listbox(wafermap_selected_frame, font=("Helvetica", 8), height=8, selectmode=tk.EXTENDED)
+wafermap_sel_yscroll = ttk.Scrollbar(wafermap_selected_frame, orient="vertical", command=wafermap_selected_listbox.yview)
+wafermap_sel_xscroll = ttk.Scrollbar(wafermap_selected_frame, orient="horizontal", command=wafermap_selected_listbox.xview)
+wafermap_selected_listbox.configure(yscrollcommand=wafermap_sel_yscroll.set, xscrollcommand=wafermap_sel_xscroll.set)
+wafermap_sel_yscroll.pack(side=tk.RIGHT, fill=tk.Y)
+wafermap_sel_xscroll.pack(side=tk.BOTTOM, fill=tk.X)
+wafermap_selected_listbox.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+
+# Param count label
+wafermap_param_count_label = tk.Label(wafermap_param_editor_frame, text="", font=("Helvetica", 8), fg="#666666")
+wafermap_param_count_label.pack(anchor="w", padx=10)
+
+def update_wafermap_param_editor(event=None):
+    """Update the parameter editor panels for the selected group"""
+    group = pptx_wafermap_edit_group_var.get()
+    wafermap_avail_listbox.delete(0, tk.END)
+    wafermap_selected_listbox.delete(0, tk.END)
+
+    if group == "-- Select Group --" or group not in pptx_wafermap_group_data:
+        wafermap_param_editor_frame.config(text="📝 Edit Parameters (select group above)")
+        wafermap_param_count_label.config(text="")
         return
 
-    if param not in pptx_wafermap_selected_params:
-        pptx_wafermap_selected_params.append(param)
-        pptx_wafermap_params_listbox.insert(tk.END, param)
+    gdata = pptx_wafermap_group_data[group]
+    wafermap_param_editor_frame.config(text=f"📝 Edit Parameters: {group}")
 
-def remove_wafermap_param_from_report():
-    """Remove selected parameter from wafermap report list"""
-    global pptx_wafermap_selected_params
+    selected_params = set(gdata["params"])
+    all_params = gdata.get("all_params", gdata["params"])
 
-    selection = pptx_wafermap_params_listbox.curselection()
+    for p in sorted(all_params):
+        if p not in selected_params:
+            wafermap_avail_listbox.insert(tk.END, p)
+
+    for p in gdata["params"]:
+        wafermap_selected_listbox.insert(tk.END, p)
+
+    num_slides = len(gdata["params"]) * wafermap_slide_count_var.get()
+    wafermap_param_count_label.config(
+        text=f"Selected: {len(gdata['params'])} of {len(all_params)} parameters | {num_slides} slides for this group"
+    )
+
+    # Update combobox values
+    groups = ["-- Select Group --"] + sorted(pptx_wafermap_group_data.keys())
+    pptx_wafermap_edit_group_combobox["values"] = groups
+
+pptx_wafermap_edit_group_combobox.bind("<<ComboboxSelected>>", update_wafermap_param_editor)
+
+def wafermap_param_add_selected():
+    group = pptx_wafermap_edit_group_var.get()
+    if group not in pptx_wafermap_group_data:
+        return
+    selection = wafermap_avail_listbox.curselection()
     if not selection:
         return
+    params_to_add = [wafermap_avail_listbox.get(i) for i in selection]
+    gdata = pptx_wafermap_group_data[group]
+    for p in params_to_add:
+        if p not in gdata["params"]:
+            gdata["params"].append(p)
+    update_wafermap_param_editor()
+    refresh_wafermap_group_listbox()
+    update_wafermap_report_summary()
 
-    idx = selection[0]
-    pptx_wafermap_params_listbox.delete(idx)
-    if idx < len(pptx_wafermap_selected_params):
-        pptx_wafermap_selected_params.pop(idx)
+def wafermap_param_remove_selected():
+    group = pptx_wafermap_edit_group_var.get()
+    if group not in pptx_wafermap_group_data:
+        return
+    selection = wafermap_selected_listbox.curselection()
+    if not selection:
+        return
+    params_to_remove = [wafermap_selected_listbox.get(i) for i in selection]
+    gdata = pptx_wafermap_group_data[group]
+    gdata["params"] = [p for p in gdata["params"] if p not in params_to_remove]
+    update_wafermap_param_editor()
+    refresh_wafermap_group_listbox()
+    update_wafermap_report_summary()
 
-def clear_wafermap_params_from_report():
-    """Clear all parameters from wafermap report list"""
-    global pptx_wafermap_selected_params
+def wafermap_param_add_all():
+    group = pptx_wafermap_edit_group_var.get()
+    if group not in pptx_wafermap_group_data:
+        return
+    gdata = pptx_wafermap_group_data[group]
+    gdata["params"] = list(gdata.get("all_params", []))
+    update_wafermap_param_editor()
+    refresh_wafermap_group_listbox()
+    update_wafermap_report_summary()
 
-    pptx_wafermap_params_listbox.delete(0, tk.END)
-    pptx_wafermap_selected_params = []
+def wafermap_param_remove_all():
+    group = pptx_wafermap_edit_group_var.get()
+    if group not in pptx_wafermap_group_data:
+        return
+    pptx_wafermap_group_data[group]["params"] = []
+    update_wafermap_param_editor()
+    refresh_wafermap_group_listbox()
+    update_wafermap_report_summary()
 
 # ============ Sub-Tab 2: Multiple Wafermaps ============
 pptx_multi_wafer_tab = ttk.Frame(pptx_sub_notebook)
@@ -30416,12 +30572,9 @@ def update_pptx_report_group_combobox():
     pptx_report_param_combobox.set("-- Select Parameter --")
     print(f"DEBUG: Report group combobox now has {len(groups)} values")
 
-    # Wafermap tab
+    # Wafermap tab - populate group data for multi-group selection
     try:
-        pptx_wafermap_report_group_combobox["values"] = groups
-        pptx_wafermap_report_group_combobox.set("-- Select Group --")
-        pptx_wafermap_report_param_combobox["values"] = ["-- Select Parameter --"]
-        pptx_wafermap_report_param_combobox.set("-- Select Parameter --")
+        populate_wafermap_group_data()
     except NameError:
         pass
 
@@ -30437,6 +30590,12 @@ def update_pptx_report_group_combobox():
     # Gage R&R tab - populate group data for multi-group selection
     try:
         populate_grr_group_data()
+    except NameError:
+        pass
+
+    # Wafermap tab - populate group data for multi-group selection
+    try:
+        populate_wafermap_group_data()
     except NameError:
         pass
 
@@ -32558,12 +32717,11 @@ def update_pptx_group_combobox():
     """Update the PowerPoint group combobox with available groups"""
     if grouped_parameters:
         group_names = ["All Groups"] + sorted(grouped_parameters.keys())
-        pptx_wafermap_group_combobox["values"] = group_names
-        pptx_wafermap_group_combobox.current(0)
+        # Wafermap group data is now populated via populate_wafermap_group_data()
 
 # Legacy variable mappings for backward compatibility with create_powerpoint_presentation
 pptx_include_boxplots_var = tk.BooleanVar(value=False)
-pptx_boxplot_group_var = pptx_wafermap_group_var
+pptx_boxplot_group_var = tk.StringVar(value="All Groups")
 
 
 def update_wafer_listbox():
@@ -32771,7 +32929,21 @@ def create_powerpoint_presentation(output_path=None):
             agenda_rows.append(("📖 Calculation Parameters", "-", 3, 3, 1))
 
         # Pre-GRR sections
-        if include_wafermap:
+        if include_wafermap and pptx_wafermap_selected_params:
+            # Add each selected wafermap group as its own agenda row
+            for gname in sorted(pptx_wafermap_group_data.keys()):
+                gdata = pptx_wafermap_group_data[gname]
+                if not gdata["selected"].get():
+                    continue
+                num_params = len(gdata["params"])
+                if num_params == 0:
+                    continue
+                num_slides = num_params * wafermap_slide_count_var.get()
+                start_page = current_page
+                end_page = current_page + num_slides - 1
+                agenda_rows.append((f"🗺️ {gname}", num_params, start_page, end_page, num_slides))
+                current_page += num_slides
+        elif include_wafermap:
             agenda_rows.append(("🗺️ Wafermap Analysis", "-", current_page, current_page + 1, 2))
             current_page += 2
         if include_multi_wafer:
@@ -32912,14 +33084,14 @@ def create_powerpoint_presentation(output_path=None):
             table_shape = agenda_slide.shapes.add_table(num_rows, num_cols, tbl_left, tbl_top, tbl_width, tbl_height)
             table = table_shape.table
 
-            # Column widths: #(0.7) Group(4.5) Parameters(2.0) Pages(2.5) Slides(2.233)
-            col_widths = [Inches(0.7), Inches(4.5), Inches(2.0), Inches(2.5), Inches(2.233)]
+            # Column widths: #(0.7) Group(4.5) Parameters(2.0) Slides(2.0) Pages(2.733)
+            col_widths = [Inches(0.7), Inches(4.5), Inches(2.0), Inches(2.0), Inches(2.733)]
             for ci, w in enumerate(col_widths):
                 table.columns[ci].width = w
 
             # Header styling
             header_bg = RGBColor(21, 101, 192)  # #1565C0 blue
-            header_texts = ["#", "Group", "Parameters", "Pages", "Slides"]
+            header_texts = ["#", "Group", "Parameters", "Slides", "Pages"]
             for ci, txt in enumerate(header_texts):
                 cell = table.cell(0, ci)
                 cell.text = ""
@@ -32948,7 +33120,7 @@ def create_powerpoint_presentation(output_path=None):
                 else:
                     pages_display = f"Page {pg_start}-{pg_end}"
 
-                row_data = [str(ri + 1), grp_name, params_display, pages_display, str(n_slides)]
+                row_data = [str(ri + 1), grp_name, params_display, str(n_slides), pages_display]
                 # Alignment: # center, Group left, rest center
                 alignments = [PP_ALIGN.CENTER, PP_ALIGN.LEFT, PP_ALIGN.CENTER, PP_ALIGN.CENTER, PP_ALIGN.CENTER]
 
