@@ -4185,7 +4185,7 @@ def show_load_wafer_dialog():
     parent = wafer_left_panel.winfo_toplevel()
     dialog = tk.Toplevel(parent)
     dialog.title("Load Wafer")
-    dialog.geometry("520x480")
+    dialog.geometry("520x620")
     dialog.transient(parent)
     dialog.grab_set()
     dialog.resizable(False, False)
@@ -13063,7 +13063,7 @@ def show_mw_load_wafer_dialog():
     parent = main_win
     dialog = tk.Toplevel(parent)
     dialog.title("Load Wafer")
-    dialog.geometry("520x480")
+    dialog.geometry("520x620")
     dialog.transient(parent)
     dialog.grab_set()
     dialog.resizable(False, False)
@@ -19499,7 +19499,7 @@ def show_diffmap_load_dialog():
     parent = main_win
     dialog = tk.Toplevel(parent)
     dialog.title("Load Wafer")
-    dialog.geometry("520x480")
+    dialog.geometry("520x620")
     dialog.transient(parent)
     dialog.grab_set()
     dialog.resizable(False, False)
