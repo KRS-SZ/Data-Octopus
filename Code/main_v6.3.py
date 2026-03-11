@@ -29271,6 +29271,10 @@ wafermap_default_layout_boxes = {
     "wafermap": {"x": 0.3, "y": 0.7, "width": 6.0, "height": 6.0, "color": "#4CAF50", "fill": "#E8F5E9", "enabled": True, "label": "Wafermap"},
     "boxplot": {"x": 6.5, "y": 0.7, "width": 6.5, "height": 3.0, "color": "#FF9800", "fill": "#FFF3E0", "enabled": True, "label": "Boxplot"},
     "histogram": {"x": 6.5, "y": 3.8, "width": 6.5, "height": 2.9, "color": "#9C27B0", "fill": "#F3E5F5", "enabled": True, "label": "Histogram"},
+    "bin_dist": {"x": 6.5, "y": 0.7, "width": 6.5, "height": 3.0, "color": "#F44336", "fill": "#FFEBEE", "enabled": False, "label": "Bin Dist."},
+    "plm_map": {"x": 0.3, "y": 0.7, "width": 6.0, "height": 6.0, "color": "#00BCD4", "fill": "#E0F7FA", "enabled": False, "label": "PLM Map"},
+    "charac_curve": {"x": 6.5, "y": 3.8, "width": 6.5, "height": 2.9, "color": "#795548", "fill": "#EFEBE9", "enabled": False, "label": "Charac Curve"},
+    "die_image": {"x": 6.5, "y": 0.7, "width": 6.5, "height": 3.0, "color": "#FF5722", "fill": "#FBE9E7", "enabled": False, "label": "Image"},
     "stats": {"x": 0.3, "y": 6.8, "width": 12.733, "height": 0.5, "color": "#607D8B", "fill": "#ECEFF1", "enabled": False, "label": "Statistics"},
     "summary": {"x": 0.3, "y": 6.8, "width": 6.0, "height": 0.5, "color": "#E91E63", "fill": "#FCE4EC", "enabled": False, "label": "Summary"},
 }
@@ -29453,17 +29457,39 @@ def create_wafermap_slide_tab(slide_index):
     preview_canvas.bind("<B1-Motion>", lambda e, i=slide_index: on_slide_drag(e, i))
     preview_canvas.bind("<ButtonRelease-1>", lambda e, i=slide_index: on_slide_release(e, i))
 
-    # Create checkboxes
+    # Create checkboxes (with selection combos for PLM Map and Image)
     for box_name, box_data in slide_layout_boxes.items():
-        cb = tk.Checkbutton(
-            box_enable_frame,
-            text=box_data["label"],
-            variable=box_enable_vars[box_name],
-            font=("Helvetica", 8),
-            fg=box_data["color"],
-            command=lambda i=slide_index: draw_slide_preview(i)
-        )
-        cb.pack(side=tk.LEFT, padx=3)
+        if box_name == "plm_map":
+            plm_frame = tk.Frame(box_enable_frame)
+            plm_frame.pack(side=tk.LEFT, padx=1)
+            cb = tk.Checkbutton(plm_frame, text=box_data["label"],
+                variable=box_enable_vars[box_name], font=("Helvetica", 8),
+                fg=box_data["color"], command=lambda i=slide_index: draw_slide_preview(i))
+            cb.pack(side=tk.LEFT)
+            plm_type_var = tk.StringVar(value="Stitched")
+            plm_combo = ttk.Combobox(plm_frame, textvariable=plm_type_var,
+                values=["Stitched", "Uniformity", "Bridged", "Bridged-Pixels"],
+                state="readonly", width=10, font=("Helvetica", 7))
+            plm_combo.pack(side=tk.LEFT, padx=1)
+            wafermap_multi_slide_data.get(slide_index, {})["plm_type_var"] = plm_type_var
+        elif box_name == "die_image":
+            img_frame = tk.Frame(box_enable_frame)
+            img_frame.pack(side=tk.LEFT, padx=1)
+            cb = tk.Checkbutton(img_frame, text=box_data["label"],
+                variable=box_enable_vars[box_name], font=("Helvetica", 8),
+                fg=box_data["color"], command=lambda i=slide_index: draw_slide_preview(i))
+            cb.pack(side=tk.LEFT)
+            img_type_var = tk.StringVar(value="First Die")
+            img_combo = ttk.Combobox(img_frame, textvariable=img_type_var,
+                values=["First Die", "Best Die", "Worst Die", "Center Die", "Overview"],
+                state="readonly", width=10, font=("Helvetica", 7))
+            img_combo.pack(side=tk.LEFT, padx=1)
+            wafermap_multi_slide_data.get(slide_index, {})["img_type_var"] = img_type_var
+        else:
+            cb = tk.Checkbutton(box_enable_frame, text=box_data["label"],
+                variable=box_enable_vars[box_name], font=("Helvetica", 8),
+                fg=box_data["color"], command=lambda i=slide_index: draw_slide_preview(i))
+            cb.pack(side=tk.LEFT, padx=3)
 
     # Presets frame
     preset_frame = tk.Frame(tab_frame)
@@ -29625,13 +29651,15 @@ def wafermap_report_select_all_groups():
     refresh_wafermap_group_listbox()
     update_wafermap_report_summary()
 
-    # Update parameter editor combobox
+    # Update parameter editor combobox immediately
     try:
         groups = ["-- Select Group --"] + sorted(pptx_wafermap_group_data.keys())
         pptx_wafermap_edit_group_combobox["values"] = groups
-        pptx_wafermap_edit_group_combobox.set("-- Select Group --")
-    except NameError:
-        pass
+        if pptx_wafermap_edit_group_var.get() not in groups:
+            pptx_wafermap_edit_group_combobox.set("-- Select Group --")
+        print(f"[PPT] Wafermap Edit Group combobox updated with {len(groups)-1} groups")
+    except Exception as e:
+        print(f"[PPT] Could not update edit group combobox: {e}")
 
 def wafermap_report_deselect_all_groups():
     """Deselect all groups for Wafermap report"""
@@ -33675,6 +33703,207 @@ def create_powerpoint_presentation(output_path=None):
                                 height=Inches(hist_cfg.get("height", 2.9))
                             )
                             plt.close(fig)
+
+                        # === Bin Distribution ===
+                        if wm_enables.get("bin_dist", tk.BooleanVar(value=False)).get():
+                            bd_cfg = wm_layout.get("bin_dist", {})
+                            lbl = slide.shapes.add_textbox(
+                                Inches(bd_cfg.get("x", 6.5)),
+                                Inches(max(0, bd_cfg.get("y", 0.7) - 0.22)),
+                                Inches(bd_cfg.get("width", 6.5)),
+                                Inches(0.2)
+                            )
+                            lp = lbl.text_frame.paragraphs[0]
+                            lp.text = "Bin Distribution"
+                            lp.font.size = Pt(10)
+                            lp.font.bold = True
+                            lp.font.color.rgb = RGBColor(244, 67, 54)
+
+                            fig, ax = plt.subplots(figsize=(bd_cfg.get("width", 6.5) * 0.95, bd_cfg.get("height", 3.0) * 0.95))
+                            # Use first wafer's bin data
+                            bin_col = None
+                            for df in wm_data_sources:
+                                if "bin" in df.columns:
+                                    bin_col = "bin"
+                                    break
+                                elif "sbin" in df.columns:
+                                    bin_col = "sbin"
+                                    break
+                            if bin_col:
+                                bins_data = wm_data_sources[0][bin_col].dropna().values
+                                if len(bins_data) > 0:
+                                    unique_bins, bin_counts = np.unique(bins_data, return_counts=True)
+                                    total_dies = len(bins_data)
+                                    bin_pcts = (bin_counts / total_dies) * 100
+                                    colors = ['#4CAF50' if b == 1 or b == 0 else '#F44336' for b in unique_bins]
+                                    x_pos = np.arange(len(unique_bins))
+                                    bars = ax.bar(x_pos, bin_pcts, color=colors, edgecolor='black', linewidth=0.5)
+                                    for bar, pct, cnt in zip(bars, bin_pcts, bin_counts):
+                                        ax.annotate(f'{pct:.1f}%\n({int(cnt)})',
+                                            xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                                            xytext=(0, 3), textcoords="offset points",
+                                            ha='center', va='bottom', fontsize=6, fontweight='bold')
+                                    ax.set_xticks(x_pos)
+                                    ax.set_xticklabels([f'Bin {int(b)}' for b in unique_bins], fontsize=6, rotation=45, ha='right')
+                                    ax.set_ylabel("Percentage (%)", fontsize=7)
+                                    ax.set_title("Bin Distribution", fontsize=8, fontweight="bold")
+                                    ax.grid(True, alpha=0.3, axis='y')
+                            fig.tight_layout()
+                            img_stream = figure_to_image_bytes(fig, dpi=200)
+                            slide.shapes.add_picture(img_stream,
+                                Inches(bd_cfg.get("x", 6.5)), Inches(bd_cfg.get("y", 0.7)),
+                                width=Inches(bd_cfg.get("width", 6.5)), height=Inches(bd_cfg.get("height", 3.0)))
+                            plt.close(fig)
+
+                        # === PLM Map ===
+                        if wm_enables.get("plm_map", tk.BooleanVar(value=False)).get():
+                            plm_cfg = wm_layout.get("plm_map", {})
+                            lbl = slide.shapes.add_textbox(
+                                Inches(plm_cfg.get("x", 0.3)),
+                                Inches(max(0, plm_cfg.get("y", 0.7) - 0.22)),
+                                Inches(plm_cfg.get("width", 6.0)),
+                                Inches(0.2)
+                            )
+                            lp = lbl.text_frame.paragraphs[0]
+                            lp.text = "PLM Map"
+                            lp.font.size = Pt(10)
+                            lp.font.bold = True
+                            lp.font.color.rgb = RGBColor(0, 188, 212)
+                            try:
+                                # Get selected PLM type from combobox
+                                plm_type_selection = slide_data.get("plm_type_var", tk.StringVar(value="Stitched")).get()
+                                print(f"[PPT] PLM Map: Looking for type '{plm_type_selection}'")
+
+                                plm_image_path = None
+                                # Search in plm_file_directory first, then die_image_directory
+                                search_dirs = []
+                                if plm_file_directory and os.path.isdir(plm_file_directory):
+                                    search_dirs.append(plm_file_directory)
+                                if die_image_directory and os.path.isdir(die_image_directory):
+                                    search_dirs.append(die_image_directory)
+                                    plm_sub = os.path.join(die_image_directory, '..', 'PLMFiles')
+                                    if os.path.isdir(plm_sub):
+                                        search_dirs.append(os.path.abspath(plm_sub))
+
+                                import glob
+                                type_lower = plm_type_selection.lower()
+                                for search_dir in search_dirs:
+                                    # Search for matching PLM type in directory
+                                    for ext in ['*.png', '*.jpg', '*.jpeg', '*.bmp', '*.tif', '*.tiff']:
+                                        for fpath in glob.glob(os.path.join(search_dir, '**', ext), recursive=True):
+                                            fname_lower = os.path.basename(fpath).lower()
+                                            if type_lower in fname_lower:
+                                                plm_image_path = fpath
+                                                break
+                                        if plm_image_path:
+                                            break
+                                    # Also check subdirectories named after the type
+                                    type_dir = os.path.join(search_dir, plm_type_selection)
+                                    if os.path.isdir(type_dir):
+                                        for ext in ['*.png', '*.jpg', '*.jpeg', '*.bmp', '*.tif', '*.tiff']:
+                                            matches = glob.glob(os.path.join(type_dir, ext))
+                                            if matches:
+                                                plm_image_path = matches[0]
+                                                break
+                                    if plm_image_path:
+                                        break
+
+                                if plm_image_path and os.path.exists(plm_image_path):
+                                    print(f"[PPT] PLM Map: Found {plm_image_path}")
+                                    from PIL import Image as PILImage
+                                    plm_img = PILImage.open(plm_image_path)
+                                    fig, ax = plt.subplots(figsize=(plm_cfg.get("width", 6.0) * 0.95, plm_cfg.get("height", 6.0) * 0.95))
+                                    ax.imshow(plm_img)
+                                    ax.set_title(f"PLM {plm_type_selection}: {os.path.basename(plm_image_path)}", fontsize=7)
+                                    ax.axis('off')
+                                    fig.tight_layout()
+                                    img_stream = figure_to_image_bytes(fig, dpi=200)
+                                    slide.shapes.add_picture(img_stream,
+                                        Inches(plm_cfg.get("x", 0.3)), Inches(plm_cfg.get("y", 0.7)),
+                                        width=Inches(plm_cfg.get("width", 6.0)), height=Inches(plm_cfg.get("height", 6.0)))
+                                    plt.close(fig)
+                                else:
+                                    print(f"[PPT] PLM Map: No '{plm_type_selection}' image found in {search_dirs}")
+                            except Exception as e:
+                                print(f"[PPT] PLM Map error: {e}")
+
+                        # === Characteristic Curve ===
+                        if wm_enables.get("charac_curve", tk.BooleanVar(value=False)).get():
+                            cc_cfg = wm_layout.get("charac_curve", {})
+                            lbl = slide.shapes.add_textbox(
+                                Inches(cc_cfg.get("x", 6.5)),
+                                Inches(max(0, cc_cfg.get("y", 3.8) - 0.22)),
+                                Inches(cc_cfg.get("width", 6.5)),
+                                Inches(0.2)
+                            )
+                            lp = lbl.text_frame.paragraphs[0]
+                            lp.text = "Charact. Curve"
+                            lp.font.size = Pt(10)
+                            lp.font.bold = True
+                            lp.font.color.rgb = RGBColor(121, 85, 72)
+                            try:
+                                fig, ax = plt.subplots(figsize=(cc_cfg.get("width", 6.5) * 0.95, cc_cfg.get("height", 2.9) * 0.95))
+                                for df, wafer_id in zip(wm_data_sources, wm_wafer_labels):
+                                    col = wm_find_col(df, wm_param_column)
+                                    if col:
+                                        values = pd.to_numeric(df[col], errors='coerce').dropna()
+                                        if len(values) > 0:
+                                            sorted_vals = np.sort(values.values)
+                                            short_lbl = str(wafer_id)[:12] + "..." if len(str(wafer_id)) > 12 else str(wafer_id)
+                                            ax.plot(range(len(sorted_vals)), sorted_vals, linewidth=0.8, label=short_lbl, alpha=0.8)
+                                ax.set_xlabel("Die Index (sorted)", fontsize=7)
+                                ax.set_ylabel(param_display[:25], fontsize=7)
+                                ax.tick_params(axis='both', labelsize=6)
+                                ax.legend(fontsize=5, loc='upper left')
+                                ax.grid(True, alpha=0.3)
+                                fig.tight_layout()
+                                img_stream = figure_to_image_bytes(fig, dpi=200)
+                                slide.shapes.add_picture(img_stream,
+                                    Inches(cc_cfg.get("x", 6.5)), Inches(cc_cfg.get("y", 3.8)),
+                                    width=Inches(cc_cfg.get("width", 6.5)), height=Inches(cc_cfg.get("height", 2.9)))
+                                plt.close(fig)
+                            except Exception as e:
+                                print(f"[PPT] Charact. Curve error: {e}")
+
+                        # === Die Image ===
+                        if wm_enables.get("die_image", tk.BooleanVar(value=False)).get():
+                            di_cfg = wm_layout.get("die_image", {})
+                            lbl = slide.shapes.add_textbox(
+                                Inches(di_cfg.get("x", 6.5)),
+                                Inches(max(0, di_cfg.get("y", 0.7) - 0.22)),
+                                Inches(di_cfg.get("width", 6.5)),
+                                Inches(0.2)
+                            )
+                            lp = lbl.text_frame.paragraphs[0]
+                            lp.text = "Image"
+                            lp.font.size = Pt(10)
+                            lp.font.bold = True
+                            lp.font.color.rgb = RGBColor(255, 87, 34)
+                            try:
+                                if die_image_directory and os.path.isdir(die_image_directory):
+                                    import glob
+                                    img_files = []
+                                    for ext in ['*.png', '*.jpg', '*.jpeg', '*.bmp', '*.tif', '*.tiff']:
+                                        img_files.extend(glob.glob(os.path.join(die_image_directory, ext)))
+                                    if img_files:
+                                        from PIL import Image as PILImage
+                                        sample_img = PILImage.open(img_files[0])
+                                        fig, ax = plt.subplots(figsize=(di_cfg.get("width", 6.5) * 0.95, di_cfg.get("height", 3.0) * 0.95))
+                                        ax.imshow(sample_img)
+                                        ax.set_title(f"Die Image ({os.path.basename(img_files[0])})", fontsize=7)
+                                        ax.axis('off')
+                                        fig.tight_layout()
+                                        img_stream = figure_to_image_bytes(fig, dpi=200)
+                                        slide.shapes.add_picture(img_stream,
+                                            Inches(di_cfg.get("x", 6.5)), Inches(di_cfg.get("y", 0.7)),
+                                            width=Inches(di_cfg.get("width", 6.5)), height=Inches(di_cfg.get("height", 3.0)))
+                                        plt.close(fig)
+                                    else:
+                                        print(f"[PPT] Image: No images found in {die_image_directory}")
+                                else:
+                                    print(f"[PPT] Image: No image directory set")
+                            except Exception as e:
+                                print(f"[PPT] Image error: {e}")
 
                         # === Statistics ===
                         if wm_enables.get("stats", tk.BooleanVar(value=False)).get():
