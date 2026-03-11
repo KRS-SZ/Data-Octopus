@@ -907,6 +907,299 @@ except ImportError as e:
     print(f"Warning: DashboardTab import failed: {e}")
     tk.Label(tab_dashboard, text="Dashboard nicht verfügbar", font=("Segoe UI", 14)).pack(pady=50)
 
+# Tab 1b: Master Inventory (Cork Share)
+tab_master_inv = ttk.Frame(notebook)
+notebook.add(tab_master_inv, text="📋 Master-Inf.")
+try:
+    from src.stdf_analyzer.gui.master_inventory_tab import MasterInventoryTab
+    master_inventory_tab_instance = MasterInventoryTab(notebook, tab_master_inv)
+except ImportError as e:
+    print(f"Warning: MasterInventoryTab import failed: {e}")
+    tk.Label(tab_master_inv, text="Master Inventory nicht verfügbar", font=("Segoe UI", 14)).pack(pady=50)
+
+# Tab 2: Wafermap
+
+# Tab 1b: Master-Inf. (Wafer Inventory from Cork Share)
+tab_master_inf = ttk.Frame(notebook)
+notebook.add(tab_master_inf, text="📋 Master-Inf.")
+
+# ============================================================================
+# Master Inventory Tab - Cork Share Wafer Tracker
+# ============================================================================
+MASTER_CORK_SHARE_PATH = r"\\frlcork-storage.thefacebook.com\oresearch_cork_001\uLED_Hive_Extracts\Master Tracker\master_wafer_inventory_status_all.csv"
+MASTER_LOCAL_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Master")
+MASTER_LOCAL_PATH = os.path.join(MASTER_LOCAL_DIR, "master_wafer_inventory_status_all.csv")
+master_inventory_df = None
+
+# Key columns to show in treeview
+MASTER_DISPLAY_COLUMNS = [
+    "lh_tuskar_alias", "lh_tuskar_lotid", "lh_tuskar_waferid",
+    "asn_color", "lh_tuskar_tool", "lh_tuskar_stage",
+    "asn_am_lotid", "asn_am_product_name", "status",
+    "gen_lot_type", "am_configuration"
+]
+MASTER_COLUMN_WIDTHS = {
+    "lh_tuskar_alias": 80, "lh_tuskar_lotid": 90, "lh_tuskar_waferid": 90,
+    "asn_color": 55, "lh_tuskar_tool": 80, "lh_tuskar_stage": 90,
+    "asn_am_lotid": 80, "asn_am_product_name": 80, "status": 130,
+    "gen_lot_type": 60, "am_configuration": 120
+}
+MASTER_COLUMN_HEADERS = {
+    "lh_tuskar_alias": "Alias", "lh_tuskar_lotid": "Tuskar Lot",
+    "lh_tuskar_waferid": "Tuskar Wafer", "asn_color": "Color",
+    "lh_tuskar_tool": "Tool", "lh_tuskar_stage": "Stage",
+    "asn_am_lotid": "AM Lot", "asn_am_product_name": "AM Product",
+    "status": "Status", "gen_lot_type": "Type", "am_configuration": "Config"
+}
+
+def load_master_inventory(from_network=True):
+    """Load master wafer inventory CSV from Cork Share (with local cache fallback)"""
+    global master_inventory_df
+    os.makedirs(MASTER_LOCAL_DIR, exist_ok=True)
+    source = "unknown"
+    try:
+        if from_network and os.path.exists(MASTER_CORK_SHARE_PATH):
+            master_inventory_df = pd.read_csv(MASTER_CORK_SHARE_PATH, low_memory=False)
+            # Save local cache
+            master_inventory_df.to_csv(MASTER_LOCAL_PATH, index=False)
+            source = "Cork Share"
+            mtime = os.path.getmtime(MASTER_CORK_SHARE_PATH)
+            from datetime import datetime
+            updated = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
+            print(f"[Master-Inf] Loaded {len(master_inventory_df)} wafers from Cork Share (updated {updated})")
+        else:
+            raise FileNotFoundError("Network not available")
+    except Exception as e:
+        print(f"[Master-Inf] Cork Share not available: {e}")
+        if os.path.exists(MASTER_LOCAL_PATH):
+            master_inventory_df = pd.read_csv(MASTER_LOCAL_PATH, low_memory=False)
+            source = "Local Cache"
+            mtime = os.path.getmtime(MASTER_LOCAL_PATH)
+            from datetime import datetime
+            updated = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
+            print(f"[Master-Inf] Loaded {len(master_inventory_df)} wafers from local cache ({updated})")
+        else:
+            print(f"[Master-Inf] No data available (no network, no cache)")
+            master_inventory_df = pd.DataFrame()
+            source = "none"
+            updated = "N/A"
+            return
+
+    # Update UI
+    try:
+        master_status_label.config(
+            text=f"Source: {source} | {len(master_inventory_df)} Wafers | Last Updated: {updated}",
+            fg="#1976D2" if source == "Cork Share" else "#FF9800"
+        )
+        populate_master_filters()
+        refresh_master_treeview()
+    except Exception:
+        pass
+
+def populate_master_filters():
+    """Populate filter comboboxes from loaded data"""
+    if master_inventory_df is None or master_inventory_df.empty:
+        return
+    for col, combo_var, combo_widget in [
+        ("asn_color", master_filter_color_var, master_filter_color_combo),
+        ("lh_tuskar_stage", master_filter_stage_var, master_filter_stage_combo),
+        ("lh_tuskar_tool", master_filter_tool_var, master_filter_tool_combo),
+        ("status", master_filter_status_var, master_filter_status_combo),
+    ]:
+        if col in master_inventory_df.columns:
+            unique_vals = sorted(master_inventory_df[col].dropna().unique().astype(str))
+            combo_widget["values"] = ["All"] + unique_vals
+            combo_var.set("All")
+
+def filter_master_data():
+    """Apply search and filters to master inventory data"""
+    if master_inventory_df is None or master_inventory_df.empty:
+        return pd.DataFrame()
+    df = master_inventory_df.copy()
+    # Text search across all columns
+    search_text = master_search_var.get().strip().lower()
+    if search_text:
+        mask = df.apply(lambda row: row.astype(str).str.lower().str.contains(search_text, na=False).any(), axis=1)
+        df = df[mask]
+    # Combobox filters
+    for col, var in [
+        ("asn_color", master_filter_color_var),
+        ("lh_tuskar_stage", master_filter_stage_var),
+        ("lh_tuskar_tool", master_filter_tool_var),
+        ("status", master_filter_status_var),
+    ]:
+        val = var.get()
+        if val and val != "All" and col in df.columns:
+            df = df[df[col].astype(str) == val]
+    return df
+
+def refresh_master_treeview(event=None):
+    """Refresh the treeview with filtered data"""
+    master_tree.delete(*master_tree.get_children())
+    df = filter_master_data()
+    for _, row in df.iterrows():
+        values = []
+        for col in MASTER_DISPLAY_COLUMNS:
+            val = row.get(col, "")
+            values.append(str(val).strip() if pd.notna(val) else "")
+        master_tree.insert("", tk.END, values=values)
+    master_count_label.config(text=f"Showing {len(df)} of {len(master_inventory_df)} wafers")
+
+def on_master_search_keyrelease(event=None):
+    """Debounced search on keyrelease"""
+    if hasattr(on_master_search_keyrelease, '_after_id'):
+        tab_master_inf.after_cancel(on_master_search_keyrelease._after_id)
+    on_master_search_keyrelease._after_id = tab_master_inf.after(300, refresh_master_treeview)
+
+def on_master_double_click(event):
+    """Show full wafer details on double-click"""
+    selection = master_tree.selection()
+    if not selection:
+        return
+    item = selection[0]
+    values = master_tree.item(item, 'values')
+    if not values or master_inventory_df is None:
+        return
+    # Find the row by alias + lot
+    alias_val = values[0]
+    lot_val = values[1]
+    matches = master_inventory_df[
+        (master_inventory_df["lh_tuskar_alias"].astype(str).str.strip() == alias_val) &
+        (master_inventory_df["lh_tuskar_lotid"].astype(str).str.strip() == lot_val)
+    ]
+    if matches.empty:
+        return
+    row = matches.iloc[0]
+    # Show details popup
+    detail_win = tk.Toplevel(main_win)
+    detail_win.title(f"Wafer Details: {alias_val} ({lot_val})")
+    detail_win.geometry("700x600")
+    detail_text = tk.Text(detail_win, font=("Consolas", 10), wrap=tk.WORD)
+    detail_scroll = ttk.Scrollbar(detail_win, orient="vertical", command=detail_text.yview)
+    detail_text.configure(yscrollcommand=detail_scroll.set)
+    detail_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+    detail_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+    for col in row.index:
+        val = row[col]
+        val_str = str(val).strip() if pd.notna(val) else ""
+        if val_str:
+            detail_text.insert(tk.END, f"{col}:\n  {val_str}\n\n")
+    detail_text.config(state='disabled')
+
+def sort_master_column(col):
+    """Sort treeview by column"""
+    if master_inventory_df is None:
+        return
+    data = [(master_tree.set(k, col), k) for k in master_tree.get_children('')]
+    try:
+        data.sort(key=lambda t: t[0].lower())
+    except:
+        data.sort()
+    if hasattr(sort_master_column, '_last_col') and sort_master_column._last_col == col:
+        data.reverse()
+        sort_master_column._last_col = None
+    else:
+        sort_master_column._last_col = col
+    for index, (val, k) in enumerate(data):
+        master_tree.move(k, '', index)
+
+# ---- UI Layout ----
+# Status bar
+master_status_frame = tk.Frame(tab_master_inf, bg="#E3F2FD", relief="ridge", bd=1)
+master_status_frame.pack(fill=tk.X, padx=10, pady=5)
+
+master_status_label = tk.Label(master_status_frame, text="Loading...", font=("Helvetica", 9), bg="#E3F2FD", fg="#666666")
+master_status_label.pack(side=tk.LEFT, padx=10, pady=3)
+
+master_refresh_btn = tk.Button(master_status_frame, text="🔄 Refresh from Cork Share",
+    font=("Helvetica", 9), command=lambda: load_master_inventory(from_network=True))
+master_refresh_btn.pack(side=tk.RIGHT, padx=10, pady=3)
+
+# Search bar
+master_search_frame = tk.Frame(tab_master_inf)
+master_search_frame.pack(fill=tk.X, padx=10, pady=3)
+
+tk.Label(master_search_frame, text="🔍 Search:", font=("Helvetica", 10, "bold")).pack(side=tk.LEFT, padx=5)
+master_search_var = tk.StringVar()
+master_search_entry = tk.Entry(master_search_frame, textvariable=master_search_var, font=("Helvetica", 10), width=40)
+master_search_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+master_search_entry.bind("<KeyRelease>", on_master_search_keyrelease)
+
+# Filter row
+master_filter_frame = tk.Frame(tab_master_inf)
+master_filter_frame.pack(fill=tk.X, padx=10, pady=3)
+
+tk.Label(master_filter_frame, text="Color:", font=("Helvetica", 8)).pack(side=tk.LEFT, padx=3)
+master_filter_color_var = tk.StringVar(value="All")
+master_filter_color_combo = ttk.Combobox(master_filter_frame, textvariable=master_filter_color_var,
+    state="readonly", width=8, font=("Helvetica", 8), values=["All"])
+master_filter_color_combo.pack(side=tk.LEFT, padx=3)
+master_filter_color_combo.bind("<<ComboboxSelected>>", refresh_master_treeview)
+
+tk.Label(master_filter_frame, text="Stage:", font=("Helvetica", 8)).pack(side=tk.LEFT, padx=3)
+master_filter_stage_var = tk.StringVar(value="All")
+master_filter_stage_combo = ttk.Combobox(master_filter_frame, textvariable=master_filter_stage_var,
+    state="readonly", width=12, font=("Helvetica", 8), values=["All"])
+master_filter_stage_combo.pack(side=tk.LEFT, padx=3)
+master_filter_stage_combo.bind("<<ComboboxSelected>>", refresh_master_treeview)
+
+tk.Label(master_filter_frame, text="Tool:", font=("Helvetica", 8)).pack(side=tk.LEFT, padx=3)
+master_filter_tool_var = tk.StringVar(value="All")
+master_filter_tool_combo = ttk.Combobox(master_filter_frame, textvariable=master_filter_tool_var,
+    state="readonly", width=10, font=("Helvetica", 8), values=["All"])
+master_filter_tool_combo.pack(side=tk.LEFT, padx=3)
+master_filter_tool_combo.bind("<<ComboboxSelected>>", refresh_master_treeview)
+
+tk.Label(master_filter_frame, text="Status:", font=("Helvetica", 8)).pack(side=tk.LEFT, padx=3)
+master_filter_status_var = tk.StringVar(value="All")
+master_filter_status_combo = ttk.Combobox(master_filter_frame, textvariable=master_filter_status_var,
+    state="readonly", width=18, font=("Helvetica", 8), values=["All"])
+master_filter_status_combo.pack(side=tk.LEFT, padx=3)
+master_filter_status_combo.bind("<<ComboboxSelected>>", refresh_master_treeview)
+
+tk.Button(master_filter_frame, text="Clear Filters", font=("Helvetica", 8),
+    command=lambda: [master_search_var.set(""), master_filter_color_var.set("All"),
+                     master_filter_stage_var.set("All"), master_filter_tool_var.set("All"),
+                     master_filter_status_var.set("All"), refresh_master_treeview()]
+).pack(side=tk.RIGHT, padx=5)
+
+# Treeview
+master_tree_frame = tk.Frame(tab_master_inf)
+master_tree_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+master_tree_yscroll = ttk.Scrollbar(master_tree_frame, orient="vertical")
+master_tree_xscroll = ttk.Scrollbar(master_tree_frame, orient="horizontal")
+
+master_tree = ttk.Treeview(master_tree_frame, columns=MASTER_DISPLAY_COLUMNS, show="headings",
+    yscrollcommand=master_tree_yscroll.set, xscrollcommand=master_tree_xscroll.set)
+master_tree_yscroll.config(command=master_tree.yview)
+master_tree_xscroll.config(command=master_tree.xview)
+
+for col in MASTER_DISPLAY_COLUMNS:
+    header = MASTER_COLUMN_HEADERS.get(col, col)
+    width = MASTER_COLUMN_WIDTHS.get(col, 100)
+    master_tree.heading(col, text=header, command=lambda c=col: sort_master_column(c))
+    master_tree.column(col, width=width, minwidth=50)
+
+master_tree_yscroll.pack(side=tk.RIGHT, fill=tk.Y)
+master_tree_xscroll.pack(side=tk.BOTTOM, fill=tk.X)
+master_tree.pack(fill=tk.BOTH, expand=True)
+master_tree.bind("<Double-1>", on_master_double_click)
+
+# Count label
+master_count_label = tk.Label(tab_master_inf, text="No data loaded", font=("Helvetica", 8), fg="#666666")
+master_count_label.pack(anchor="w", padx=15, pady=2)
+
+# Auto-load on startup (in background thread)
+def _auto_load_master():
+    try:
+        load_master_inventory(from_network=True)
+    except Exception as e:
+        print(f"[Master-Inf] Auto-load error: {e}")
+
+import threading
+threading.Thread(target=_auto_load_master, daemon=True).start()
+
 # Tab 2: Wafermap
 tab6 = ttk.Frame(notebook)
 notebook.add(tab6, text="🗺 Wafer")
