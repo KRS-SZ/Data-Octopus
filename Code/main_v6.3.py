@@ -33770,62 +33770,114 @@ def create_powerpoint_presentation(output_path=None):
                             lp.font.bold = True
                             lp.font.color.rgb = RGBColor(0, 188, 212)
                             try:
-                                # Get selected PLM type from combobox
                                 plm_type_selection = slide_data.get("plm_type_var", tk.StringVar(value="Stitched")).get()
-                                print(f"[PPT] PLM Map: Looking for type '{plm_type_selection}'")
+                                print(f"[PPT] PLM Map: Building wafer view for type '{plm_type_selection}'")
 
-                                plm_image_path = None
-                                # Search in plm_file_directory first, then die_image_directory
-                                search_dirs = []
-                                if plm_file_directory and os.path.isdir(plm_file_directory):
-                                    search_dirs.append(plm_file_directory)
-                                if die_image_directory and os.path.isdir(die_image_directory):
-                                    search_dirs.append(die_image_directory)
-                                    plm_sub = os.path.join(die_image_directory, '..', 'PLMFiles')
+                                # Map combobox selection to filename keywords
+                                plm_type_keywords = {
+                                    "Stitched": "Stitched-Image",
+                                    "Uniformity": "UniformitySyn",
+                                    "Bridged": "Bridged-Pixels-Map",
+                                    "Bridged-Pixels": "Bridged-Pixels_",
+                                }
+                                plm_keyword = plm_type_keywords.get(plm_type_selection, plm_type_selection)
+
+                                # Get PLM directory
+                                plm_dir = plm_file_directory
+                                if not plm_dir and die_image_directory:
+                                    plm_sub = os.path.join(os.path.dirname(die_image_directory), 'PLMFiles')
                                     if os.path.isdir(plm_sub):
-                                        search_dirs.append(os.path.abspath(plm_sub))
+                                        plm_dir = os.path.abspath(plm_sub)
 
-                                import glob
-                                type_lower = plm_type_selection.lower()
-                                for search_dir in search_dirs:
-                                    # Search for matching PLM type in directory
-                                    for ext in ['*.png', '*.jpg', '*.jpeg', '*.bmp', '*.tif', '*.tiff']:
-                                        for fpath in glob.glob(os.path.join(search_dir, '**', ext), recursive=True):
-                                            fname_lower = os.path.basename(fpath).lower()
-                                            if type_lower in fname_lower:
-                                                plm_image_path = fpath
-                                                break
-                                        if plm_image_path:
-                                            break
-                                    # Also check subdirectories named after the type
-                                    type_dir = os.path.join(search_dir, plm_type_selection)
-                                    if os.path.isdir(type_dir):
-                                        for ext in ['*.png', '*.jpg', '*.jpeg', '*.bmp', '*.tif', '*.tiff']:
-                                            matches = glob.glob(os.path.join(type_dir, ext))
-                                            if matches:
-                                                plm_image_path = matches[0]
-                                                break
-                                    if plm_image_path:
-                                        break
+                                if plm_dir and os.path.isdir(plm_dir):
+                                    import re as re_mod
+                                    from matplotlib.patches import Rectangle as MplRect
+                                    from matplotlib import cm as mpl_cm
 
-                                if plm_image_path and os.path.exists(plm_image_path):
-                                    print(f"[PPT] PLM Map: Found {plm_image_path}")
-                                    from PIL import Image as PILImage
-                                    plm_img = PILImage.open(plm_image_path)
-                                    fig, ax = plt.subplots(figsize=(plm_cfg.get("width", 6.0) * 0.95, plm_cfg.get("height", 6.0) * 0.95))
-                                    ax.imshow(plm_img)
-                                    ax.set_title(f"PLM {plm_type_selection}: {os.path.basename(plm_image_path)}", fontsize=7)
-                                    ax.axis('off')
-                                    fig.tight_layout()
-                                    img_stream = figure_to_image_bytes(fig, dpi=200)
-                                    slide.shapes.add_picture(img_stream,
-                                        Inches(plm_cfg.get("x", 0.3)), Inches(plm_cfg.get("y", 0.7)),
-                                        width=Inches(plm_cfg.get("width", 6.0)), height=Inches(plm_cfg.get("height", 6.0)))
-                                    plt.close(fig)
+                                    # Get wafer data for coordinates
+                                    wm_df = wm_data_sources[0]
+                                    x_min_w, x_max_w = int(wm_df['x'].min()), int(wm_df['x'].max())
+                                    y_min_w, y_max_w = int(wm_df['y'].min()), int(wm_df['y'].max())
+                                    grid_w = x_max_w - x_min_w + 1
+                                    grid_h = y_max_w - y_min_w + 1
+
+                                    # Scan PLM files matching type and extract coordinates
+                                    plm_files_by_coord = {}
+                                    for fname in os.listdir(plm_dir):
+                                        if not fname.endswith('.txt'):
+                                            continue
+                                        if plm_keyword not in fname:
+                                            continue
+                                        match = re_mod.search(r'[_\-]X(\d+)[_\-]Y(\d+)', fname, re_mod.IGNORECASE)
+                                        if match:
+                                            px, py = int(match.group(1)), int(match.group(2))
+                                            plm_files_by_coord[(px, py)] = os.path.join(plm_dir, fname)
+
+                                    print(f"[PPT] PLM Map: Found {len(plm_files_by_coord)} '{plm_type_selection}' files")
+
+                                    if plm_files_by_coord:
+                                        fig, ax = plt.subplots(figsize=(plm_cfg.get("width", 6.0) * 0.95, plm_cfg.get("height", 6.0) * 0.95))
+                                        ax.set_facecolor('#e8e8e8')
+
+                                        # Draw background for all die positions
+                                        for _, row in wm_df.iterrows():
+                                            xi = int(row['x']) - x_min_w
+                                            yi = int(row['y']) - y_min_w
+                                            rect = MplRect((xi - 0.48, yi - 0.48), 0.96, 0.96,
+                                                           facecolor='#f0f0f0', edgecolor='#cccccc', linewidth=0.2)
+                                            ax.add_patch(rect)
+
+                                        # Load and render PLM thumbnails at die positions
+                                        plm_cache = {}
+                                        loaded = 0
+                                        for (px, py), fpath in plm_files_by_coord.items():
+                                            xi = px - x_min_w
+                                            yi = py - y_min_w
+                                            try:
+                                                plm_data = load_plm_as_matrix(fpath)
+                                                if plm_data is not None and plm_data.size > 0:
+                                                    d_min, d_max = np.nanmin(plm_data), np.nanmax(plm_data)
+                                                    if d_max > d_min:
+                                                        norm = (plm_data - d_min) / (d_max - d_min)
+                                                    else:
+                                                        norm = np.zeros_like(plm_data)
+                                                    colormap = mpl_cm.get_cmap('viridis')
+                                                    colored = (colormap(norm)[:, :, :3] * 255).astype(np.uint8)
+                                                    extent = [xi - 0.48, xi + 0.48, yi + 0.48, yi - 0.48]
+                                                    ax.imshow(colored, extent=extent, aspect='auto', interpolation='nearest', zorder=2)
+                                                    loaded += 1
+                                            except Exception:
+                                                pass
+
+                                        ax.set_xlim(-0.5, grid_w - 0.5)
+                                        ax.set_ylim(grid_h - 0.5, -0.5)
+                                        ax.set_aspect('equal')
+
+                                        # Coordinate labels
+                                        tick_step = max(1, grid_w // 8)
+                                        ax.set_xticks(range(0, grid_w, tick_step))
+                                        ax.set_xticklabels([str(x_min_w + i) for i in range(0, grid_w, tick_step)], fontsize=5)
+                                        tick_step_y = max(1, grid_h // 8)
+                                        ax.set_yticks(range(0, grid_h, tick_step_y))
+                                        ax.set_yticklabels([str(y_min_w + i) for i in range(0, grid_h, tick_step_y)], fontsize=5)
+
+                                        ax.set_title(f"PLM {plm_type_selection} ({loaded} dies)", fontsize=8, fontweight='bold')
+                                        fig.tight_layout()
+
+                                        img_stream = figure_to_image_bytes(fig, dpi=200)
+                                        slide.shapes.add_picture(img_stream,
+                                            Inches(plm_cfg.get("x", 0.3)), Inches(plm_cfg.get("y", 0.7)),
+                                            width=Inches(plm_cfg.get("width", 6.0)), height=Inches(plm_cfg.get("height", 6.0)))
+                                        plt.close(fig)
+                                        print(f"[PPT] PLM Map: Rendered {loaded} die thumbnails")
+                                    else:
+                                        print(f"[PPT] PLM Map: No '{plm_type_selection}' files found in {plm_dir}")
                                 else:
-                                    print(f"[PPT] PLM Map: No '{plm_type_selection}' image found in {search_dirs}")
+                                    print(f"[PPT] PLM Map: No PLM directory available")
                             except Exception as e:
                                 print(f"[PPT] PLM Map error: {e}")
+                                import traceback
+                                traceback.print_exc()
 
                         # === Characteristic Curve ===
                         if wm_enables.get("charac_curve", tk.BooleanVar(value=False)).get():
