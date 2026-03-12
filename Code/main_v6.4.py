@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "6.4.1"  # Loading bar + wafer list width fix
+APP_VERSION = "6.4.2"  # GRR loading progress dialogs + threading
 
 import sys
 
@@ -27472,7 +27472,7 @@ def _load_grr_plm_folders(num_folders):
     grr_status_var.set(get_text("plm_select_folders"))
     main_win.update_idletasks()
 
-    # Select multiple folders (one dialog per folder)
+    # Select multiple folders (one dialog per folder) - must stay on main thread
     selected_folders = []
     existing_paths = {f['path'] for f in grr_file_data}
 
@@ -27491,62 +27491,89 @@ def _load_grr_plm_folders(num_folders):
         grr_status_var.set(get_text("plm_loading_cancelled"))
         return
 
-    new_count = 0
-    for folder_path in selected_folders:
-        grr_status_var.set(get_text("plm_loading_folder").format(name=os.path.basename(folder_path)))
-        main_win.update_idletasks()
+    # Progress dialog
+    prog_dlg = tk.Toplevel(main_win)
+    prog_dlg.title("Loading PLM Folders…")
+    prog_dlg.geometry("420x140")
+    prog_dlg.transient(main_win)
+    prog_dlg.grab_set()
+    prog_dlg.resizable(False, False)
+    prog_dlg.update_idletasks()
+    x = main_win.winfo_x() + (main_win.winfo_width() - 420) // 2
+    y = main_win.winfo_y() + (main_win.winfo_height() - 140) // 2
+    prog_dlg.geometry(f"+{x}+{y}")
+    _plm_prog_status = tk.Label(prog_dlg, text="🔬 Preparing…",
+                                font=("Segoe UI", 11, "bold"))
+    _plm_prog_status.pack(pady=(16, 4))
+    _plm_prog_file = tk.Label(prog_dlg, text="", font=("Segoe UI", 9), fg="gray")
+    _plm_prog_file.pack(pady=(0, 6))
+    _plm_prog_bar = ttk.Progressbar(prog_dlg, mode="indeterminate", length=360)
+    _plm_prog_bar.pack(padx=20, pady=(0, 12))
+    _plm_prog_bar.start(15)
 
-        try:
-            if raw_pixel_mode:
-                df_plm = _build_plm_pixel_dataframe(folder_path, plm_type_filter)
-            else:
-                df_plm = _build_plm_dataframe(folder_path, plm_type_filter)
+    def _plm_worker():
+        new_count = 0
+        total = len(selected_folders)
+        for idx, folder_path in enumerate(selected_folders):
+            main_win.after(0, _plm_prog_status.config,
+                           {"text": f"🔬 Processing PLM {idx+1}/{total}…"})
+            main_win.after(0, _plm_prog_file.config,
+                           {"text": os.path.basename(folder_path)})
 
-            if df_plm is None or len(df_plm) == 0:
-                print(f"[GRR PLM] No valid PLM data in {folder_path}")
-                continue
+            try:
+                if raw_pixel_mode:
+                    df_plm = _build_plm_pixel_dataframe(folder_path, plm_type_filter)
+                else:
+                    df_plm = _build_plm_dataframe(folder_path, plm_type_filter)
 
-            param_cols = [c for c in df_plm.columns if c not in ('x', 'y')]
-            if not param_cols:
-                print(f"[GRR PLM] No parameter columns extracted from {folder_path}")
-                continue
+                if df_plm is None or len(df_plm) == 0:
+                    print(f"[GRR PLM] No valid PLM data in {folder_path}")
+                    continue
 
-            file_info = {
-                'path': folder_path,
-                'type': 'csv_wafermap',
-                'data': df_plm,
-                'wafer_id': os.path.basename(folder_path),
-                'params': {col: col for col in param_cols}
-            }
+                param_cols = [c for c in df_plm.columns if c not in ('x', 'y')]
+                if not param_cols:
+                    print(f"[GRR PLM] No parameter columns extracted from {folder_path}")
+                    continue
 
-            grr_file_data.append(file_info)
-            new_count += 1
+                file_info = {
+                    'path': folder_path,
+                    'type': 'csv_wafermap',
+                    'data': df_plm,
+                    'wafer_id': os.path.basename(folder_path),
+                    'params': {col: col for col in param_cols}
+                }
 
-            # Auto-detect PLM files in same folder structure for CSV/STDF files
-            if file_info['type'] in ('csv_wafermap', 'stdf') and hasattr(file_info.get('data'), 'columns'):
-                try:
-                    _auto_integrate_plm_params(file_info, folder_path)
-                except Exception as plm_err:
-                    print(f"[PLM Auto] Error integrating PLM: {plm_err}")
+                grr_file_data.append(file_info)
+                new_count += 1
 
-            mode_str = "RAW PIXEL" if raw_pixel_mode else "STATS"
-            print(f"[GRR PLM {mode_str}] Loaded folder: {folder_path}")
-            print(f"  Rows: {len(df_plm)}, Parameters: {len(param_cols)}")
-            print(f"  Params: {param_cols[:10]}{'...' if len(param_cols) > 10 else ''}")
+                if file_info['type'] in ('csv_wafermap', 'stdf') and hasattr(file_info.get('data'), 'columns'):
+                    try:
+                        _auto_integrate_plm_params(file_info, folder_path)
+                    except Exception as plm_err:
+                        print(f"[PLM Auto] Error integrating PLM: {plm_err}")
 
-        except Exception as e:
-            print(f"[GRR PLM] Error loading folder {folder_path}: {e}")
-            import traceback
-            traceback.print_exc()
+                mode_str = "RAW PIXEL" if raw_pixel_mode else "STATS"
+                print(f"[GRR PLM {mode_str}] Loaded folder: {folder_path}")
+                print(f"  Rows: {len(df_plm)}, Parameters: {len(param_cols)}")
+                print(f"  Params: {param_cols[:10]}{'...' if len(param_cols) > 10 else ''}")
 
-    if new_count == 0:
-        grr_status_var.set(get_text("plm_no_data"))
-        return
+            except Exception as e:
+                print(f"[GRR PLM] Error loading folder {folder_path}: {e}")
+                import traceback
+                traceback.print_exc()
 
-    grr_status_var.set(get_text("plm_loaded").format(count=new_count, total=len(grr_file_data)))
+        main_win.after(0, _plm_done, new_count)
 
-    # Rebuild available params from ALL loaded files
-    _rebuild_grr_params_after_load()
+    def _plm_done(new_count):
+        _plm_prog_bar.stop()
+        prog_dlg.destroy()
+        if new_count == 0:
+            grr_status_var.set(get_text("plm_no_data"))
+            return
+        grr_status_var.set(get_text("plm_loaded").format(count=new_count, total=len(grr_file_data)))
+        _rebuild_grr_params_after_load()
+
+    threading.Thread(target=_plm_worker, daemon=True).start()
 
 
 def _show_plm_type_selector():
@@ -28219,16 +28246,10 @@ def load_grr_wafer_folder():
     main_win.update_idletasks()
 
     existing_paths = {f['path'] for f in grr_file_data}
-    new_count = 0
 
-    # Define subfolder names to search for (case-insensitive)
-    csv_folder_names = ['csvfiles', 'csv', 'csv_files', 'csvdata']
-    plm_folder_names = ['plmfiles', 'plm', 'plm_files', 'plmdata']
-    stdf_folder_names = ['stddatalog', 'stdf', 'stdf_files', 'stdfdata']
-    image_folder_names = ['imagecaptures', 'images', 'image_captures', 'captures']
-
+    # Collect all folder paths first (dialogs must be on main thread)
+    selected_folders = []
     for i in range(num_wafers):
-        # Ask user to select wafer folder
         wafer_folder = filedialog.askdirectory(
             title=f"Select Wafer Folder {i+1} of {num_wafers} (containing CSVFiles, PLMFiles, etc.)"
         )
@@ -28237,142 +28258,176 @@ def load_grr_wafer_folder():
         if wafer_folder in existing_paths:
             print(f"[Load Wafer] Skipping duplicate: {wafer_folder}")
             continue
+        selected_folders.append(wafer_folder)
 
-        grr_status_var.set(f"Loading wafer {i+1}: {os.path.basename(wafer_folder)}...")
-        main_win.update_idletasks()
+    if not selected_folders:
+        grr_status_var.set("No wafer folders selected")
+        return
 
-        # Find subfolders
-        csv_folder = None
-        plm_folder = None
-        stdf_folder = None
-        image_folder = None
+    # Progress dialog
+    prog_dlg = tk.Toplevel(main_win)
+    prog_dlg.title("Loading Wafer Folders…")
+    prog_dlg.geometry("420x140")
+    prog_dlg.transient(main_win)
+    prog_dlg.grab_set()
+    prog_dlg.resizable(False, False)
+    prog_dlg.update_idletasks()
+    x = main_win.winfo_x() + (main_win.winfo_width() - 420) // 2
+    y = main_win.winfo_y() + (main_win.winfo_height() - 140) // 2
+    prog_dlg.geometry(f"+{x}+{y}")
+    _grr_prog_status = tk.Label(prog_dlg, text="📂 Scanning folders…",
+                                font=("Segoe UI", 11, "bold"))
+    _grr_prog_status.pack(pady=(16, 4))
+    _grr_prog_file = tk.Label(prog_dlg, text="", font=("Segoe UI", 9), fg="gray")
+    _grr_prog_file.pack(pady=(0, 6))
+    _grr_prog_bar = ttk.Progressbar(prog_dlg, mode="indeterminate", length=360)
+    _grr_prog_bar.pack(padx=20, pady=(0, 12))
+    _grr_prog_bar.start(15)
 
-        try:
-            items = os.listdir(wafer_folder)
-            items_lower = {item.lower(): item for item in items}
+    # Define subfolder names to search for (case-insensitive)
+    csv_folder_names = ['csvfiles', 'csv', 'csv_files', 'csvdata']
+    plm_folder_names = ['plmfiles', 'plm', 'plm_files', 'plmdata']
+    stdf_folder_names = ['stddatalog', 'stdf', 'stdf_files', 'stdfdata']
+    image_folder_names = ['imagecaptures', 'images', 'image_captures', 'captures']
 
-            # Find CSV folder
-            for name in csv_folder_names:
-                if name in items_lower:
-                    csv_folder = os.path.join(wafer_folder, items_lower[name])
-                    break
+    def _wafer_folder_worker():
+        new_count = 0
+        total = len(selected_folders)
+        for idx, wafer_folder in enumerate(selected_folders):
+            main_win.after(0, _grr_prog_status.config,
+                           {"text": f"📂 Scanning folder {idx+1}/{total}…"})
+            main_win.after(0, _grr_prog_file.config,
+                           {"text": os.path.basename(wafer_folder)})
 
-            # Find PLM folder
-            for name in plm_folder_names:
-                if name in items_lower:
-                    plm_folder = os.path.join(wafer_folder, items_lower[name])
-                    break
+            csv_folder = None
+            plm_folder = None
+            stdf_folder = None
+            image_folder = None
 
-            # Find STDF folder
-            for name in stdf_folder_names:
-                if name in items_lower:
-                    stdf_folder = os.path.join(wafer_folder, items_lower[name])
-                    break
+            try:
+                items = os.listdir(wafer_folder)
+                items_lower = {item.lower(): item for item in items}
 
-            # Find Image folder
-            for name in image_folder_names:
-                if name in items_lower:
-                    image_folder = os.path.join(wafer_folder, items_lower[name])
-                    break
+                for name in csv_folder_names:
+                    if name in items_lower:
+                        csv_folder = os.path.join(wafer_folder, items_lower[name])
+                        break
+                for name in plm_folder_names:
+                    if name in items_lower:
+                        plm_folder = os.path.join(wafer_folder, items_lower[name])
+                        break
+                for name in stdf_folder_names:
+                    if name in items_lower:
+                        stdf_folder = os.path.join(wafer_folder, items_lower[name])
+                        break
+                for name in image_folder_names:
+                    if name in items_lower:
+                        image_folder = os.path.join(wafer_folder, items_lower[name])
+                        break
 
-            print(f"[Load Wafer] Found: CSV={csv_folder is not None}, PLM={plm_folder is not None}, STDF={stdf_folder is not None}, Images={image_folder is not None}")
+                print(f"[Load Wafer] Found: CSV={csv_folder is not None}, PLM={plm_folder is not None}, STDF={stdf_folder is not None}, Images={image_folder is not None}")
 
-            # Load CSV file if found
-            if csv_folder and os.path.isdir(csv_folder):
-                csv_files = [f for f in os.listdir(csv_folder) if f.lower().endswith('.csv')]
-                if csv_files:
-                    csv_path = os.path.join(csv_folder, csv_files[0])  # Take first CSV
-                    print(f"[Load Wafer] Loading CSV: {csv_path}")
+                if csv_folder and os.path.isdir(csv_folder):
+                    csv_files = [f for f in os.listdir(csv_folder) if f.lower().endswith('.csv')]
+                    if csv_files:
+                        csv_path = os.path.join(csv_folder, csv_files[0])
+                        main_win.after(0, _grr_prog_status.config,
+                                       {"text": f"📊 Loading CSV {idx+1}/{total}…"})
+                        print(f"[Load Wafer] Loading CSV: {csv_path}")
 
-                    import pandas as pd
-                    df_csv = pd.read_csv(csv_path, delimiter=',')
+                        import pandas as pd
+                        df_csv = pd.read_csv(csv_path, delimiter=',')
 
-                    # Find x/y columns
-                    x_col = None
-                    y_col = None
-                    for col in df_csv.columns:
-                        col_lower = col.lower().strip()
-                        if col_lower in ['x', 'x_coord', 'x_coordinate', 'xcoord', 'die_x']:
-                            x_col = col
-                        elif col_lower in ['y', 'y_coord', 'y_coordinate', 'ycoord', 'die_y']:
-                            y_col = col
-
-                    if x_col and y_col:
-                        df_csv[x_col] = pd.to_numeric(df_csv[x_col], errors='coerce')
-                        df_csv[y_col] = pd.to_numeric(df_csv[y_col], errors='coerce')
-                        df_csv = df_csv.rename(columns={x_col: 'x', y_col: 'y'})
-
-                        param_cols = []
+                        x_col = None
+                        y_col = None
                         for col in df_csv.columns:
-                            if col not in ['x', 'y']:
-                                df_csv[col] = pd.to_numeric(df_csv[col], errors='coerce')
-                                if df_csv[col].notna().any():
-                                    param_cols.append(col)
+                            col_lower = col.lower().strip()
+                            if col_lower in ['x', 'x_coord', 'x_coordinate', 'xcoord', 'die_x']:
+                                x_col = col
+                            elif col_lower in ['y', 'y_coord', 'y_coordinate', 'ycoord', 'die_y']:
+                                y_col = col
 
-                        file_info = {
-                            'path': wafer_folder,
-                            'type': 'csv_wafermap',
-                            'data': df_csv,
-                            'wafer_id': os.path.basename(wafer_folder),
-                            'params': param_cols,
-                            'csv_path': csv_path,
-                        }
+                        if x_col and y_col:
+                            df_csv[x_col] = pd.to_numeric(df_csv[x_col], errors='coerce')
+                            df_csv[y_col] = pd.to_numeric(df_csv[y_col], errors='coerce')
+                            df_csv = df_csv.rename(columns={x_col: 'x', y_col: 'y'})
 
-                        # Set PLM folder
-                        if plm_folder and os.path.isdir(plm_folder):
-                            file_info['plm_dir'] = plm_folder
-                            print(f"[Load Wafer] PLM dir set: {plm_folder}")
+                            param_cols = []
+                            for col in df_csv.columns:
+                                if col not in ['x', 'y']:
+                                    df_csv[col] = pd.to_numeric(df_csv[col], errors='coerce')
+                                    if df_csv[col].notna().any():
+                                        param_cols.append(col)
 
-                        # Set image folder
-                        if image_folder and os.path.isdir(image_folder):
-                            file_info['image_dir'] = image_folder
+                            file_info = {
+                                'path': wafer_folder,
+                                'type': 'csv_wafermap',
+                                'data': df_csv,
+                                'wafer_id': os.path.basename(wafer_folder),
+                                'params': param_cols,
+                                'csv_path': csv_path,
+                            }
 
-                        grr_file_data.append(file_info)
-                        new_count += 1
-                        print(f"[Load Wafer] Loaded: {os.path.basename(wafer_folder)} - {len(param_cols)} params, {len(df_csv)} rows")
-                    else:
-                        print(f"[Load Wafer] No x/y columns found in CSV")
+                            if plm_folder and os.path.isdir(plm_folder):
+                                file_info['plm_dir'] = plm_folder
+                                print(f"[Load Wafer] PLM dir set: {plm_folder}")
+                            if image_folder and os.path.isdir(image_folder):
+                                file_info['image_dir'] = image_folder
 
-            # Fallback: Load STDF if no CSV
-            elif stdf_folder and os.path.isdir(stdf_folder):
-                stdf_files = [f for f in os.listdir(stdf_folder) if f.lower().endswith(('.stdf', '.std'))]
-                if stdf_files:
-                    stdf_path = os.path.join(stdf_folder, stdf_files[0])
-                    print(f"[Load Wafer] Loading STDF: {stdf_path}")
+                            grr_file_data.append(file_info)
+                            new_count += 1
+                            print(f"[Load Wafer] Loaded: {os.path.basename(wafer_folder)} - {len(param_cols)} params, {len(df_csv)} rows")
+                        else:
+                            print(f"[Load Wafer] No x/y columns found in CSV")
 
-                    df, wafer_id, test_info, test_limits_dict, wafer_config = load_single_stdf_file_for_csv(stdf_path)
-                    if df is not None and len(df) > 0:
-                        param_cols = [c for c in df.columns if c not in ('x', 'y', 'bin', 'sbin')]
-                        file_info = {
-                            'path': wafer_folder,
-                            'type': 'stdf',
-                            'data': df,
-                            'wafer_id': wafer_id or os.path.basename(wafer_folder),
-                            'params': {col: col for col in param_cols},
-                            'stdf_path': stdf_path,
-                        }
+                elif stdf_folder and os.path.isdir(stdf_folder):
+                    stdf_files = [f for f in os.listdir(stdf_folder) if f.lower().endswith(('.stdf', '.std'))]
+                    if stdf_files:
+                        stdf_path = os.path.join(stdf_folder, stdf_files[0])
+                        main_win.after(0, _grr_prog_status.config,
+                                       {"text": f"📊 Loading STDF {idx+1}/{total}…"})
+                        print(f"[Load Wafer] Loading STDF: {stdf_path}")
 
-                        if plm_folder and os.path.isdir(plm_folder):
-                            file_info['plm_dir'] = plm_folder
-                        if image_folder and os.path.isdir(image_folder):
-                            file_info['image_dir'] = image_folder
+                        df, wafer_id, test_info, test_limits_dict, wafer_config = load_single_stdf_file_for_csv(stdf_path)
+                        if df is not None and len(df) > 0:
+                            param_cols = [c for c in df.columns if c not in ('x', 'y', 'bin', 'sbin')]
+                            file_info = {
+                                'path': wafer_folder,
+                                'type': 'stdf',
+                                'data': df,
+                                'wafer_id': wafer_id or os.path.basename(wafer_folder),
+                                'params': {col: col for col in param_cols},
+                                'stdf_path': stdf_path,
+                            }
 
-                        grr_file_data.append(file_info)
-                        new_count += 1
-                        print(f"[Load Wafer] Loaded STDF: {os.path.basename(wafer_folder)}")
-            else:
-                print(f"[Load Wafer] No CSV or STDF folder found in {wafer_folder}")
+                            if plm_folder and os.path.isdir(plm_folder):
+                                file_info['plm_dir'] = plm_folder
+                            if image_folder and os.path.isdir(image_folder):
+                                file_info['image_dir'] = image_folder
 
-        except Exception as e:
-            print(f"[Load Wafer] Error loading {wafer_folder}: {e}")
-            import traceback
-            traceback.print_exc()
+                            grr_file_data.append(file_info)
+                            new_count += 1
+                            print(f"[Load Wafer] Loaded STDF: {os.path.basename(wafer_folder)}")
+                else:
+                    print(f"[Load Wafer] No CSV or STDF folder found in {wafer_folder}")
 
-    if new_count > 0:
-        grr_status_var.set(f"Loaded {new_count} wafer folder(s), total: {len(grr_file_data)}")
-        _rebuild_grr_params_after_load()
-    else:
-        grr_status_var.set("No wafer folders loaded")
+            except Exception as e:
+                print(f"[Load Wafer] Error loading {wafer_folder}: {e}")
+                import traceback
+                traceback.print_exc()
+
+        main_win.after(0, _wafer_folder_done, new_count)
+
+    def _wafer_folder_done(new_count):
+        _grr_prog_bar.stop()
+        prog_dlg.destroy()
+        if new_count > 0:
+            grr_status_var.set(f"✅ Loaded {new_count} wafer folder(s), total: {len(grr_file_data)}")
+            _rebuild_grr_params_after_load()
+        else:
+            grr_status_var.set("No wafer folders loaded")
+
+    threading.Thread(target=_wafer_folder_worker, daemon=True).start()
 
 
 def load_grr_files():
@@ -28388,7 +28443,6 @@ def load_grr_files():
         return
 
     # ==================== STDF / CSV LOADING BRANCH ====================
-    # Set file filter based on selected type
     if file_type == "STDF":
         filetypes = [
             ("STDF files", "*.stdf *.std"),
@@ -28410,166 +28464,177 @@ def load_grr_files():
     if not file_paths:
         return
 
-    # Track already loaded paths to avoid duplicates
     existing_paths = {f['path'] for f in grr_file_data}
-    new_count = 0
-    skipped_count = 0
 
-    # Load each file - APPEND to existing data
-    for path in file_paths:
-        # Skip duplicates
-        if path in existing_paths:
-            print(f"[GRR Load] Skipping duplicate: {os.path.basename(path)}")
-            skipped_count += 1
-            continue
+    # Progress dialog
+    prog_dlg = tk.Toplevel(main_win)
+    prog_dlg.title("Loading GRR Files…")
+    prog_dlg.geometry("420x140")
+    prog_dlg.transient(main_win)
+    prog_dlg.grab_set()
+    prog_dlg.resizable(False, False)
+    prog_dlg.update_idletasks()
+    x = main_win.winfo_x() + (main_win.winfo_width() - 420) // 2
+    y = main_win.winfo_y() + (main_win.winfo_height() - 140) // 2
+    prog_dlg.geometry(f"+{x}+{y}")
+    _grr_f_status = tk.Label(prog_dlg, text="📊 Preparing…",
+                             font=("Segoe UI", 11, "bold"))
+    _grr_f_status.pack(pady=(16, 4))
+    _grr_f_file = tk.Label(prog_dlg, text="", font=("Segoe UI", 9), fg="gray")
+    _grr_f_file.pack(pady=(0, 6))
+    _grr_f_bar = ttk.Progressbar(prog_dlg, mode="indeterminate", length=360)
+    _grr_f_bar.pack(padx=20, pady=(0, 12))
+    _grr_f_bar.start(15)
 
-        file_ext = os.path.splitext(path)[1].lower()
-        file_info = {'path': path, 'type': None, 'data': None, 'wafer_id': None}
+    def _grr_files_worker():
+        new_count = 0
+        skipped_count = 0
+        total = len(file_paths)
 
-        try:
-            if file_ext in ('.stdf', '.std'):
-                # Load STDF file using existing parser
-                df, wafer_id, test_info, test_limits_dict, wafer_config = load_single_stdf_file_for_csv(path)
-                if df is not None and len(df) > 0:
-                    param_cols = [c for c in df.columns if c not in ('x', 'y', 'bin', 'sbin')]
-                    file_info['type'] = 'stdf'
-                    file_info['data'] = df
-                    file_info['wafer_id'] = wafer_id
-                    file_info['params'] = {col: col for col in param_cols}
-                else:
-                    print(f"[GRR Load] STDF returned no data: {os.path.basename(path)}")
-                    continue
+        for idx, path in enumerate(file_paths):
+            if path in existing_paths:
+                print(f"[GRR Load] Skipping duplicate: {os.path.basename(path)}")
+                skipped_count += 1
+                continue
 
-            elif file_ext == '.csv':
-                # Load CSV wafermap file - header row + data with comma delimiter
-                # Format: x, y coordinates + measurement parameters
-                try:
-                    import pandas as pd
-                    # Load CSV with comma delimiter and header
-                    df_csv = pd.read_csv(path, delimiter=',')
+            main_win.after(0, _grr_f_status.config,
+                           {"text": f"📊 Loading file {idx+1}/{total}…"})
+            main_win.after(0, _grr_f_file.config,
+                           {"text": os.path.basename(path)})
 
-                    print(f"CSV columns: {list(df_csv.columns)}")
+            file_ext = os.path.splitext(path)[1].lower()
+            file_info = {'path': path, 'type': None, 'data': None, 'wafer_id': None}
 
-                    # Look for x and y coordinate columns (case-insensitive)
-                    x_col = None
-                    y_col = None
-                    for col in df_csv.columns:
-                        col_lower = col.lower().strip()
-                        if col_lower in ['x', 'x_coord', 'x_coordinate', 'xcoord', 'die_x']:
-                            x_col = col
-                        elif col_lower in ['y', 'y_coord', 'y_coordinate', 'ycoord', 'die_y']:
-                            y_col = col
-
-                    if x_col and y_col:
-                        # This is a wafermap format with x, y coordinates
-                        # Convert to numeric
-                        df_csv[x_col] = pd.to_numeric(df_csv[x_col], errors='coerce')
-                        df_csv[y_col] = pd.to_numeric(df_csv[y_col], errors='coerce')
-
-                        # Rename columns to standard names
-                        df_csv = df_csv.rename(columns={x_col: 'x', y_col: 'y'})
-
-                        # Get numeric parameter columns (excluding x, y)
-                        param_cols = []
-                        for col in df_csv.columns:
-                            if col not in ['x', 'y']:
-                                df_csv[col] = pd.to_numeric(df_csv[col], errors='coerce')
-                                if df_csv[col].notna().any():
-                                    param_cols.append(col)
-
-                        # Store as DataFrame (similar to STDF format)
-                        file_info['type'] = 'csv_wafermap'
-                        file_info['data'] = df_csv
-                        file_info['wafer_id'] = os.path.basename(path)
+            try:
+                if file_ext in ('.stdf', '.std'):
+                    df, wafer_id, test_info, test_limits_dict, wafer_config = load_single_stdf_file_for_csv(path)
+                    if df is not None and len(df) > 0:
+                        param_cols = [c for c in df.columns if c not in ('x', 'y', 'bin', 'sbin')]
+                        file_info['type'] = 'stdf'
+                        file_info['data'] = df
+                        file_info['wafer_id'] = wafer_id
                         file_info['params'] = {col: col for col in param_cols}
-
-                        print(f"CSV wafermap loaded: {path}, dies={len(df_csv)}, params={len(param_cols)}")
-                        print(f"  X range: {df_csv['x'].min()} to {df_csv['x'].max()}")
-                        print(f"  Y range: {df_csv['y'].min()} to {df_csv['y'].max()}")
                     else:
-                        # No x, y columns found - treat as regular data matrix
-                        numeric_cols = df_csv.select_dtypes(include=[np.number]).columns
-                        if len(numeric_cols) > 0:
-                            data = df_csv[numeric_cols].values
+                        print(f"[GRR Load] STDF returned no data: {os.path.basename(path)}")
+                        continue
+
+                elif file_ext == '.csv':
+                    try:
+                        import pandas as pd
+                        df_csv = pd.read_csv(path, delimiter=',')
+
+                        print(f"CSV columns: {list(df_csv.columns)}")
+
+                        x_col = None
+                        y_col = None
+                        for col in df_csv.columns:
+                            col_lower = col.lower().strip()
+                            if col_lower in ['x', 'x_coord', 'x_coordinate', 'xcoord', 'die_x']:
+                                x_col = col
+                            elif col_lower in ['y', 'y_coord', 'y_coordinate', 'ycoord', 'die_y']:
+                                y_col = col
+
+                        if x_col and y_col:
+                            df_csv[x_col] = pd.to_numeric(df_csv[x_col], errors='coerce')
+                            df_csv[y_col] = pd.to_numeric(df_csv[y_col], errors='coerce')
+                            df_csv = df_csv.rename(columns={x_col: 'x', y_col: 'y'})
+
+                            param_cols = []
+                            for col in df_csv.columns:
+                                if col not in ['x', 'y']:
+                                    df_csv[col] = pd.to_numeric(df_csv[col], errors='coerce')
+                                    if df_csv[col].notna().any():
+                                        param_cols.append(col)
+
+                            file_info['type'] = 'csv_wafermap'
+                            file_info['data'] = df_csv
+                            file_info['wafer_id'] = os.path.basename(path)
+                            file_info['params'] = {col: col for col in param_cols}
+
+                            print(f"CSV wafermap loaded: {path}, dies={len(df_csv)}, params={len(param_cols)}")
+                            print(f"  X range: {df_csv['x'].min()} to {df_csv['x'].max()}")
+                            print(f"  Y range: {df_csv['y'].min()} to {df_csv['y'].max()}")
                         else:
-                            data = df_csv.apply(pd.to_numeric, errors='coerce').values
+                            numeric_cols = df_csv.select_dtypes(include=[np.number]).columns
+                            if len(numeric_cols) > 0:
+                                data = df_csv[numeric_cols].values
+                            else:
+                                data = df_csv.apply(pd.to_numeric, errors='coerce').values
 
-                        file_info['type'] = 'csv'
-                        file_info['data'] = data
-                        file_info['wafer_id'] = os.path.basename(path)
+                            file_info['type'] = 'csv'
+                            file_info['data'] = data
+                            file_info['wafer_id'] = os.path.basename(path)
 
-                        valid = data[~np.isnan(data)]
-                        if len(valid) > 0:
-                            print(f"CSV matrix loaded: {path}, shape={data.shape}")
+                            valid = data[~np.isnan(data)]
+                            if len(valid) > 0:
+                                print(f"CSV matrix loaded: {path}, shape={data.shape}")
 
-                except Exception as e:
-                    print(f"CSV loading error: {e}")
-                    # Fallback to numpy
+                    except Exception as e:
+                        print(f"CSV loading error: {e}")
+                        try:
+                            data = np.genfromtxt(path, delimiter=',', skip_header=1)
+                            file_info['type'] = 'csv'
+                            file_info['data'] = data
+                            file_info['wafer_id'] = os.path.basename(path)
+                        except Exception as e2:
+                            print(f"Fallback also failed: {e2}")
+
+                elif file_ext == '.txt':
                     try:
-                        data = np.genfromtxt(path, delimiter=',', skip_header=1)
-                        file_info['type'] = 'csv'
-                        file_info['data'] = data
-                        file_info['wafer_id'] = os.path.basename(path)
-                    except Exception as e2:
-                        print(f"Fallback also failed: {e2}")
-
-            elif file_ext == '.txt':
-                # Load TXT file (assume space or tab delimited)
-                try:
-                    data = np.loadtxt(path)
-                except:
-                    try:
-                        data = np.genfromtxt(path, delimiter='\t')
+                        data = np.loadtxt(path)
                     except:
-                        data = np.genfromtxt(path, delimiter=' ')
+                        try:
+                            data = np.genfromtxt(path, delimiter='\t')
+                        except:
+                            data = np.genfromtxt(path, delimiter=' ')
 
-                # Ensure data is 2D
-                if data.ndim == 1:
-                    n = len(data)
-                    cols = int(np.ceil(np.sqrt(n)))
-                    rows = int(np.ceil(n / cols))
-                    padded = np.full(rows * cols, np.nan)
-                    padded[:n] = data
-                    data = padded.reshape(rows, cols)
+                    if data.ndim == 1:
+                        n = len(data)
+                        cols = int(np.ceil(np.sqrt(n)))
+                        rows = int(np.ceil(n / cols))
+                        padded = np.full(rows * cols, np.nan)
+                        padded[:n] = data
+                        data = padded.reshape(rows, cols)
 
-                file_info['type'] = 'txt'
-                file_info['data'] = data
-                file_info['wafer_id'] = os.path.basename(path)
+                    file_info['type'] = 'txt'
+                    file_info['data'] = data
+                    file_info['wafer_id'] = os.path.basename(path)
 
-                # Calculate basic stats for status
-                valid = data[~np.isnan(data)]
-                if len(valid) > 0:
-                    print(f"TXT loaded: {path}, shape={data.shape}, min={np.min(valid):.3g}, max={np.max(valid):.3g}")
+                    valid = data[~np.isnan(data)]
+                    if len(valid) > 0:
+                        print(f"TXT loaded: {path}, shape={data.shape}, min={np.min(valid):.3g}, max={np.max(valid):.3g}")
 
-            grr_file_data.append(file_info)
-            new_count += 1
+                grr_file_data.append(file_info)
+                new_count += 1
 
-            # Auto-detect PLM files in same folder structure for CSV/STDF files
-            if file_info['type'] in ('csv_wafermap', 'stdf') and hasattr(file_info.get('data'), 'columns'):
-                print(f"[PLM Auto] Trying PLM auto-integration for {os.path.basename(path)} (type={file_info['type']})")
-                try:
-                    _auto_integrate_plm_params(file_info, path)
-                    # Show params count after integration
-                    print(f"[PLM Auto] After integration: {len(file_info.get('params', {}))} params in file_info")
-                except Exception as plm_err:
-                    print(f"[PLM Auto] ✗ Error integrating PLM: {plm_err}")
-                    import traceback
-                    traceback.print_exc()
-            else:
-                print(f"[PLM Auto] Skipping PLM integration for {os.path.basename(path)} (type={file_info.get('type')}, has_columns={hasattr(file_info.get('data'), 'columns')})")
+                if file_info['type'] in ('csv_wafermap', 'stdf') and hasattr(file_info.get('data'), 'columns'):
+                    print(f"[PLM Auto] Trying PLM auto-integration for {os.path.basename(path)} (type={file_info['type']})")
+                    try:
+                        _auto_integrate_plm_params(file_info, path)
+                        print(f"[PLM Auto] After integration: {len(file_info.get('params', {}))} params in file_info")
+                    except Exception as plm_err:
+                        print(f"[PLM Auto] ✗ Error integrating PLM: {plm_err}")
+                        import traceback
+                        traceback.print_exc()
+                else:
+                    print(f"[PLM Auto] Skipping PLM integration for {os.path.basename(path)} (type={file_info.get('type')}, has_columns={hasattr(file_info.get('data'), 'columns')})")
 
-        except Exception as e:
-            print(f"Error loading {path}: {e}")
-            grr_status_var.set(f"Error loading {os.path.basename(path)}: {str(e)[:50]}")
+            except Exception as e:
+                print(f"Error loading {path}: {e}")
 
-    status_msg = f"Loaded {len(grr_file_data)} files total ({new_count} new"
-    if skipped_count > 0:
-        status_msg += f", {skipped_count} skipped duplicates"
-    status_msg += ")"
-    grr_status_var.set(status_msg)
+        main_win.after(0, _grr_files_done, new_count, skipped_count)
 
-    # Rebuild available params and update UI
-    _rebuild_grr_params_after_load()
+    def _grr_files_done(new_count, skipped_count):
+        _grr_f_bar.stop()
+        prog_dlg.destroy()
+        status_msg = f"✅ Loaded {len(grr_file_data)} files total ({new_count} new"
+        if skipped_count > 0:
+            status_msg += f", {skipped_count} skipped duplicates"
+        status_msg += ")"
+        grr_status_var.set(status_msg)
+        _rebuild_grr_params_after_load()
+
+    threading.Thread(target=_grr_files_worker, daemon=True).start()
 
 grr_load_btn = tk.Button(
     grr_load_btn_frame,
