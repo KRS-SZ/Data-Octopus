@@ -148,6 +148,18 @@ class MasterInventoryTab:
         )
         self.status_label.pack(side=tk.RIGHT, padx=20, pady=10)
 
+        # Progress bar (initially hidden)
+        self._progress_frame = tk.Frame(self.frame, bg="#E3F2FD")
+        self._progress_label = tk.Label(
+            self._progress_frame, text="", font=("Segoe UI", 10),
+            bg="#E3F2FD", fg="#0D47A1",
+        )
+        self._progress_label.pack(side=tk.LEFT, padx=(20, 10), pady=4)
+        self._progress_bar = ttk.Progressbar(
+            self._progress_frame, mode="indeterminate", length=220,
+        )
+        self._progress_bar.pack(side=tk.LEFT, padx=(0, 20), pady=4)
+
         # --- Row 1: Refresh + Search + View preset ---
         ctrl = tk.Frame(self.frame)
         ctrl.pack(fill=tk.X, padx=10, pady=(8, 4))
@@ -285,16 +297,22 @@ class MasterInventoryTab:
     def _load_data_async(self):
         self.refresh_btn.config(state=tk.DISABLED)
         self.status_label.config(text="Loading…")
+        self._progress_frame.pack(fill=tk.X, before=self.tree_frame)
+        self._progress_bar.start(15)
+        self._progress_label.config(text="⏳ Preparing…")
         threading.Thread(target=self._load_data_worker, daemon=True).start()
 
     def _load_data_worker(self):
         source = "network"
         try:
             if os.path.isfile(self.NETWORK_CSV):
+                self.frame.after(0, self._progress_label.config, {"text": "⬇ Downloading from Cork Share…"})
                 os.makedirs(self.LOCAL_DIR, exist_ok=True)
                 shutil.copy2(self.NETWORK_CSV, self.LOCAL_CSV)
+                self.frame.after(0, self._progress_label.config, {"text": "📊 Loading CSV…"})
                 df = pd.read_csv(self.LOCAL_CSV, low_memory=False)
             elif os.path.isfile(self.LOCAL_CSV):
+                self.frame.after(0, self._progress_label.config, {"text": "📊 Loading CSV from cache…"})
                 df = pd.read_csv(self.LOCAL_CSV, low_memory=False)
                 source = "cache"
             else:
@@ -303,6 +321,7 @@ class MasterInventoryTab:
         except Exception as exc:
             if os.path.isfile(self.LOCAL_CSV):
                 try:
+                    self.frame.after(0, self._progress_label.config, {"text": "📊 Loading CSV from cache…"})
                     df = pd.read_csv(self.LOCAL_CSV, low_memory=False)
                     source = "cache"
                 except Exception as exc2:
@@ -315,6 +334,8 @@ class MasterInventoryTab:
         self.frame.after(0, self._on_data_loaded, df, source)
 
     def _on_data_loaded(self, df: pd.DataFrame, source: str):
+        self._progress_bar.stop()
+        self._progress_frame.pack_forget()
         self.df = df
         self.filtered_df = df.copy()
         self.all_columns = list(df.columns)
@@ -351,6 +372,8 @@ class MasterInventoryTab:
             return ""
 
     def _show_load_error(self, msg: str):
+        self._progress_bar.stop()
+        self._progress_frame.pack_forget()
         self.status_label.config(text="⚠ Load failed")
         self.refresh_btn.config(state=tk.NORMAL)
         self.count_label.config(text=f"Error: {msg}")

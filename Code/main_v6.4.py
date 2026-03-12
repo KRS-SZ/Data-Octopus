@@ -3,7 +3,7 @@
 # from Semi_ATE.STDF.STDFFile import STDFFile
 
 # ─── VERSION ───
-APP_VERSION = "6.4.0"  # Load from Master Selection Mode
+APP_VERSION = "6.4.1"  # Loading bar + wafer list width fix
 
 import sys
 
@@ -924,28 +924,61 @@ try:
             if not os.path.isfile(file_path):
                 messagebox.showerror("File not found", f"Cannot access:\n{file_path}")
                 return
-            try:
-                tmp_dir = tempfile.mkdtemp(prefix="dataoctopus_")
-                with zipfile.ZipFile(file_path, 'r') as zf:
-                    zf.extractall(tmp_dir)
 
-                std_files = [
-                    os.path.join(tmp_dir, n) for n in zf.namelist()
-                    if n.lower().endswith(('.std', '.stdf')) and not n.endswith('/')
-                ]
-                csv_files = [
-                    os.path.join(tmp_dir, n) for n in zf.namelist()
-                    if n.lower().endswith('.csv') and not n.endswith('/')
-                ]
-                csv_full = [f for f in csv_files if '_lim.' not in os.path.basename(f).lower()]
-                csv_target = csv_full[0] if csv_full else (csv_files[0] if csv_files else None)
+            # Progress dialog
+            prog_dlg = tk.Toplevel(main_win)
+            prog_dlg.title("Loading Wafer…")
+            prog_dlg.geometry("400x130")
+            prog_dlg.transient(main_win)
+            prog_dlg.grab_set()
+            prog_dlg.resizable(False, False)
+            tk.Label(prog_dlg, text=os.path.basename(file_path),
+                     font=("Segoe UI", 9), fg="gray").pack(pady=(12, 4))
+            prog_status = tk.Label(prog_dlg, text="⬇ Copying file…",
+                                   font=("Segoe UI", 11, "bold"))
+            prog_status.pack(pady=(0, 6))
+            prog_bar = ttk.Progressbar(prog_dlg, mode="indeterminate", length=340)
+            prog_bar.pack(padx=20, pady=(0, 12))
+            prog_bar.start(15)
+            prog_dlg.update_idletasks()
+
+            def _zip_worker():
+                try:
+                    main_win.after(0, prog_status.config, {"text": "⬇ Copying file…"})
+                    tmp_dir = tempfile.mkdtemp(prefix="dataoctopus_")
+                    local_zip = os.path.join(tmp_dir, os.path.basename(file_path))
+                    shutil.copy2(file_path, local_zip)
+
+                    main_win.after(0, prog_status.config, {"text": "📦 Unzipping…"})
+                    with zipfile.ZipFile(local_zip, 'r') as zf:
+                        zf.extractall(tmp_dir)
+                        names = zf.namelist()
+
+                    std_files = [
+                        os.path.join(tmp_dir, n) for n in names
+                        if n.lower().endswith(('.std', '.stdf')) and not n.endswith('/')
+                    ]
+                    csv_files = [
+                        os.path.join(tmp_dir, n) for n in names
+                        if n.lower().endswith('.csv') and not n.endswith('/')
+                    ]
+                    csv_full = [f for f in csv_files if '_lim.' not in os.path.basename(f).lower()]
+                    csv_target = csv_full[0] if csv_full else (csv_files[0] if csv_files else None)
+
+                    main_win.after(0, prog_status.config, {"text": "📊 Loading data…"})
+                    main_win.after(0, _zip_done, tmp_dir, std_files, csv_target)
+                except Exception as e:
+                    main_win.after(0, _zip_error, str(e))
+
+            def _zip_done(tmp_dir, std_files, csv_target):
+                prog_bar.stop()
+                prog_dlg.destroy()
 
                 if not std_files and not csv_target:
                     messagebox.showwarning("Empty ZIP", "No STDF or CSV found inside the ZIP.")
                     shutil.rmtree(tmp_dir, ignore_errors=True)
                     return
 
-                # ── Selection dialog ──
                 def _do_load(choice):
                     pick_dlg.destroy()
                     if choice == "stdf" and std_files:
@@ -984,9 +1017,12 @@ try:
                 else:
                     _do_load("csv")
 
-            except Exception as e:
-                messagebox.showerror("ZIP Error", f"Failed to extract ZIP:\n{e}")
-                return
+            def _zip_error(msg):
+                prog_bar.stop()
+                prog_dlg.destroy()
+                messagebox.showerror("ZIP Error", f"Failed to extract ZIP:\n{msg}")
+
+            threading.Thread(target=_zip_worker, daemon=True).start()
             return
 
         # ── Direct files ──
@@ -4800,8 +4836,13 @@ wafer_list_frame_inner.bind(
     lambda e: wafer_list_canvas.configure(scrollregion=wafer_list_canvas.bbox("all"))
 )
 
-wafer_list_canvas.create_window((0, 0), window=wafer_list_frame_inner, anchor="nw")
+wafer_list_canvas_window_id = wafer_list_canvas.create_window((0, 0), window=wafer_list_frame_inner, anchor="nw")
 wafer_list_canvas.configure(yscrollcommand=wafer_list_scrollbar.set)
+
+def _on_wafer_list_canvas_configure(event):
+    wafer_list_canvas.itemconfig(wafer_list_canvas_window_id, width=event.width)
+
+wafer_list_canvas.bind("<Configure>", _on_wafer_list_canvas_configure)
 
 wafer_list_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 wafer_list_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
