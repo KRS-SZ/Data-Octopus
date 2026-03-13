@@ -1660,6 +1660,8 @@ def load_mc300_file():
         # Füge zu Multiple Wafers hinzu
         multiple_stdf_data.append(df)
         multiple_wafer_ids.append(current_wafer_id)
+        multiple_test_params.append(dict(test_parameters))
+        multiple_grouped_params.append({g: list(p) for g, p in grouped_parameters.items()})
 
         # Store metadata
         datetime_parts = header_info['datetime_device'].split('/')
@@ -1729,7 +1731,7 @@ def load_csv_wafermap_file(csv_path=None):
     """Load wafermap data from a CSV file"""
     global current_stdf_data, current_wafer_id, test_parameters, grouped_parameters, test_limits
     global multiple_stdf_data, multiple_wafer_ids, die_image_directory
-    global wafer_metadata
+    global wafer_metadata, multiple_test_params, multiple_grouped_params
 
     # Wenn kein Pfad übergeben, zeige File-Dialog
     if not csv_path:
@@ -1962,17 +1964,24 @@ def load_csv_wafermap_file(csv_path=None):
         if not multiple_stdf_data:
             multiple_stdf_data = [df]
             multiple_wafer_ids = [wafer_id]
+            multiple_test_params = [dict(test_parameters)]
+            multiple_grouped_params = [{g: list(p) for g, p in grouped_parameters.items()}]
             wafer_metadata = [csv_meta]
         else:
             # Check if this wafer is already loaded (by ID)
             if wafer_id not in multiple_wafer_ids:
                 multiple_stdf_data.append(df)
                 multiple_wafer_ids.append(wafer_id)
+                multiple_test_params.append(dict(test_parameters))
+                multiple_grouped_params.append({g: list(p) for g, p in grouped_parameters.items()})
                 wafer_metadata.append(csv_meta)
             else:
                 # Replace existing wafer data
                 idx = multiple_wafer_ids.index(wafer_id)
                 multiple_stdf_data[idx] = df
+                if idx < len(multiple_test_params):
+                    multiple_test_params[idx] = dict(test_parameters)
+                    multiple_grouped_params[idx] = {g: list(p) for g, p in grouped_parameters.items()}
                 if idx < len(wafer_metadata):
                     wafer_metadata[idx] = csv_meta
 
@@ -2665,6 +2674,9 @@ show_grid_var = tk.BooleanVar(value=False)
 selected_die_coords = None
 multiple_stdf_data = []
 multiple_wafer_ids = []
+multiple_test_params = []  # Per-wafer test_parameters (list of dicts)
+multiple_grouped_params = []  # Per-wafer grouped_parameters (list of dicts)
+_all_test_parameters = {}  # Master copy of ALL test params ever loaded (for name lookup)
 wafer_metadata = []  # Stores metadata dict per wafer (format, source, path, header info)
 
 # Performance optimization: Cache for computed grids
@@ -4828,6 +4840,8 @@ def load_csv_wafermap_from_path(csv_path):
 
         multiple_stdf_data = [df]
         multiple_wafer_ids = [wafer_id]
+        multiple_test_params = [dict(test_parameters)]
+        multiple_grouped_params = [{g: list(p) for g, p in grouped_parameters.items()}]
 
         update_group_combobox()
         refresh_heatmap_display()
@@ -4865,17 +4879,57 @@ def _get_wafer_selection_mode():
 
 def on_wafer_checkbox_changed(clicked_idx):
     """Handle checkbox click – enforce single/multi depending on active tab."""
+    global test_parameters, grouped_parameters
     mode = _get_wafer_selection_mode()
     if mode == "single":
-        # Single select: deselect all others, select only clicked
         for i, var in enumerate(wafer_tab_checkbox_vars):
             var.set(i == clicked_idx)
         wafer_tab_selected_var.set(clicked_idx)
+        # Restore per-wafer params and groups directly from stored snapshots
+        if clicked_idx < len(multiple_test_params) and multiple_test_params[clicked_idx]:
+            test_parameters = dict(multiple_test_params[clicked_idx])
+            if clicked_idx < len(multiple_grouped_params) and multiple_grouped_params[clicked_idx]:
+                grouped_parameters = {g: list(p) for g, p in multiple_grouped_params[clicked_idx].items()}
+            update_group_combobox()
         _update_wafer_checkbox_visuals()
         refresh_heatmap_display()
     else:
-        # Multi select: toggle freely
         _update_wafer_checkbox_visuals()
+
+
+def _rebuild_params_for_wafer(df):
+    """Rebuild test_parameters and grouped_parameters from a wafer's DataFrame columns."""
+    global test_parameters, grouped_parameters
+    import re as _re_rebuild
+    new_params = {}
+    new_groups = {}
+    exclude = {'x', 'y', 'bin', 'sbin', 'hbin', 'X', 'Y', 'BIN'}
+    for col in df.columns:
+        if str(col) in exclude or col in exclude:
+            continue
+        if not pd.api.types.is_numeric_dtype(df[col]):
+            continue
+        col_str = str(col)
+        if isinstance(col, (int, np.integer)):
+            test_num = int(col)
+            test_key = f"test_{test_num}"
+            test_name = _all_test_parameters.get(test_key, col_str)
+        else:
+            match = _re_rebuild.search(r'_(\d{5,})$', col_str)
+            if match:
+                test_num = int(match.group(1))
+            else:
+                test_num = hash(col_str) % 10000000
+            test_key = f"test_{test_num}"
+            test_name = _all_test_parameters.get(test_key, col_str)
+        new_params[test_key] = test_name
+        group = extract_group_from_column(test_name) if test_name else "Ungrouped"
+        if group not in new_groups:
+            new_groups[group] = []
+        new_groups[group].append((test_num, test_name, test_name))
+    test_parameters = new_params
+    grouped_parameters = new_groups
+    update_group_combobox()
 
 def _update_wafer_checkbox_visuals():
     """Update visual highlighting of selected wafers."""
@@ -4956,7 +5010,7 @@ def unload_single_wafer():
     """Unload the currently selected wafer"""
     global multiple_stdf_data, multiple_wafer_ids, current_stdf_data, current_wafer_id
     global test_parameters, grouped_parameters, test_limits
-    global wafer_metadata
+    global wafer_metadata, multiple_test_params, multiple_grouped_params
 
     if not multiple_wafer_ids:
         print("No wafers loaded")
@@ -4972,6 +5026,10 @@ def unload_single_wafer():
     del multiple_wafer_ids[idx]
     if idx < len(wafer_metadata):
         del wafer_metadata[idx]
+    if idx < len(multiple_test_params):
+        del multiple_test_params[idx]
+    if idx < len(multiple_grouped_params):
+        del multiple_grouped_params[idx]
 
     if not multiple_wafer_ids:
         current_stdf_data = None
@@ -4984,6 +5042,9 @@ def unload_single_wafer():
         wafer_tab_selected_var.set(new_idx)
         current_stdf_data = multiple_stdf_data[new_idx]
         current_wafer_id = multiple_wafer_ids[new_idx]
+        if new_idx < len(multiple_test_params) and multiple_test_params[new_idx]:
+            test_parameters = dict(multiple_test_params[new_idx])
+            grouped_parameters = {g: list(p) for g, p in multiple_grouped_params[new_idx].items()}
 
     update_wafer_tab_selection_list()
     update_group_combobox()
@@ -4994,10 +5055,12 @@ def unload_all_wafers():
     """Unload all wafers and reset everything"""
     global multiple_stdf_data, multiple_wafer_ids, current_stdf_data, current_wafer_id
     global test_parameters, grouped_parameters, test_limits
-    global wafer_metadata
+    global wafer_metadata, multiple_test_params, multiple_grouped_params
 
     multiple_stdf_data.clear()
     multiple_wafer_ids.clear()
+    multiple_test_params.clear()
+    multiple_grouped_params.clear()
     wafer_metadata.clear()
     current_stdf_data = None
     current_wafer_id = None
@@ -6562,7 +6625,8 @@ def _sync_param_combobox():
 
 def update_group_combobox():
     """Update the group selection combobox with available groups"""
-    global grouped_parameters, custom_tests
+    global grouped_parameters, custom_tests, _all_test_parameters
+    _all_test_parameters.update(test_parameters)
 
     group_names = ["All Groups"]
 
@@ -7394,11 +7458,7 @@ def load_stdf_files_threaded(stdf_paths, title="Loading"):
 
         elapsed = time.time() - start_time[0]
 
-        # Process results
-        multiple_stdf_data = []
-        multiple_wafer_ids = []
-        wafer_metadata = []
-
+        # Process results – APPEND to existing wafers (don't reset)
         for result in results:
             multiple_stdf_data.append(result['df'])
             multiple_wafer_ids.append(result['wafer_id'])
@@ -7423,6 +7483,10 @@ def load_stdf_files_threaded(stdf_paths, title="Loading"):
                 stdf_meta['center_x'] = wcfg.get('center_x', '')
                 stdf_meta['center_y'] = wcfg.get('center_y', '')
             wafer_metadata.append(stdf_meta)
+
+            # Store per-wafer params
+            multiple_test_params.append(dict(result['test_params']))
+            multiple_grouped_params.append({g: list(p) for g, p in result.get('grouped_params', {}).items()})
 
             if not test_parameters:
                 test_parameters = result['test_params']
@@ -12970,6 +13034,8 @@ def apply_config_and_load():
             print(f"Found {len(stdf_files)} STDF file(s)")
             multiple_stdf_data = []
             multiple_wafer_ids = []
+            multiple_test_params = []
+            multiple_grouped_params = []
 
             for stdf_file in stdf_files:
                 stdf_path = os.path.join(stdf_dir, stdf_file)
@@ -12980,6 +13046,8 @@ def apply_config_and_load():
                 if not df.empty:
                     multiple_stdf_data.append(df)
                     multiple_wafer_ids.append(wafer_id if wafer_id else stdf_file)
+                    multiple_test_params.append(dict(test_params) if test_params else {})
+                    multiple_grouped_params.append({g: list(p) for g, p in grouped_params.items()} if grouped_params else {})
                     wafer_metadata.append({
                         'format': 'STDF', 'source': 'local',
                         'file_path': stdf_path,
