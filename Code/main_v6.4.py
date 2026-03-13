@@ -917,6 +917,28 @@ try:
         """Dispatch wafer load from Master-Inf. tab (supports ZIP, STDF, CSV, TXT)."""
         import zipfile, tempfile, shutil
 
+        # Try alternative Cork Share server names if file not found
+        CORK_SERVERS = [
+            r"\\frlcork-storage.thefacebook.com",
+            r"\\lhr-shared02-smb.thefacebook.com",
+        ]
+
+        def _try_alt_servers(path):
+            """Try alternative server names for Cork Share UNC paths."""
+            if os.path.isfile(path):
+                return path
+            for srv in CORK_SERVERS:
+                for alt in CORK_SERVERS:
+                    if alt == srv:
+                        continue
+                    if path.lower().startswith(srv.lower()):
+                        alt_path = alt + path[len(srv):]
+                        if os.path.isfile(alt_path):
+                            print(f"[Master] Resolved via alt server: {alt_path}")
+                            return alt_path
+            return path  # return original if no alternative found
+
+        file_path = _try_alt_servers(file_path)
         ext = file_path.lower()
 
         # ── ZIP handling (Cork Share delivers .zip) ──
@@ -1047,23 +1069,167 @@ try:
             messagebox.showwarning("Selection", "Please select exactly 2 wafers\n(1st = Reference, 2nd = Comparison).")
             return
         import zipfile, tempfile
-        resolved = []
-        for p in paths[:2]:
-            if p.lower().endswith('.zip') and os.path.isfile(p):
-                tmp = tempfile.mkdtemp(prefix="dataoctopus_dm_")
-                with zipfile.ZipFile(p, 'r') as zf:
-                    zf.extractall(tmp)
-                csv_files = [os.path.join(tmp, n) for n in zf.namelist()
-                             if n.lower().endswith('.csv') and '_lim.' not in n.lower() and not n.endswith('/')]
-                std_files = [os.path.join(tmp, n) for n in zf.namelist()
-                             if n.lower().endswith(('.std', '.stdf')) and not n.endswith('/')]
-                resolved.append(csv_files[0] if csv_files else (std_files[0] if std_files else p))
-            else:
-                resolved.append(p)
-        try:
-            diffmap_load_from_paths(resolved[0], resolved[1])
-        except Exception as e:
-            messagebox.showerror("Diffmap Error", f"Failed to load diffmap:\n{e}")
+
+        prog_dlg = tk.Toplevel(main_win)
+        prog_dlg.title("Loading Diffmap from Master…")
+        prog_dlg.geometry("420x140")
+        prog_dlg.transient(main_win)
+        prog_dlg.grab_set()
+        prog_dlg.resizable(False, False)
+        prog_dlg.update_idletasks()
+        x = main_win.winfo_x() + (main_win.winfo_width() - 420) // 2
+        y = main_win.winfo_y() + (main_win.winfo_height() - 140) // 2
+        prog_dlg.geometry(f"+{x}+{y}")
+        _dm_status = tk.Label(prog_dlg, text="📊 Extracting files…",
+                              font=("Segoe UI", 11, "bold"))
+        _dm_status.pack(pady=(16, 4))
+        _dm_file = tk.Label(prog_dlg, text="", font=("Segoe UI", 9), fg="gray")
+        _dm_file.pack(pady=(0, 6))
+        _dm_bar = ttk.Progressbar(prog_dlg, mode="indeterminate", length=360)
+        _dm_bar.pack(padx=20, pady=(0, 12))
+        _dm_bar.start(15)
+
+        def _dm_worker():
+            resolved = []
+            for idx, p in enumerate(paths[:2]):
+                label = "Reference" if idx == 0 else "Comparison"
+                main_win.after(0, _dm_status.config, {"text": f"📊 Extracting {label}…"})
+                main_win.after(0, _dm_file.config, {"text": os.path.basename(p)})
+                if p.lower().endswith('.zip') and os.path.isfile(p):
+                    tmp = tempfile.mkdtemp(prefix="dataoctopus_dm_")
+                    with zipfile.ZipFile(p, 'r') as zf:
+                        zf.extractall(tmp)
+                    csv_files = [os.path.join(tmp, n) for n in zf.namelist()
+                                 if n.lower().endswith('.csv') and '_lim.' not in n.lower() and not n.endswith('/')]
+                    std_files = [os.path.join(tmp, n) for n in zf.namelist()
+                                 if n.lower().endswith(('.std', '.stdf')) and not n.endswith('/')]
+                    resolved.append(csv_files[0] if csv_files else (std_files[0] if std_files else p))
+                else:
+                    resolved.append(p)
+            main_win.after(0, _dm_status.config, {"text": "📊 Calculating Diffmap…"})
+            main_win.after(0, lambda: _dm_done(resolved))
+
+        def _dm_done(resolved):
+            _dm_bar.stop()
+            prog_dlg.destroy()
+            try:
+                diffmap_load_from_paths(resolved[0], resolved[1])
+            except Exception as e:
+                messagebox.showerror("Diffmap Error", f"Failed to load diffmap:\n{e}")
+
+        threading.Thread(target=_dm_worker, daemon=True).start()
+
+    def _mw_load_from_master(paths):
+        """Load wafer paths from Master Inventory into Multi-Wafer tab."""
+        if not paths:
+            return
+        import zipfile, tempfile
+
+        prog_dlg = tk.Toplevel(main_win)
+        prog_dlg.title("Loading Multi-Wafer from Master…")
+        prog_dlg.geometry("420x140")
+        prog_dlg.transient(main_win)
+        prog_dlg.grab_set()
+        prog_dlg.resizable(False, False)
+        prog_dlg.update_idletasks()
+        x = main_win.winfo_x() + (main_win.winfo_width() - 420) // 2
+        y = main_win.winfo_y() + (main_win.winfo_height() - 140) // 2
+        prog_dlg.geometry(f"+{x}+{y}")
+        _mw_status = tk.Label(prog_dlg, text="📊 Extracting files…",
+                              font=("Segoe UI", 11, "bold"))
+        _mw_status.pack(pady=(16, 4))
+        _mw_file = tk.Label(prog_dlg, text="", font=("Segoe UI", 9), fg="gray")
+        _mw_file.pack(pady=(0, 6))
+        _mw_bar = ttk.Progressbar(prog_dlg, mode="indeterminate", length=360)
+        _mw_bar.pack(padx=20, pady=(0, 12))
+        _mw_bar.start(15)
+
+        def _mw_worker():
+            resolved = []
+            total = len(paths)
+            for idx, p in enumerate(paths):
+                main_win.after(0, _mw_status.config, {"text": f"📊 Extracting file {idx+1}/{total}…"})
+                main_win.after(0, _mw_file.config, {"text": os.path.basename(p)})
+                if p.lower().endswith('.zip') and os.path.isfile(p):
+                    tmp = tempfile.mkdtemp(prefix="dataoctopus_mw_")
+                    with zipfile.ZipFile(p, 'r') as zf:
+                        zf.extractall(tmp)
+                    csv_files = [os.path.join(tmp, n) for n in zf.namelist()
+                                 if n.lower().endswith('.csv') and '_lim.' not in n.lower() and not n.endswith('/')]
+                    std_files = [os.path.join(tmp, n) for n in zf.namelist()
+                                 if n.lower().endswith(('.std', '.stdf')) and not n.endswith('/')]
+                    resolved.append(csv_files[0] if csv_files else (std_files[0] if std_files else p))
+                else:
+                    resolved.append(p)
+            main_win.after(0, _mw_status.config, {"text": "📊 Loading into Multi-Wafer…"})
+            main_win.after(0, lambda: _mw_done(resolved))
+
+        def _mw_done(resolved):
+            _mw_bar.stop()
+            prog_dlg.destroy()
+            try:
+                add_multi_wafer_csv_files(csv_paths=resolved)
+                notebook.select(tab_multi_wafer)
+            except Exception as e:
+                messagebox.showerror("Multi-Wafer Error", f"Failed to load from Master:\n{e}")
+
+        threading.Thread(target=_mw_worker, daemon=True).start()
+
+    def _grr_load_from_master(paths):
+        """Load wafer paths from Master Inventory into Gage R&R tab."""
+        if not paths:
+            return
+        import zipfile, tempfile
+
+        prog_dlg = tk.Toplevel(main_win)
+        prog_dlg.title("Loading Gage R&R from Master…")
+        prog_dlg.geometry("420x140")
+        prog_dlg.transient(main_win)
+        prog_dlg.grab_set()
+        prog_dlg.resizable(False, False)
+        prog_dlg.update_idletasks()
+        x = main_win.winfo_x() + (main_win.winfo_width() - 420) // 2
+        y = main_win.winfo_y() + (main_win.winfo_height() - 140) // 2
+        prog_dlg.geometry(f"+{x}+{y}")
+        _grr_m_status = tk.Label(prog_dlg, text="📊 Extracting files…",
+                                 font=("Segoe UI", 11, "bold"))
+        _grr_m_status.pack(pady=(16, 4))
+        _grr_m_file = tk.Label(prog_dlg, text="", font=("Segoe UI", 9), fg="gray")
+        _grr_m_file.pack(pady=(0, 6))
+        _grr_m_bar = ttk.Progressbar(prog_dlg, mode="indeterminate", length=360)
+        _grr_m_bar.pack(padx=20, pady=(0, 12))
+        _grr_m_bar.start(15)
+
+        def _grr_m_worker():
+            resolved = []
+            total = len(paths)
+            for idx, p in enumerate(paths):
+                main_win.after(0, _grr_m_status.config, {"text": f"📊 Extracting file {idx+1}/{total}…"})
+                main_win.after(0, _grr_m_file.config, {"text": os.path.basename(p)})
+                if p.lower().endswith('.zip') and os.path.isfile(p):
+                    tmp = tempfile.mkdtemp(prefix="dataoctopus_grr_")
+                    with zipfile.ZipFile(p, 'r') as zf:
+                        zf.extractall(tmp)
+                    csv_files = [os.path.join(tmp, n) for n in zf.namelist()
+                                 if n.lower().endswith('.csv') and '_lim.' not in n.lower() and not n.endswith('/')]
+                    std_files = [os.path.join(tmp, n) for n in zf.namelist()
+                                 if n.lower().endswith(('.std', '.stdf')) and not n.endswith('/')]
+                    resolved.append(csv_files[0] if csv_files else (std_files[0] if std_files else p))
+                else:
+                    resolved.append(p)
+            main_win.after(0, _grr_m_status.config, {"text": "📊 Loading into Gage R&R…"})
+            main_win.after(0, lambda: _grr_m_done(resolved))
+
+        def _grr_m_done(resolved):
+            _grr_m_bar.stop()
+            prog_dlg.destroy()
+            try:
+                load_grr_files(file_paths=resolved)
+                notebook.select(tab_grr)
+            except Exception as e:
+                messagebox.showerror("Gage R&R Error", f"Failed to load from Master:\n{e}")
+
+        threading.Thread(target=_grr_m_worker, daemon=True).start()
 except ImportError as e:
     print(f"Warning: MasterInventoryTab import failed: {e}")
     tk.Label(tab_master_inv, text="Master Inventory nicht verfügbar", font=("Segoe UI", 14)).pack(pady=50)
@@ -1679,7 +1845,7 @@ def load_csv_wafermap_file(csv_path=None):
 
         for col in df.columns:
             col_lower = str(col).lower()
-            if col_lower in ['hardbin', 'hbin', 'hard_bin']:
+            if col_lower in ['hardbin', 'hbin', 'hard_bin', 'bin']:
                 hardbin_column = col
                 print(f"  Found HardBin column: '{col}'")
             elif col_lower in ['softbin', 'sbin', 'soft_bin']:
@@ -4660,7 +4826,7 @@ wafer_tab_checkbox_widgets = []
 
 def _get_wafer_selection_mode():
     """Return 'single' for Heatmap, 'multi' for Statistics/Charac."""
-    return "single" if _active_display_tab == "heatmap" else "multi"
+    return "single" if _active_display_tab == "wafermap" else "multi"
 
 def on_wafer_checkbox_changed(clicked_idx):
     """Handle checkbox click – enforce single/multi depending on active tab."""
@@ -5005,9 +5171,10 @@ def update_wafer_tab_selection_list():
         # Try to extract structured info from typical naming patterns
         # Pattern: AM_P03004_CP2_V201_PROD_UNAV02468_1_Slot1_BatchID-123456_X_0_20260209-154610
         for p in parts:
-            if p.startswith('P0') or p.startswith('P1') or p.startswith('P2'):
-                product = p
-            elif p.startswith('UNAV') or p.startswith('LOT'):
+            if not product and (p.startswith('P0') or p.startswith('P1') or p.startswith('P2')):
+                # Take only base product code (e.g. P03004, not P03004-CP2-X1-V221...)
+                product = p.split('-')[0] if '-' in p else p
+            elif p.startswith('UNAV') or p.startswith('UNAC') or p.startswith('LOT'):
                 lot = p
             elif p.startswith('Slot') or _re.match(r'^Slot\d+$', p):
                 slot = p
@@ -5031,7 +5198,7 @@ def update_wafer_tab_selection_list():
             line2_parts.append(f"Lot: {lot}")
         if date_str:
             line2_parts.append(date_str)
-        line2 = " | ".join(line2_parts) if line2_parts else wafer_name[:40]
+        line2 = " | ".join(line2_parts) if line2_parts else wafer_name
 
         var = tk.BooleanVar(value=(idx == wafer_tab_selected_var.get()))
         wafer_tab_checkbox_vars.append(var)
@@ -5041,9 +5208,22 @@ def update_wafer_tab_selection_list():
 
         _idx = idx
 
-        # Top row: checkbox with wafer number
+        # Top row: checkbox with wafer number + Inf. button
         top_row = tk.Frame(cb_frame, bg="white")
         top_row.pack(fill=tk.X)
+
+        # Pack Inf. button FIRST (RIGHT) so it gets guaranteed space
+        inf_btn = tk.Label(
+            top_row,
+            text="Inf.",
+            font=("Helvetica", 7, "bold"),
+            bg="#2196F3", fg="white",
+            relief=tk.RIDGE, bd=1,
+            padx=4, pady=1,
+            cursor="hand2"
+        )
+        inf_btn.pack(side=tk.RIGHT, padx=(2, 4))
+        inf_btn.bind("<Button-1>", lambda e, i=_idx: show_wafer_info_popup(i))
 
         cb = tk.Checkbutton(
             top_row,
@@ -5059,27 +5239,16 @@ def update_wafer_tab_selection_list():
         )
         cb.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        # "Inf." button for wafer info popup
-        inf_btn = tk.Label(
-            top_row,
-            text="Inf.",
-            font=("Helvetica", 7, "bold"),
-            bg="#2196F3", fg="white",
-            relief=tk.RIDGE, bd=1,
-            padx=4, pady=1,
-            cursor="hand2"
-        )
-        inf_btn.pack(side=tk.RIGHT, padx=(2, 6))
-        inf_btn.bind("<Button-1>", lambda e, i=_idx: show_wafer_info_popup(i))
-
-        # Info line
+        # Info line (wrapping enabled for long names)
         info_label = tk.Label(
             cb_frame,
             text=f"  {line2}",
             font=("Consolas", 7),
             anchor="w",
             bg="white",
-            fg="#666"
+            fg="#666",
+            wraplength=220,
+            justify=tk.LEFT
         )
         info_label.pack(fill=tk.X, padx=(22, 2))
 
@@ -6304,6 +6473,58 @@ def update_limits_display(test_num=None):
 # limits_overlay_frame.place_forget()  # Start hidden
 
 
+def _sync_param_combobox():
+    """Sync parameter combobox with current group selection (without triggering heatmap refresh)."""
+    global grouped_parameters, test_parameters, custom_tests, hardbin_column, softbin_column
+
+    selected_group = heatmap_group_combobox.get()
+
+    param_options = []
+    if hardbin_column:
+        param_options.append("HardBin")
+    if softbin_column:
+        param_options.append("SoftBin")
+    if not param_options:
+        param_options = ["BIN (Bin Number)"]
+
+    def sort_key(item):
+        test_key = item[0] if isinstance(item, tuple) else item
+        if isinstance(test_key, str) and test_key.startswith("test_"):
+            try:
+                return (0, int(test_key.replace("test_", "")))
+            except ValueError:
+                pass
+        if isinstance(item, tuple):
+            return (1, simplify_param_name(item[1]).upper())
+        return (1, str(item).upper())
+
+    if selected_group == "─── Custom Tests ───":
+        param_options = []
+        for test_name in sorted(custom_tests.keys()):
+            param_options.append(f"CUSTOM: {test_name}")
+    elif selected_group == "All Groups" or not grouped_parameters:
+        for test_key, test_name in sorted(test_parameters.items(), key=sort_key):
+            simple_name = simplify_param_name(test_name)
+            param_options.append(f"{test_key}: {simple_name}")
+        if custom_tests:
+            param_options.append("─── Custom Tests ───")
+            for test_name in sorted(custom_tests.keys()):
+                param_options.append(f"CUSTOM: {test_name}")
+    else:
+        if selected_group in grouped_parameters:
+            group_params = grouped_parameters[selected_group]
+            sorted_params = sorted(group_params, key=lambda x: x[0])
+            for param in sorted_params:
+                test_num = param[0]
+                full_name = param[2] if len(param) > 2 else param[1]
+                simple_name = simplify_param_name(full_name)
+                param_options.append(f"test_{test_num}: {simple_name}")
+
+    heatmap_param_combobox["values"] = param_options
+    if param_options:
+        heatmap_param_combobox.current(0)
+
+
 def update_group_combobox():
     """Update the group selection combobox with available groups"""
     global grouped_parameters, custom_tests
@@ -6320,6 +6541,12 @@ def update_group_combobox():
     heatmap_group_combobox["values"] = group_names
     heatmap_group_combobox.current(0)
     print(f"Updated group combobox with {len(group_names)} groups")
+
+    # Sync parameter dropdown with selected group (without triggering a full heatmap refresh)
+    try:
+        _sync_param_combobox()
+    except Exception:
+        pass
 
     # Also update the Report tab's group combobox
     try:
@@ -7624,20 +7851,20 @@ def update_multi_stdf_heatmap():
         # Create colorbar
         cbar = fig.colorbar(im, ax=ax, fraction=0.024, pad=0.01)
 
-        # Add bin legend with names from BinningLookup (if loaded)
-        if is_bin_column and binning_lookup.loaded:
-            # Get unique bins and their names
+        # Add bin legend (always for bin columns)
+        if is_bin_column:
             unique_bins_sorted = sorted([int(b) for b in unique_bins if not np.isnan(b)])
             legend_text = ""
             for bin_val in unique_bins_sorted:
-                bin_name = binning_lookup.get_bin_name(bin_val)
+                bin_name = None
+                if binning_lookup.loaded:
+                    bin_name = binning_lookup.get_bin_name(bin_val)
                 if bin_name:
                     legend_text += f"Bin {bin_val}: {bin_name}\n"
                 else:
                     legend_text += f"Bin {bin_val}\n"
 
             if legend_text:
-                # Add text box with bin legend
                 props = dict(boxstyle='round', facecolor='white', alpha=0.9, edgecolor='gray')
                 ax.text(1.02, 0.98, legend_text.strip(), transform=ax.transAxes, fontsize=8,
                        verticalalignment='top', horizontalalignment='left',
@@ -9543,9 +9770,12 @@ def on_heatmap_die_click(event):
     if event.inaxes is None:
         return
 
-    # Use multiple_stdf_data if available, otherwise use current_stdf_data
+    # Use the SELECTED wafer (not always wafer 0)
     if multiple_stdf_data and len(multiple_stdf_data) > 0:
-        data_source = multiple_stdf_data[0]
+        sel_idx = get_selected_wafer_tab_index()
+        if sel_idx >= len(multiple_stdf_data):
+            sel_idx = 0
+        data_source = multiple_stdf_data[sel_idx]
     elif current_stdf_data is not None and not current_stdf_data.empty:
         data_source = current_stdf_data
     else:
@@ -9652,9 +9882,12 @@ def on_heatmap_click(event):
         print("Click outside axes")
         return
 
-    # Use multiple_stdf_data if available, otherwise use current_stdf_data
+    # Use the SELECTED wafer (not always wafer 0)
     if multiple_stdf_data and len(multiple_stdf_data) > 0:
-        data_source = multiple_stdf_data[0]  # Use first file for now
+        sel_idx = get_selected_wafer_tab_index()
+        if sel_idx >= len(multiple_stdf_data):
+            sel_idx = 0
+        data_source = multiple_stdf_data[sel_idx]
     elif current_stdf_data is not None and not current_stdf_data.empty:
         data_source = current_stdf_data
     else:
@@ -13160,7 +13393,7 @@ def show_mw_load_wafer_dialog():
             notebook.select(tab_master_inv)
             master_inventory_tab_instance.enter_selection_mode(
                 "Select wafer(s) for: 📊 Multi-Wafer (Ctrl+Click for multi)",
-                callback=lambda paths: [_master_load_wafer(p) for p in paths],
+                callback=lambda paths: _mw_load_from_master(paths),
                 multi=True,
             )
         except Exception as e:
@@ -13862,7 +14095,8 @@ multi_wafer_group_combo.pack(side=tk.LEFT, padx=2)
 multi_wafer_group_combo.bind("<<ComboboxSelected>>", lambda e: update_multi_wafer_param_by_group())
 
 # Parameter label + combobox
-tk.Label(multi_wafer_control_frame, text="Parameter:", font=("Helvetica", 10)).pack(side=tk.LEFT, padx=(10, 2))
+multi_wafer_param_label = tk.Label(multi_wafer_control_frame, text="Parameter:", font=("Helvetica", 10))
+multi_wafer_param_label.pack(side=tk.LEFT, padx=(10, 2))
 
 multi_wafer_param_combobox = ttk.Combobox(
     multi_wafer_control_frame, state="readonly", width=30, font=("Helvetica", 9)
@@ -14352,6 +14586,7 @@ def multi_wafer_overlay_coordinates():
 
 # Storage for individual parameter selections per wafer (wafer_index -> selected_param)
 multi_wafer_independent_params = {}
+multi_wafer_independent_groups = {}  # wafer_index -> selected_group (persistent)
 multi_wafer_independent_comboboxes = {}
 multi_wafer_independent_selector_frame = None
 
@@ -14370,8 +14605,6 @@ def on_compare_independent_changed():
             create_independent_param_selectors.selector_frame.destroy()
             create_independent_param_selectors.selector_frame = None
         # Re-show global parameter selection
-        multi_wafer_param_label.pack(side=tk.LEFT, padx=5)
-        multi_wafer_param_combobox.pack(side=tk.LEFT, padx=5, after=multi_wafer_param_label)
         multi_wafer_param_label.pack(side=tk.LEFT, padx=5)
         multi_wafer_param_combobox.pack(side=tk.LEFT, padx=5, after=multi_wafer_param_label)
         update_multi_wafer_display()
@@ -15816,21 +16049,22 @@ def clear_multi_wafer_files():
     print("Cleared all loaded wafermaps")
 
 
-def add_multi_wafer_csv_files():
+def add_multi_wafer_csv_files(csv_paths=None):
     """Add multiple CSV/STDF files to the Multiple Wafermaps tab (appends to existing)"""
     global multi_wafer_stdf_data, multi_wafer_wafer_ids, multi_wafer_test_params
     global multi_wafer_wafer_configs
     global multi_wafer_test_params_per_wafer, multi_wafer_test_limits_per_wafer
 
-    csv_paths = filedialog.askopenfilenames(
-        title="Select CSV or STDF files to add",
-        filetypes=[
-            ("All supported", "*.csv;*.stdf;*.std"),
-            ("CSV files", "*.csv"),
-            ("STDF files", "*.stdf *.std"),
-            ("All files", "*.*"),
-        ],
-    )
+    if csv_paths is None:
+        csv_paths = filedialog.askopenfilenames(
+            title="Select CSV or STDF files to add",
+            filetypes=[
+                ("All supported", "*.csv;*.stdf;*.std"),
+                ("CSV files", "*.csv"),
+                ("STDF files", "*.stdf *.std"),
+                ("All files", "*.*"),
+            ],
+        )
 
     if not csv_paths:
         print("No files selected.")
@@ -18101,12 +18335,17 @@ def update_multi_wafer_independent_display():
         else:
             test_key = selected_param.split(":")[0].strip()
             if test_key.startswith("test_"):
-                param_column = int(test_key.replace("test_", ""))
+                test_num = int(test_key.replace("test_", ""))
             else:
                 try:
-                    param_column = int(test_key)
+                    test_num = int(test_key)
                 except ValueError:
+                    test_num = None
                     param_column = test_key
+
+            if test_num is not None:
+                param_column = _find_param_column(df, test_num, multi_wafer_test_params)
+
             param_label = selected_param
 
         if param_column not in df.columns:
@@ -18203,13 +18442,12 @@ def update_multi_wafer_independent_display():
         else:
             multi_wafer_canvas.destroy()
 
-    # Create new canvas
+    # Create individual parameter selection comboboxes FIRST (before canvas)
+    create_independent_param_selectors(selected_indices, selected_ids, available_params, cols, rows)
+
+    # Create new canvas AFTER selector frame
     multi_wafer_canvas = FigureCanvasTkAgg(fig, master=multi_wafer_display_frame)
     multi_wafer_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
-    # Create individual parameter selection comboboxes as overlays
-    # We'll place them in a separate frame above the canvas
-    create_independent_param_selectors(selected_indices, selected_ids, available_params, cols, rows)
 
     # Store original axis limits for reset zoom functionality
     original_axis_limits = {}
@@ -18263,7 +18501,7 @@ def update_multi_wafer_independent_display():
         fig.canvas.draw_idle()
 
     def on_indep_wafer_press(event):
-        """Handle mouse press - start drawing zoom rectangle or clear selection if outside wafer"""
+        """Handle mouse press - start drawing zoom rectangle or show PLM for clicked die"""
         if event.button != 1:  # Only left click
             return
 
@@ -18295,7 +18533,35 @@ def update_multi_wafer_independent_display():
             fig.canvas.draw_idle()
             return
 
-        # Left click on wafer - start zoom rectangle
+        # Show PLM files for clicked die (same as normal mode)
+        for info in multi_wafer_plot_data_cache.get('axes_info', []):
+            if info['ax'] == clicked_ax:
+                x_grid = int(round(event.xdata))
+                y_grid = int(round(event.ydata))
+                x_coord = info['x_min'] + x_grid
+                y_coord = info['y_min'] + y_grid
+
+                # If Select Positions mode is active, add to history
+                if multi_wafer_select_positions_var.get():
+                    pos = (x_coord, y_coord)
+                    if pos not in multi_wafer_selected_positions:
+                        multi_wafer_selected_positions.append(pos)
+                        print(f"Added position ({x_coord}, {y_coord}) to history. Total: {len(multi_wafer_selected_positions)}")
+                    try:
+                        update_plm_position_history()
+                        draw_selected_position_markers()
+                    except Exception as e:
+                        print(f"Position history error: {e}")
+
+                # Display PLM files for this die
+                try:
+                    display_multi_wafer_plm_files(x_coord, y_coord)
+                    multi_wafer_left_notebook.select(1)  # Switch to PLM tab
+                except Exception as e:
+                    print(f"PLM display error: {e}")
+                break
+
+        # Left click on wafer - also start zoom rectangle
         zoom_state['selected_ax'] = clicked_ax
         zoom_state['start_point'] = (event.xdata, event.ydata)
         zoom_state['is_drawing'] = True
@@ -18407,63 +18673,94 @@ def create_independent_param_selectors(selected_indices, selected_ids, available
     if hasattr(create_independent_param_selectors, 'selector_frame') and create_independent_param_selectors.selector_frame:
         create_independent_param_selectors.selector_frame.destroy()
 
-    # Create a frame for parameter selectors above the canvas
-    selector_frame = tk.Frame(multi_wafer_display_frame)
-    if hasattr(multi_wafer_canvas, 'get_tk_widget'):
-        selector_frame.pack(side=tk.TOP, fill=tk.X, before=multi_wafer_canvas.get_tk_widget())
-    else:
-        selector_frame.pack(side=tk.TOP, fill=tk.X, before=multi_wafer_canvas)
+    # Create a frame for parameter selectors ABOVE the canvas
+    selector_frame = tk.Frame(multi_wafer_display_frame, bg='#E8EAF6', relief=tk.GROOVE, bd=1)
+    selector_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 3))
     create_independent_param_selectors.selector_frame = selector_frame
 
-    # Create a grid of selectors matching the wafermap layout
+    # Build group names
+    group_names = ["All Groups"] + sorted(grouped_parameters.keys())
+
+    def _get_params_for_group(group_name):
+        """Filter parameters by group – same logic as update_multi_wafer_param_by_group()"""
+        param_options = ["BIN (Bin Number)"]
+        if group_name == "All Groups" or group_name not in grouped_parameters:
+            for test_key, test_name in sorted(multi_wafer_test_params.items(), key=lambda x: simplify_param_name(x[1]).upper()):
+                simple_name = simplify_param_name(test_name)
+                param_options.append(f"{test_key}: {simple_name}")
+        else:
+            params = grouped_parameters[group_name]
+            for param in sorted(params, key=lambda x: simplify_param_name(x[2] if len(x) > 2 else x[1]).upper()):
+                test_num = param[0]
+                full_name = param[2] if len(param) > 2 else param[1]
+                simple_name = simplify_param_name(full_name)
+                test_key = f"test_{test_num}"
+                if test_key in multi_wafer_test_params:
+                    param_options.append(f"{test_key}: {simple_name}")
+        return param_options
+
     num_wafers = len(selected_indices)
 
     for idx, (wafer_idx, wafer_id) in enumerate(zip(selected_indices, selected_ids)):
-        row = idx // cols
-        col = idx % cols
+        grid_row = idx // cols
+        grid_col = idx % cols
 
-        # Create a small frame for each selector
-        cell_frame = tk.Frame(selector_frame)
-        cell_frame.grid(row=row, column=col, padx=5, pady=2, sticky='ew')
+        cell_frame = tk.Frame(selector_frame, bg='#E8EAF6')
+        cell_frame.grid(row=grid_row, column=grid_col, padx=4, pady=3, sticky='ew')
 
-        # Short wafer ID label
-        short_id = str(wafer_id)[:15] + "..." if len(str(wafer_id)) > 15 else str(wafer_id)
-        label = tk.Label(cell_frame, text=short_id, font=("Helvetica", 8), width=18, anchor='w')
-        label.pack(side=tk.LEFT, padx=2)
+        # Row 1: Wafer ID + Group
+        row1 = tk.Frame(cell_frame, bg='#E8EAF6')
+        row1.pack(fill=tk.X)
 
-        # Combobox for parameter selection
-        current_param = multi_wafer_independent_params.get(wafer_idx, available_params[0] if available_params else "")
+        short_id = str(wafer_id)[:20] + "…" if len(str(wafer_id)) > 20 else str(wafer_id)
+        tk.Label(row1, text=f"🗺 {short_id}", font=("Segoe UI", 8, "bold"),
+                 bg='#E8EAF6', anchor='w').pack(side=tk.LEFT, padx=(2, 4))
 
+        tk.Label(row1, text="Group:", font=("Segoe UI", 8), bg='#E8EAF6').pack(side=tk.LEFT)
+
+        saved_group = multi_wafer_independent_groups.get(wafer_idx, "All Groups")
+        group_var = tk.StringVar(value=saved_group)
+        group_combo = ttk.Combobox(row1, textvariable=group_var, values=group_names,
+                                   state="readonly", width=14, font=("Segoe UI", 8))
+        group_combo.pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+
+        row2 = tk.Frame(cell_frame, bg='#E8EAF6')
+        row2.pack(fill=tk.X, pady=(1, 0))
+
+        filtered_params = _get_params_for_group(saved_group)
+        current_param = multi_wafer_independent_params.get(wafer_idx, filtered_params[0] if filtered_params else "")
         combo_var = tk.StringVar(value=current_param)
-        combo = ttk.Combobox(
-            cell_frame,
-            textvariable=combo_var,
-            values=available_params,
-            state="readonly",
-            width=35,
-            font=("Helvetica", 8)
-        )
-        combo.pack(side=tk.LEFT, padx=2)
+        combo = ttk.Combobox(row2, textvariable=combo_var, values=filtered_params,
+                             state="readonly", font=("Segoe UI", 8))
+        combo.pack(fill=tk.X, padx=2)
 
-        # Set combobox to current parameter value
-        if current_param in available_params:
+        if current_param in filtered_params:
             combo.set(current_param)
-        elif available_params:
-            combo.set(available_params[0])
-            multi_wafer_independent_params[wafer_idx] = available_params[0]
+        elif filtered_params:
+            combo.set(filtered_params[0])
+            multi_wafer_independent_params[wafer_idx] = filtered_params[0]
 
-        # Bind selection change
+        def on_group_change(event, w_idx=wafer_idx, g_var=group_var, p_combo=combo, p_var=combo_var):
+            multi_wafer_independent_groups[w_idx] = g_var.get()
+            filtered = _get_params_for_group(g_var.get())
+            p_combo['values'] = filtered
+            current = p_var.get()
+            if current not in filtered and filtered:
+                p_combo.set(filtered[0])
+                multi_wafer_independent_params[w_idx] = filtered[0]
+                update_multi_wafer_independent_display()
+
+        group_combo.bind("<<ComboboxSelected>>", on_group_change)
+
         def on_param_change(event, w_idx=wafer_idx, var=combo_var):
             multi_wafer_independent_params[w_idx] = var.get()
             update_multi_wafer_independent_display()
 
         combo.bind("<<ComboboxSelected>>", on_param_change)
-
         multi_wafer_independent_comboboxes[wafer_idx] = combo
 
-    # Configure grid columns to expand evenly
-    for col in range(cols):
-        selector_frame.grid_columnconfigure(col, weight=1)
+    for c in range(cols):
+        selector_frame.grid_columnconfigure(c, weight=1)
 
 
 def update_multi_wafer_boxplot():
@@ -28430,9 +28727,141 @@ def load_grr_wafer_folder():
     threading.Thread(target=_wafer_folder_worker, daemon=True).start()
 
 
-def load_grr_files():
+def load_grr_files(file_paths=None):
     """Load files for Gage R&R comparison - APPENDS to existing loaded wafers"""
     global grr_file_data, grr_selected_dies, grr_available_params, grr_selected_params
+
+    if file_paths is not None:
+        # Called with pre-selected paths (e.g. from Master Inventory)
+        if not file_paths:
+            return
+
+        existing_paths = {f['path'] for f in grr_file_data}
+
+        # Progress dialog
+        prog_dlg = tk.Toplevel(main_win)
+        prog_dlg.title("Loading GRR Files…")
+        prog_dlg.geometry("420x140")
+        prog_dlg.transient(main_win)
+        prog_dlg.grab_set()
+        prog_dlg.resizable(False, False)
+        prog_dlg.update_idletasks()
+        x = main_win.winfo_x() + (main_win.winfo_width() - 420) // 2
+        y = main_win.winfo_y() + (main_win.winfo_height() - 140) // 2
+        prog_dlg.geometry(f"+{x}+{y}")
+        _grr_f_status = tk.Label(prog_dlg, text="📊 Preparing…",
+                                 font=("Segoe UI", 11, "bold"))
+        _grr_f_status.pack(pady=(16, 4))
+        _grr_f_file = tk.Label(prog_dlg, text="", font=("Segoe UI", 9), fg="gray")
+        _grr_f_file.pack(pady=(0, 6))
+        _grr_f_bar = ttk.Progressbar(prog_dlg, mode="indeterminate", length=360)
+        _grr_f_bar.pack(padx=20, pady=(0, 12))
+        _grr_f_bar.start(15)
+
+        def _grr_master_worker():
+            new_count = 0
+            skipped_count = 0
+            total = len(file_paths)
+
+            for idx, path in enumerate(file_paths):
+                if path in existing_paths:
+                    print(f"[GRR Load] Skipping duplicate: {os.path.basename(path)}")
+                    skipped_count += 1
+                    continue
+
+                main_win.after(0, _grr_f_status.config,
+                               {"text": f"📊 Loading file {idx+1}/{total}…"})
+                main_win.after(0, _grr_f_file.config,
+                               {"text": os.path.basename(path)})
+
+                file_ext = os.path.splitext(path)[1].lower()
+                file_info = {'path': path, 'type': None, 'data': None, 'wafer_id': None}
+
+                try:
+                    if file_ext in ('.stdf', '.std'):
+                        df, wafer_id, test_info, test_limits_dict, wafer_config = load_single_stdf_file_for_csv(path)
+                        if df is not None and len(df) > 0:
+                            param_cols = [c for c in df.columns if c not in ('x', 'y', 'bin', 'sbin')]
+                            file_info['type'] = 'stdf'
+                            file_info['data'] = df
+                            file_info['wafer_id'] = wafer_id
+                            file_info['params'] = {col: col for col in param_cols}
+                        else:
+                            print(f"[GRR Load] STDF returned no data: {os.path.basename(path)}")
+                            continue
+
+                    elif file_ext == '.csv':
+                        try:
+                            import pandas as pd
+                            df_csv = pd.read_csv(path, delimiter=',')
+                            x_col = None
+                            y_col = None
+                            for col in df_csv.columns:
+                                col_lower = col.lower().strip()
+                                if col_lower in ['x', 'x_coord', 'x_coordinate', 'xcoord', 'die_x']:
+                                    x_col = col
+                                elif col_lower in ['y', 'y_coord', 'y_coordinate', 'ycoord', 'die_y']:
+                                    y_col = col
+                            if x_col and y_col:
+                                df_csv[x_col] = pd.to_numeric(df_csv[x_col], errors='coerce')
+                                df_csv[y_col] = pd.to_numeric(df_csv[y_col], errors='coerce')
+                                df_csv = df_csv.rename(columns={x_col: 'x', y_col: 'y'})
+                                param_cols = []
+                                for col in df_csv.columns:
+                                    if col not in ['x', 'y']:
+                                        df_csv[col] = pd.to_numeric(df_csv[col], errors='coerce')
+                                        if df_csv[col].notna().any():
+                                            param_cols.append(col)
+                                file_info['type'] = 'csv_wafermap'
+                                file_info['data'] = df_csv
+                                file_info['wafer_id'] = os.path.basename(path)
+                                file_info['params'] = {col: col for col in param_cols}
+                                print(f"CSV wafermap loaded: {path}, dies={len(df_csv)}, params={len(param_cols)}")
+                            else:
+                                numeric_cols = df_csv.select_dtypes(include=[np.number]).columns
+                                if len(numeric_cols) > 0:
+                                    data = df_csv[numeric_cols].values
+                                else:
+                                    data = df_csv.apply(pd.to_numeric, errors='coerce').values
+                                file_info['type'] = 'csv'
+                                file_info['data'] = data
+                                file_info['wafer_id'] = os.path.basename(path)
+                        except Exception as e:
+                            print(f"CSV loading error: {e}")
+                            try:
+                                data = np.genfromtxt(path, delimiter=',', skip_header=1)
+                                file_info['type'] = 'csv'
+                                file_info['data'] = data
+                                file_info['wafer_id'] = os.path.basename(path)
+                            except Exception as e2:
+                                print(f"Fallback also failed: {e2}")
+
+                    grr_file_data.append(file_info)
+                    new_count += 1
+
+                    if file_info['type'] in ('csv_wafermap', 'stdf') and hasattr(file_info.get('data'), 'columns'):
+                        try:
+                            _auto_integrate_plm_params(file_info, path)
+                        except Exception as plm_err:
+                            print(f"[PLM Auto] ✗ Error integrating PLM: {plm_err}")
+
+                except Exception as e:
+                    print(f"Error loading {path}: {e}")
+
+            main_win.after(0, _grr_master_done, new_count, skipped_count)
+
+        def _grr_master_done(new_count, skipped_count):
+            _grr_f_bar.stop()
+            prog_dlg.destroy()
+            status_msg = f"✅ Loaded {len(grr_file_data)} files total ({new_count} new"
+            if skipped_count > 0:
+                status_msg += f", {skipped_count} skipped duplicates"
+            status_msg += ")"
+            grr_status_var.set(status_msg)
+            _rebuild_grr_params_after_load()
+
+        threading.Thread(target=_grr_master_worker, daemon=True).start()
+        return
 
     num_files = int(grr_num_files_var.get())
     file_type = grr_file_type_var.get()
@@ -28659,6 +29088,29 @@ grr_load_files_btn = tk.Button(
     pady=3
 )
 grr_load_files_btn.pack(fill=tk.X, pady=(2, 0))
+
+def _load_from_master_grr():
+    try:
+        notebook.select(tab_master_inv)
+        master_inventory_tab_instance.enter_selection_mode(
+            "Select wafer(s) for: 📏 Gage R&R (Ctrl+Click for multi)",
+            callback=lambda paths: _grr_load_from_master(paths),
+            multi=True,
+        )
+    except Exception as e:
+        print(f"Load from Master error: {e}")
+
+grr_load_master_btn = tk.Button(
+    grr_load_btn_frame,
+    text="📋 Browse Master...",
+    command=_load_from_master_grr,
+    font=("Helvetica", 9),
+    bg='#7B1FA2',
+    fg='white',
+    padx=10,
+    pady=3
+)
+grr_load_master_btn.pack(fill=tk.X, pady=(2, 0))
 
 # Export results button
 def export_grr_results():

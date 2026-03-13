@@ -98,6 +98,12 @@ class MasterInventoryTab:
         "cp1_manifold_location",
     ]
 
+    # Known Cork Share server names (try alternatives if primary not reachable)
+    CORK_SHARE_SERVERS = [
+        r"\\frlcork-storage.thefacebook.com",
+        r"\\lhr-shared02-smb.thefacebook.com",
+    ]
+
     DEFAULT_COL_WIDTH = 110
 
     def __init__(
@@ -394,10 +400,10 @@ class MasterInventoryTab:
             return
 
         cols = [c for c in self.active_columns if c in self.filtered_df.columns]
-        for idx, (_, row) in enumerate(self.filtered_df.iterrows()):
+        for idx, (df_idx, row) in enumerate(self.filtered_df.iterrows()):
             values = [str(row[c]) if pd.notna(row.get(c)) else "" for c in cols]
             tag = "oddrow" if idx % 2 else "evenrow"
-            self.tree.insert("", tk.END, values=values, tags=(tag,))
+            self.tree.insert("", tk.END, iid=str(df_idx), values=values, tags=(tag,))
 
         total = len(self.df) if self.df is not None else 0
         shown = len(self.filtered_df)
@@ -595,18 +601,51 @@ class MasterInventoryTab:
     # ================================================================
 
     def _resolve_wafer_path(self, row: pd.Series) -> Optional[str]:
-        """Find the first valid file path from the known path columns."""
+        """Find the first valid file path from the known path columns.
+
+        Tries alternative Cork Share server names if the original path is
+        not reachable (e.g. lhr-shared02 → frlcork-storage and vice versa).
+        """
+        candidates: List[str] = []
         for col in self.WAFER_PATH_COLUMNS:
             val = row.get(col, "")
             if pd.notna(val) and str(val).strip():
                 path = str(val).strip()
-                if os.path.isfile(path) or os.path.isdir(path):
-                    return path
-        # Second pass: return first non-empty path even if not reachable now
-        for col in self.WAFER_PATH_COLUMNS:
-            val = row.get(col, "")
-            if pd.notna(val) and str(val).strip():
-                return str(val).strip()
+                print(f"[Master] _resolve_wafer_path: {col} = {path[:80]}...")
+                # Skip manifold URIs (not file system paths)
+                if not path.startswith("\\\\") and not os.path.isabs(path):
+                    print(f"[Master]   → skipped (not a filesystem path)")
+                    continue
+                candidates.append(path)
+            else:
+                print(f"[Master] _resolve_wafer_path: {col} = (empty)")
+
+        print(f"[Master] candidates: {len(candidates)}")
+
+        # First pass: check original paths
+        for path in candidates:
+            if os.path.isfile(path) or os.path.isdir(path):
+                print(f"[Master] → found (original): {path[:80]}")
+                return path
+
+        # Second pass: try alternative Cork Share server names
+        for path in candidates:
+            for server in self.CORK_SHARE_SERVERS:
+                for alt_server in self.CORK_SHARE_SERVERS:
+                    if alt_server == server:
+                        continue
+                    if path.lower().startswith(server.lower()):
+                        alt_path = alt_server + path[len(server):]
+                        print(f"[Master] trying alt: {alt_path[:80]}...")
+                        if os.path.isfile(alt_path) or os.path.isdir(alt_path):
+                            print(f"[Master] → found (alt server): {alt_path[:80]}")
+                            return alt_path
+
+        # Third pass: return first candidate even if not reachable
+        if candidates:
+            print(f"[Master] → returning unreachable: {candidates[0][:80]}")
+            return candidates[0]
+        print(f"[Master] → NO path found at all!")
         return None
 
     def _on_load_wafer_clicked(self):
@@ -696,18 +735,17 @@ class MasterInventoryTab:
             return
 
         paths: List[str] = []
-        cols_present = [c for c in self.active_columns if c in self.df.columns]
         for item in sel:
-            values = self.tree.item(item, "values")
-            if not values:
+            # item iid is the DataFrame index (set in _populate_tree)
+            try:
+                df_idx = int(item)
+            except (ValueError, TypeError):
+                print(f"[Master] _confirm_selection: cannot parse iid={item!r}")
                 continue
-            match = self.df.copy()
-            for i, col in enumerate(cols_present[:2]):
-                if i < len(values):
-                    match = match[match[col].astype(str) == values[i]]
-            if match.empty:
+            if df_idx not in self.df.index:
+                print(f"[Master] _confirm_selection: df_idx={df_idx} not in df.index")
                 continue
-            row = match.iloc[0]
+            row = self.df.loc[df_idx]
             path = self._resolve_wafer_path(row)
             if path:
                 paths.append(path)
