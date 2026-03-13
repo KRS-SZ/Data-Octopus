@@ -189,7 +189,14 @@ class MasterInventoryTab:
             ctrl, text="📂 Load Wafer", command=self._on_load_wafer_clicked,
             font=("Segoe UI", 9, "bold"), bg="#4CAF50", fg="white", width=14,
         )
-        self.load_wafer_btn.pack(side=tk.LEFT, padx=(0, 16))
+        self.load_wafer_btn.pack(side=tk.LEFT, padx=(0, 6))
+
+        # Download Data button
+        self.download_btn = tk.Button(
+            ctrl, text="📥 Download Data", command=self._on_download_data_clicked,
+            font=("Segoe UI", 9, "bold"), bg="#1565C0", fg="white", width=16,
+        )
+        self.download_btn.pack(side=tk.LEFT, padx=(0, 16))
 
         # View preset
         tk.Label(ctrl, text="View:", font=("Segoe UI", 10, "bold")).pack(side=tk.LEFT, padx=(0, 4))
@@ -647,6 +654,75 @@ class MasterInventoryTab:
             return candidates[0]
         print(f"[Master] → NO path found at all!")
         return None
+
+    def _on_download_data_clicked(self):
+        """Download the wafer data file for the selected row to a local path."""
+        from tkinter import filedialog as fd
+
+        if self.tree is None:
+            return
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showinfo("No Selection", "Please select a wafer row first.")
+            return
+
+        values = self.tree.item(sel[0], "values")
+        if not values or self.df is None:
+            return
+
+        cols_present = [c for c in self.active_columns if c in self.df.columns]
+        if not cols_present:
+            return
+
+        match = self.df.copy()
+        for i, col in enumerate(cols_present[:2]):
+            if i < len(values):
+                match = match[match[col].astype(str) == values[i]]
+        if match.empty:
+            return
+
+        row = match.iloc[0]
+        source_path = self._resolve_wafer_path(row)
+        if not source_path:
+            messagebox.showwarning(
+                "No Path",
+                "No downloadable wafer data path found for this wafer.\n\n"
+                "Checked columns:\n" + "\n".join(f"  • {c}" for c in self.WAFER_PATH_COLUMNS),
+            )
+            return
+
+        source_is_dir = os.path.isdir(source_path)
+        source_name = os.path.basename(source_path.rstrip("/\\"))
+
+        if source_is_dir:
+            dest_dir = fd.askdirectory(
+                title=f"Save folder '{source_name}' to…",
+                initialdir=os.path.expanduser("~\\Desktop"),
+            )
+            if not dest_dir:
+                return
+            dest = os.path.join(dest_dir, source_name)
+            try:
+                shutil.copytree(source_path, dest, dirs_exist_ok=True)
+                messagebox.showinfo("Download Complete", f"Folder saved to:\n{dest}")
+            except Exception as e:
+                messagebox.showerror("Download Error", f"Failed to copy folder:\n{e}")
+        else:
+            ext = os.path.splitext(source_name)[1] or ".*"
+            dest_path = fd.asksaveasfilename(
+                title="Save wafer data as…",
+                initialdir=os.path.expanduser("~\\Desktop"),
+                initialfile=source_name,
+                defaultextension=ext,
+                filetypes=[("STDF files", "*.stdf *.std"), ("CSV files", "*.csv"), ("All files", "*.*")],
+            )
+            if not dest_path:
+                return
+            try:
+                shutil.copy2(source_path, dest_path)
+                messagebox.showinfo("Download Complete", f"File saved to:\n{dest_path}")
+            except Exception as e:
+                messagebox.showerror("Download Error", f"Failed to copy file:\n{e}")
 
     def _on_load_wafer_clicked(self):
         """Load wafer data for the currently selected row."""
